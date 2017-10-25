@@ -448,9 +448,15 @@ void AliTreeTrending::AppendBand(const char* outputDir, const char *figureName, 
   trendingDraw->MakeStatusPlot("./", "dcaStatus.png", expression, varTitle, cutString,sCriteria);
 \endcode
 */
-void AliTreeTrending::MakeStatusPlot(const char *outputDir, const char *figureName,  TString expression, TString varTitle,  TCut cutString, TString sCriteria) {
+void AliTreeTrending::MakeStatusPlot(const char *outputDir, const char *figureName,  TString expression, TString varTitle,  TCut cutString, TString sCriteria, TString friendName) {
   fWorkingCanvas->Clear();
-  TMultiGraph *multiGraph = AliTreeTrending::MakeMultiGraphStatus(fTree,"",  expression, varTitle, cutString, sCriteria);
+  TMultiGraph *multiGraph = NULL;
+  if (friendName.Length() > 0 && fTree->GetFriend(friendName)){
+    multiGraph =  AliTreeTrending::MakeMultiGraphStatus(fTree->GetFriend(friendName), "", expression, varTitle, cutString, sCriteria);
+  }else{
+    multiGraph =  AliTreeTrending::MakeMultiGraphStatus(fTree, "", expression, varTitle, cutString, sCriteria);
+  }
+
   if(multiGraph==0) {
     ::Error("AliTreeTrending::MakeStatusPlot", "MakeMultiGraphStatus returned NULL pointer");
     return;
@@ -465,6 +471,51 @@ void AliTreeTrending::MakeStatusPlot(const char *outputDir, const char *figureNa
   AliSysInfo::AddStamp(expression.Data(),3,counter++);
 }
 
+
+/// Recursive function to decompose the status string into sub-contribution
+/// \param tree            - input tree
+/// \param currentString   - current status string
+/// \param statusVar       - resulting status variable
+/// \param statusTitle     - resulting status variable
+/// \param suffix          - suffix to parse status string "_Warning"
+/// \param counter         - counter for debug purposes
+/*!
+\code
+ TString currentString="dcar_Warning";
+ TString statusVar="", statusTitle="";
+ TPRegexp suffix("_Warning$");
+ Int_t counter=0;
+ AliTreeTrending::DecomposeStatusAlias(treeMC, currentString,statusVar,statusTitle,suffix,counter);
+ statusVar+="run";
+ trendingDraw->MakeStatusPlot("./", "dcarStatusMC.png", statusVar, statusTitle, "defaultCut",sCriteria);
+
+ trendingDraw->MakeStatusPlot("./", "dcarStatusAnchor.png", statusVar, statusTitle, "defaultCut",sCriteria,"TPC.Anchor");
+ \endcode
+*/
+void AliTreeTrending::DecomposeStatusAlias(TTree* tree, TString currentString, TString &statusVar, TString &statusTitle, TPRegexp &suffix, Int_t &counter){
+  //
+  if (tree==NULL) throw std::invalid_argument("invalid tree argument");
+  TString toAdd=currentString;
+  suffix.Substitute(toAdd,"");
+  statusVar+=toAdd;
+  statusVar+=";";
+  TString title=toAdd;
+  if (TStatToolkit::GetMetadata(tree,(toAdd+".Title").Data())) title=TStatToolkit::GetMetadata(tree,toAdd+".Title")->GetTitle();
+  statusTitle+=title;
+  statusTitle+=";";
+  TString content=tree->GetAlias(currentString.Data());
+  TObjArray  * array = content.Tokenize("|&");
+  printf("%d\t%s\t%s\n",counter,toAdd.Data(), content.Data());
+  for (Int_t i=0; i<array->GetEntries(); i++){
+    TString cString=array->At(i)->GetName();
+    cString.ReplaceAll("(","");
+    cString.ReplaceAll(")","");
+    if (suffix.Match(cString,"")>0) {
+      DecomposeStatusAlias(tree, cString, statusVar, statusTitle,suffix,counter);
+      counter++;
+    }
+  }
+}
 
 
 
