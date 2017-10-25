@@ -309,6 +309,10 @@ TMultiGraph * AliTreeTrending::MakeMultiGraphStatus(TTree *fTree, TString mgrNam
     if (mgr==NULL) continue;
     for (Int_t igr=0; igr<mgr->GetListOfGraphs()->GetEntries(); igr++) {
       TGraph *cgr = (TGraph *) mgr->GetListOfGraphs()->At(igr);
+      if (cgr==NULL){
+        ::Error("AliTreeTrending::MakeMultiGraphStatus","Graph %d of multi-graph %s is 0", igr, mgr->GetName());
+        continue;
+      }
       cgr->SetTitle(""); cgr->GetYaxis()->SetTitle("");
       cgr->GetYaxis()->Set(nVars, yBins);
       cgr->GetYaxis()->SetRangeUser(0,nVars);
