@@ -279,9 +279,20 @@ void AliTreeTrending::AppendStatusPad(Float_t padRatio, Float_t bottomMargin, Fl
 \endcode
  */
 TMultiGraph * AliTreeTrending::MakeMultiGraphStatus(TTree *fTree, TString mgrName, TString expression, TString varTitle, TCut cutString, TString sCriteria, Bool_t setAxis) {
-  // 1. Make TMultiGraph for each group
+  // 1. Make TMultiGraph for each group   
   TObjArray *oaStatusBarVars = expression.Tokenize(";:");
   TObjArray *oaStatusBarNames = varTitle.Tokenize(";:");
+
+  if(oaStatusBarVars->GetEntries()<1) ::Error("AliTreeTrending::MakeMultiGraphStatus", "Empty variable string provided");
+  if(oaStatusBarVars->GetEntries()-1!=oaStatusBarNames->GetEntries()) { 
+    ::Error("AliTreeTrending::MakeMultiGraphStatus", "Variable\tNames");
+    for(int i=0; i<oaStatusBarVars->GetEntries(); i++){        
+      TString varVars = TString(oaStatusBarVars->At(i)!=NULL?oaStatusBarVars->At(i)->GetName():"undef.");
+      TString varNames = TString(oaStatusBarNames->At(i)!=NULL?oaStatusBarNames->At(i)->GetName():"undef.");
+      ::Error("AliTreeTrending::MakeMultiGraphStatus", "%s\t%s",varVars.Data(),varNames.Data());
+    }
+    return 0;
+  }
   Int_t nVars = oaStatusBarVars->GetEntriesFast() - 1;
   TObjArray *graphArray = new TObjArray(nVars);
   for (Int_t iVar = 0; iVar < nVars; iVar++) {
@@ -433,10 +444,13 @@ void AliTreeTrending::AppendBand(const char* outputDir, const char *figureName, 
   trendingDraw->MakeStatusPlot("./", "dcaStatus.png", expression, varTitle, cutString,sCriteria);
 \endcode
 */
-void AliTreeTrending::MakeStatusPlot(const char *outputDir, const char *figureName,  TString expression, TString varTitle,
-                    TCut cutString, TString sCriteria) {
+void AliTreeTrending::MakeStatusPlot(const char *outputDir, const char *figureName,  TString expression, TString varTitle,  TCut cutString, TString sCriteria) {
   fWorkingCanvas->Clear();
   TMultiGraph *multiGraph = AliTreeTrending::MakeMultiGraphStatus(fTree,"",  expression, varTitle, cutString, sCriteria);
+  if(multiGraph==0) {
+    ::Error("AliTreeTrending::MakeStatusPlot", "MakeMultiGraphStatus returned NULL pointer");
+    return;
+  }
   TStatToolkit::DrawMultiGraph(multiGraph, "ap");
   AppendStatusPad(0.3, 0.4, 0.05);
   if (outputDir != NULL) {
