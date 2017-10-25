@@ -59,6 +59,7 @@
 #include "TPRegexp.h"
 #include "TColor.h"
 #include "TMath.h"
+#include "TRegexp.h"
 #include "TObjArray.h"
 #include "TSystem.h"
 #include <iostream>
@@ -72,6 +73,7 @@ TString AliDrawStyle::fDefaultTStyleID;                            ///< ID of th
 TString AliDrawStyle::fDefaultArrayStyleID;                        ///< ID of the default array styles
 std::map<TString, TString>  AliDrawStyle::fLatexAlice;
 std::map<TString, TStyle*>  AliDrawStyle::fStyleAlice;
+std::map<TString, TObjArray*>  AliDrawStyle::fCssStyleAlice;       //
 std::map<TString, std::vector<int> > AliDrawStyle::fMarkerStyles;  // PLEASE LEAVE THE UNAESTHETIC SPACE
 std::map<TString, std::vector<int> > AliDrawStyle::fMarkerColors;  // IN ORDER TO MAKE IT WORK WITH THE
 std::map<TString, std::vector<float> > AliDrawStyle::fMarkerSize;  // NATIVE SLC6 COMPILER!!!
@@ -306,21 +308,21 @@ void   AliDrawStyle::RegisterDefaultStyle(){
   fStyleAlice["figTemplateGrey"]=RegisterDefaultStyleFigTemplate(kFALSE);
   //
   TStyle *style=RegisterDefaultStyleFigTemplate(kFALSE);
-  style->SetName("figTemplate2"); 
+  style->SetName("figTemplate2");
   style->SetTitleXSize(TMath::Power(2,0.5)*style->GetTitleXSize());
   style->SetTitleYSize(TMath::Power(2,0.5)*style->GetTitleYSize());
   style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("X"),"X");
   style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Y"),"Y");
-  style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Z"),"Z");  
+  style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Z"),"Z");
   fStyleAlice["figTemplate2"]=style;
   //
   style=RegisterDefaultStyleFigTemplate(kFALSE);
-  style->SetName("figTemplate3"); 
+  style->SetName("figTemplate3");
   style->SetTitleXSize(TMath::Power(3,0.5)*style->GetTitleXSize());
   style->SetTitleYSize(TMath::Power(3,0.5)*style->GetTitleYSize());
   style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("X"),"X");
   style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("Y"),"Y");
-  style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("Z"),"Z");  
+  style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("Z"),"Z");
   fStyleAlice["figTemplate3"]=style;
 
 
@@ -348,8 +350,8 @@ void  AliDrawStyle::RegisterDefaultMarkers(){
     (fMarkerSize["figTemplate"])[i]=1;
     (fFillColors["figTemplate"])[i]=fillColors[i];
     (fLineWidth["figTemplate"])[i]=0.5;
-    (fLineStyle["figTemplate"])[i]=i+1;   
-    (fLineColor["figTemplate"])[i]=colors[i];    
+    (fLineStyle["figTemplate"])[i]=i+1;
+    (fLineColor["figTemplate"])[i]=colors[i];
   }
   // style inspired by TRD performance paper
   Int_t colorsTRD[12]={0};
@@ -437,16 +439,15 @@ TStyle*  RegisterDefaultStyleFigTemplate(Bool_t graypalette) {
   return figStyle;
 }
 
-/// CSS sttle parsing functions
-///
+/// CSS style parsing functions
 
 ///
-/// \param input      - input string
-/// \param tagName    - name of tag to find
-/// \return           - attribute tagName from the input string using CSS like parsing, empty string in case not found
+/// \param input        - input string
+/// \param propertyName - name of property to find
+/// \return             - property propertyName from the input string using CSS like parsing, empty string in case not found
 ///
-TString  AliDrawStyle::GetAttributeValue(TString input, TString tagName){
-  Int_t index0 = input.Index(tagName.Data());
+TString  AliDrawStyle::GetPropertyValue(TString input, TString propertyName){
+  Int_t index0 = input.Index(propertyName.Data());
   if (index0<0) return "";
   Int_t index1 = input.Index(':',index0)+1;
   Int_t index2= input.Index(';',index1)-1;
@@ -456,7 +457,7 @@ TString  AliDrawStyle::GetAttributeValue(TString input, TString tagName){
 }
 ///
 /// \param input    - input string (CSS record - find proper name in the w3c)
-/// \param tagName  -  name of tag to find
+/// \param propertyName  -  name of property to find
 /// \param index    - index of value to find
 /// \return         - value as a integer  -1 if does not exist, resp , separated value at index index
 /*!
@@ -466,8 +467,8 @@ TString  AliDrawStyle::GetAttributeValue(TString input, TString tagName){
   AliDrawStyle::GetNamedIntegerAt(input,"marker_style",3);  //  return  23
   AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2);  //  return  4
  */
-Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString tagName, Int_t index){
-  TString  value = AliDrawStyle::GetAttributeValue(input,tagName);
+Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString propertyName, Int_t index){
+  TString  value = AliDrawStyle::GetPropertyValue(input,propertyName);
   Int_t indexStart=0;
   Int_t indexFinish=value.Index(',',indexStart);
   for (Int_t j=0; j<index; j++){
@@ -482,7 +483,7 @@ Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString tagName, Int_t i
 }
 
 /// \param input    - input string (CSS record - find proper name in the w3c)
-/// \param tagName  -  name of tag to find
+/// \param propertyName  -  name of tag to find
 /// \param index    - index of value to find
 /// \return         - value as a float  -1 if does not exist, resp , separated value at index index
 /*!
@@ -492,8 +493,8 @@ Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString tagName, Int_t i
   AliDrawStyle::GetNamedIntegerAt(input,"marker_style",3);  //  return  23
   AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2);  //  return  4
  */
-Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString tagName, Int_t index){
-  TString  value = AliDrawStyle::GetAttributeValue(input,tagName);
+Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString propertyName, Int_t index){
+  TString  value = AliDrawStyle::GetPropertyValue(input,propertyName);
   Int_t indexStart=0;
   Int_t indexFinish=value.Index(',',indexStart);
   for (Int_t j=0; j<index; j++){
@@ -513,13 +514,19 @@ Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString tagName, Int_t ind
 ///   * code should not fail
 ///   * return 0 pointer if inconsistent content
 ///   * Use ::Error verbosity according debug level
-/// * proper CSS comments handling (Boris)
+/// * proper CSS comments handling (Boris) @done
 /// * include CSS files  (should be included as )
 /// \param inputName     - input file to read
 /// \param verbose       - specify verbose level for ::error and ::info (Int_t should be interpreted as an bitmask)
 /// \return              - TObjArray  with the pairs TNamed of the CSS <Selector, declaration> or  TObjArray (recursive structure like includes)
 TObjArray * AliDrawStyle::ReadCSSFile(const char *  inputName, Int_t verbose){
+  //check file exisitnf
   TString inputCSS = gSystem->GetFromPipe(TString::Format("cat %s",inputName).Data());     // I expect this variable is defined
+  //remove comments:
+  while (inputCSS.Index("*/") > 0){
+    inputCSS = inputCSS(0, inputCSS.Index("/*")) + inputCSS(inputCSS.Index("*/")+2, inputCSS.Length());
+  }
+    //inputCSS.ReplaceAll("\n", ""); we can add this, in the other case ClassName will be like "\n .TH*", but I suppose it doesn't matter.
   TObjArray *tokenArray = inputCSS.Tokenize("{}");   //assuming we can not use {} symbols in the style IDS
   Int_t entries = tokenArray->GetEntries();
   TObjArray *cssArray = new TObjArray(entries / 2);
@@ -560,12 +567,65 @@ void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputNam
   }
 }
 /// Function to check  match between "CSS" selector and pair of className, objectName
-/// \param selector    - selector ID
+/// \param selectors    - selector ID
+/// \param elementName - name of element
 /// \param className   - name of class
 /// \param objectName  - object name
 /// \return            - kTRUE if selector match classname and objectName
 /// TODO
-///   - precalculate the tree ?
-Bool_t  AliDrawStyle::IsSelected(TString selector, TString className, TString objectName){
-  return kTRUE;
+///   - precalculate the tree ? yes, in best practice we should use trees for css parsing. I think later we can implement simple variant.
+Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementName, TString className, TString objectName){
+  //TString selectors = "TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3"
+
+  Bool_t elementCatched;
+  Bool_t classCatched;
+  Bool_t objectCatched;
+  Ssiz_t fromStart=0;
+  Ssiz_t fromStart1;
+
+  TString subSelectors;
+  TString selector;
+
+  TPRegexp elemPat(".*?[.]");
+  TPRegexp classPat("[.].*[#]");
+  TPRegexp objPat("[#].*");
+
+  while(selectors.Tokenize(subSelectors,fromStart," \t")){
+    fromStart1 = 0;
+   while(subSelectors.Tokenize(selector,fromStart1,", ")){
+     elementCatched = false;
+     classCatched = false;
+     objectCatched = false;
+
+     if(selector(objPat) == ""){
+        objectCatched = true;
+        selector.Append("#anyObjects");
+      }
+      else if (selector(objPat) == ("#" + objectName)) objectCatched = true;
+      if(selector(classPat) == ""){
+         classCatched = true;
+         selector.Insert(selector.Index("#"), ".anyClasses");
+       }
+       else if (selector(classPat) == ("." + className + "#")) classCatched = true;
+     if(selector(elemPat) == "." || selector(elemPat) == "" || selector(elemPat) == (elementName + ".")) elementCatched = true;
+     if (elementCatched && classCatched && objectCatched)  return true;
+   }
+  }
+  return false;
+}
+
+///
+/// \param styleName
+/// \param elementID
+/// \param classID
+/// \param objectID
+/// \return
+TString AliDrawStyle::GetProperties(const char *styleName, TString elementID, TString classID, TString objectID){
+   Int_t entries = fCssStyleAlice[styleName]->GetEntriesFast();
+   for(Int_t i = 0; i < entries; i++){
+     if(IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, classID, objectID)){
+       return TString(fCssStyleAlice[styleName]->At(i)->GetTitle());
+     }
+   }
+   return "";
 }
