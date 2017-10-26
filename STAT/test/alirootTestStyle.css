@@ -1,19 +1,34 @@
-.TH*  {
+/*
+How to use css in aliroot.
+examples of css style in aliroot:
+*/
+
+/*
+TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 - means apply the value of marker_size, marker_color, line_color, line_style for obj1 of class TH1 with tag Status and obj1 from TH1 with tag Warning and for obj3 from TH1 with tag Warning.
+*/
+TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3   {
     marker_size:   1,1,1,1;
-    marker_color:  2,4,6,8;
+    marker_color:  2,4,6,8; /* marker_color defenition */
     line_color:    2,4,6,8;
     line_style:    1,1,1,1;
 }
-.TGraph*  {
+/*
+TGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 - means obj1 from TGraph with any tag(Status, Warnings, Errors) and TPC.QA.dcar_posA_1 from TGraph with tag Status.
+*/
+TGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1   {
     marker_size:   1,1,1,1;
-    marker_color:  2,4,6,8;
-    line_color:    2,4,6,8;
-    line_style:    1,1,1,1;
-}
-.TGraphErrors*  {
-    marker_size:   1,1,1,1;
-    marker_color:  2,4,6,8;
-    line_color:    2,4,6,8;
+    marker_color:  2,4,6,8; /* marker_color defenition */
+    line_color:    2,4,6,8; /* line_color defenition */
     line_style:    1,1,1,1;
 }
 
+/*
+TF1.Status, .Status#obj1, #obj3 - means any object from TF1 class with tag Status and obj1 from any class with tag Status and obj3 from any class with any tag.
+*/
+
+TF1.Status, .Status#obj1, #obj3   {
+    marker_size:   1,1,1,1;
+    marker_color:  2,4,6,8;
+    line_color:    2,4,6,8;
+    line_style:    1,1,1,1;
+}
