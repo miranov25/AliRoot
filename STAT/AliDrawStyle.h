@@ -94,7 +94,7 @@ protected:
   static TString fDefaultArrayStyleID;                        ///< ID of the default array styles
   static std::map<TString, TString> fLatexAlice;              ///< map of predefined latex symbols - formatted according ALICE rules
   static std::map<TString, TStyle*>  fStyleAlice;             ///< map of Alice predefined styles (+user defined)
-  static std::map<TString, TObjArray*>  fCssStyleAlice;    ///< map of Alice predefined styles corresponding to css notation
+  static std::map<TString, TObjArray*>  fCssStyleAlice;       ///< map of Alice predefined styles corresponding to css notation
   static std::map<TString, std::vector<int> > fMarkerStyles;  ///< map of predefined marker styles arrays
   static std::map<TString, std::vector<int> > fMarkerColors;  ///< map of predefined colors  arrays
   static std::map<TString, std::vector<float> > fMarkerSize;  ///< map of predefined marker sizes ()

@@ -592,6 +592,7 @@ Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementName, TString
   while(selectors.Tokenize(subSelectors,fromStart," \t")){
     fromStart1 = 0;
    while(subSelectors.Tokenize(selector,fromStart1,", ")){
+     selector = selector.Strip(TString::kBoth, ' ');
      elementCatched = false;
      classCatched = false;
      objectCatched = false;
@@ -630,12 +631,15 @@ AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "Statu
 \endcode
 */
 TString AliDrawStyle::GetProperty(const char *styleName, TString propertyName, TString elementID, TString classID, TString objectID){
+
+  if(fCssStyleAlice[styleName] == NULL) return "";
+
   Int_t entries = fCssStyleAlice[styleName]->GetEntriesFast();
   TString declaration="";
   for(Int_t i = 0; i < entries; i++){
     if(IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, classID, objectID)){
       TString  value = GetPropertyValue(fCssStyleAlice[styleName]->At(i)->GetTitle(),propertyName);
-      if (value.Length()>0) return value;
+      if (value.Length()>0) return value.Strip(TString::kBoth, ' ');
     }
   }
   return "";

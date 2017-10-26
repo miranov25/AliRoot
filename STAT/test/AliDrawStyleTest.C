@@ -220,8 +220,6 @@ Bool_t  AliDrawStyleTest_IsSelected(){//TString selector, TString className, TSt
     ::Error("AliDrawStyleTest","!AliDrawStyle::IsSelected(selectors, \"Graph\", \"Warning\", \"obj1\")- FAILED");
   }
 
-
-
   //should I make this like separate function?
   // Int_t n = 100000;
   // TStopwatch timer;
@@ -234,5 +232,17 @@ Bool_t  AliDrawStyleTest_IsSelected(){//TString selector, TString className, TSt
   // std::cout << "Benchmarking:" <<endl;
   // std::cout.precision(4);
   // std::cout << n << "calls of AliDrawStyle::IsSelected(tag*.TH*#*xxx \ttag*.*Errors#*yyy  , \"tag123\", \"TGraphErrors\",\"yyy\") tooks" << timer.RealTime() << ".s" <<endl;
+
+}
+
+Bool_t  AliDrawStyleTest_GetProperty(){
+  AliDrawStyle::SetCssStyle("alirootTestStyle.css",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));
+  if (AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "Status", "TPC.QA.dcar_posA_1") == "   1,2,3,4"){
+    ::Info("AliDrawStyleTest","AliDrawStyle::GetProperty(\"alirootTestStyle.css\",\"marker_size\", \"TGraph\", \"Status\", \"TPC.QA.dcar_posA_1\")- IsOK");
+  }else{
+    ::Error("AliDrawStyleTest","AliDrawStyle::GetProperty(\"alirootTestStyle.css\",\"marker_size\", \"TGraph\", \"Status\", \"TPC.QA.dcar_posA_1\")- FAILED");
+  }
+
+
 
 }
