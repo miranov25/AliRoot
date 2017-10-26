@@ -89,10 +89,10 @@ void AliDrawStyle::SetDefaults(){
 }
 
 /// set AliDrawStyle::SetDefaultStyles
-/// \param tstyleName  - default style to be used class function in case of empty style selection
+/// \param styleName  - default style to be used class function in case of empty style selection
 /// \param arrayName   - default style to be used class function in case of empty array style selection
-void AliDrawStyle::SetDefaultStyles(const char * tstyleName, const char* arrayName){
-  fDefaultTStyleID=tstyleName;
+void AliDrawStyle::SetDefaultStyles(const char * styleName, const char* arrayName){
+  fDefaultTStyleID=styleName;
   fDefaultArrayStyleID=arrayName;
 }
 
@@ -123,12 +123,12 @@ Int_t AliDrawStyle::GetIntegerAt(const char * format, Int_t index, const char * 
   if (format==NULL) return -1;
   if (index<0) return -1;
   index++;
-  TString sformat(format);
+  TString sFormat(format);
   TString token(format);
   Int_t position=0;
   Int_t counter=0;
   while (counter<index){
-    if (sformat.Tokenize(token,position,separator)) {
+    if (sFormat.Tokenize(token,position,separator)) {
       counter++;
     }else{
       break;
@@ -154,12 +154,12 @@ Float_t AliDrawStyle::GetFloatAt(const char * format, Int_t index, const char * 
   if (format==NULL) return -1;
   if (index<0) return -1;
   index++;
-  TString sformat(format);
+  TString sFormat(format);
   TString token(format);
   Int_t position=0;
   Int_t counter=0;
   while (counter<index){
-    if (sformat.Tokenize(token,position,separator)) {
+    if (sFormat.Tokenize(token,position,separator)) {
       counter++;
     }else{
       break;
@@ -173,7 +173,7 @@ Float_t AliDrawStyle::GetFloatAt(const char * format, Int_t index, const char * 
 // GetMarkerStyle associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return marker style for given stylename, index
+/// \return marker style for given styleName, index
 Int_t AliDrawStyle::GetMarkerStyle(const char *style, Int_t index){
   if (AliDrawStyle::fMarkerStyles[style].size() <= index) {
     return GetIntegerAt(style,index);
@@ -184,7 +184,7 @@ Int_t AliDrawStyle::GetMarkerStyle(const char *style, Int_t index){
 // GetLineStyle associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return marker style for given stylename, index
+/// \return marker style for given styleName, index
 Int_t AliDrawStyle::GetLineStyle(const char *style, Int_t index){
   if (AliDrawStyle::fLineStyle[style].size() <= index) {
     return GetIntegerAt(style,index);
@@ -195,7 +195,7 @@ Int_t AliDrawStyle::GetLineStyle(const char *style, Int_t index){
 // GetLineColor associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return marker style for given stylename, index
+/// \return marker style for given styleName, index
 Int_t AliDrawStyle::GetLineColor(const char *style, Int_t index){
   if (AliDrawStyle::fLineColor[style].size() <= index) {
     return GetIntegerAt(style,index);
@@ -206,7 +206,7 @@ Int_t AliDrawStyle::GetLineColor(const char *style, Int_t index){
 /// GetMarkerColor associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return marker color for given stylename, index
+/// \return marker color for given styleName, index
 Int_t AliDrawStyle::GetMarkerColor(const char *style, Int_t index){
   if (AliDrawStyle::fMarkerColors[style].size() <= index) {
     return GetIntegerAt(style,index);
@@ -216,7 +216,7 @@ Int_t AliDrawStyle::GetMarkerColor(const char *style, Int_t index){
 /// GetMarkerSize associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return marker color for given stylename, index
+/// \return marker color for given styleName, index
 Float_t AliDrawStyle::GetMarkerSize(const char *style, Int_t index){
   if (AliDrawStyle::fMarkerSize[style].size() <= index) {
     return GetIntegerAt(style,index);
@@ -226,7 +226,7 @@ Float_t AliDrawStyle::GetMarkerSize(const char *style, Int_t index){
 /// GetFillColor associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return fill color for given stylename, index
+/// \return fill color for given styleName, index
 Int_t AliDrawStyle::GetFillColor(const char *style, Int_t index){
   if (AliDrawStyle::fFillColors[style].size() <= index) {
     return GetIntegerAt(style,index);
@@ -236,7 +236,7 @@ Int_t AliDrawStyle::GetFillColor(const char *style, Int_t index){
 /// GetLineWidth associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
-/// \return fill color for given stylename, index
+/// \return fill color for given styleName, index
 Float_t AliDrawStyle::GetLineWidth(const char *style, Int_t index){
   if (AliDrawStyle::fLineWidth[style].size() <= index) {
     return GetFloatAt(style,index);
@@ -294,7 +294,6 @@ void  AliDrawStyle::RegisterDefaultLatexSymbols(){
   fLatexAlice["qpt0"]="#it{q}/#it{p}_{T}";
   fLatexAlice["pt"]="#it{p}_{T}  (GeV/#it{c}) ";
   fLatexAlice["pt0"]="#it{p}_{T} ";
-  //  fLatexAlice["sqptmev"]="#sigma_{#it{q}/#it{p}_{T}}/#it{p}_{T}^{2} (MeV/#it{c})^{-1}";
   fLatexAlice["sqptmev"]="#sigma_{#it{q}/#it{p}_{T}} (MeV/#it{c})^{-1}";
   fLatexAlice["pbpb502"]="Pb#font[122]{-}Pb #sqrt{#it{s}_{NN}} =5.02 TeV";
   fLatexAlice["pp13"]="pp #sqrt{#it{s}} = 13 TeV ";
@@ -333,7 +332,7 @@ void  AliDrawStyle::RegisterDefaultMarkers(){
   //
   // Style source:
   // https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
-  const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7, kBlack, kRed+1 }; // for syst bands
+  const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7, kBlack, kRed+1 }; // for systematic bands
   const Int_t colors[]     = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2,kGray+1,  kRed-10 };
   const Int_t markers[]    = {kFullCircle, kFullSquare,kOpenCircle,kOpenSquare,kOpenDiamond,kOpenCross,kFullCross,kFullDiamond,kFullStar,kOpenStar};
   //
@@ -397,7 +396,7 @@ void  AliDrawStyle::RegisterDefaultMarkers(){
 
 }
 
-TStyle*  RegisterDefaultStyleFigTemplate(Bool_t graypalette) {
+TStyle*  RegisterDefaultStyleFigTemplate(Bool_t grayPalette) {
   // Style source:
   // https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
   //
@@ -406,7 +405,7 @@ TStyle*  RegisterDefaultStyleFigTemplate(Bool_t graypalette) {
   figStyle->SetOptTitle(0);
   figStyle->SetOptStat(0);
 
-  if(graypalette) figStyle->SetPalette(8,0);
+  if(grayPalette) figStyle->SetPalette(8,0);
   else figStyle->SetPalette(1);
 
   figStyle->SetCanvasColor(10);
@@ -517,10 +516,10 @@ Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString propertyName, Int_
 /// * proper CSS comments handling (Boris) @done
 /// * include CSS files  (should be included as )
 /// \param inputName     - input file to read
-/// \param verbose       - specify verbose level for ::error and ::info (Int_t should be interpreted as an bitmask)
+/// \param verbose       - specify verbose level for ::error and ::info (Int_t should be interpreted as an bit-mask)
 /// \return              - TObjArray  with the pairs TNamed of the CSS <Selector, declaration> or  TObjArray (recursive structure like includes)
 TObjArray * AliDrawStyle::ReadCSSFile(const char *  inputName, Int_t verbose){
-  //check file exisitnf
+  //check file exist
   TString inputCSS = gSystem->GetFromPipe(TString::Format("cat %s",inputName).Data());     // I expect this variable is defined
   //remove comments:
   while (inputCSS.Index("*/") > 0){
@@ -542,17 +541,17 @@ TObjArray * AliDrawStyle::ReadCSSFile(const char *  inputName, Int_t verbose){
 /// Write cssArray to the file as a plain array (recursive function)
 /// \param cssArray    - input css array to write
 /// \param outputName  - output file
-/// \param pcssOut     - output stream ( )
-void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputName, fstream *pcssOut) {
-  if (pcssOut == NULL) {
-    pcssOut=new fstream;
-    pcssOut->open("test.css", ios_base::out|ios_base::trunc);
+/// \param cssOut     - output stream ( )
+void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputName, fstream *pCssOut) {
+  if (pCssOut == NULL) {
+    pCssOut=new fstream;
+    pCssOut->open("test.css", ios_base::out|ios_base::trunc);
   }
-  fstream &cssOut = *pcssOut;
+  fstream &cssOut = *pCssOut;
   for (Int_t i=0;i<cssArray->GetEntries();i++) {
     TObject *object = cssArray->At(i);
     if (object->InheritsFrom("TObjArray")){
-      AliDrawStyle::WriteCSSFile((TObjArray*)object, 0, pcssOut);
+      AliDrawStyle::WriteCSSFile((TObjArray*)object, 0, pCssOut);
     }else {
       cssOut << object->GetName();
       cssOut << "{";
@@ -562,8 +561,8 @@ void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputNam
   }
   cssOut<<std::flush;
   if (outputName!=NULL) {
-    pcssOut->close();
-    delete pcssOut;
+    pCssOut->close();
+    delete pCssOut;
   }
 }
 /// Function to check  match between "CSS" selector and pair of className, objectName
@@ -571,9 +570,9 @@ void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputNam
 /// \param elementName - name of element
 /// \param className   - name of class
 /// \param objectName  - object name
-/// \return            - kTRUE if selector match classname and objectName
+/// \return            - kTRUE if selector match class name and object name
 /// TODO
-///   - precalculate the tree ? yes, in best practice we should use trees for css parsing. I think later we can implement simple variant.
+///   - pre-calculate the tree ? yes, in best practice we should use trees for css parsing. I think later we can implement simple variant.
 Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementName, TString className, TString objectName){
   //TString selectors = "TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3"
 
@@ -620,12 +619,24 @@ Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementName, TString
 /// \param classID
 /// \param objectID
 /// \return
-TString AliDrawStyle::GetProperties(const char *styleName, TString elementID, TString classID, TString objectID){
-   Int_t entries = fCssStyleAlice[styleName]->GetEntriesFast();
-   for(Int_t i = 0; i < entries; i++){
-     if(IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, classID, objectID)){
-       return TString(fCssStyleAlice[styleName]->At(i)->GetTitle());
-     }
-   }
-   return "";
+/*!
+\code
+AliDrawStyle::SetCssStyle("alirootTestStyle.css",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));
+AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "", "obj1");                     // "   1,1,1,1" as it should be
+AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "", "TPC.QA.dcar_posA_1");       // empty as it should
+AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "Status", "TPC.QA.dcar_posA_1"); // should be "   1,1,1,1"
+
+
+\endcode
+*/
+TString AliDrawStyle::GetProperty(const char *styleName, TString propertyName, TString elementID, TString classID, TString objectID){
+  Int_t entries = fCssStyleAlice[styleName]->GetEntriesFast();
+  TString declaration="";
+  for(Int_t i = 0; i < entries; i++){
+    if(IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, classID, objectID)){
+      TString  value = GetPropertyValue(fCssStyleAlice[styleName]->At(i)->GetTitle(),propertyName);
+      if (value.Length()>0) return value;
+    }
+  }
+  return "";
 }
