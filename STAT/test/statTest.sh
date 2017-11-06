@@ -70,10 +70,19 @@ testAliDrawStyleTest() {
     gSystem->AddIncludePath("-I$ALICE_ROOT/include");
     .x ./AliDrawStyleTest.C+
 EOF
+
+  Ali=$"AliDrawStyle::"
+  declare -a funcList=("GetMarkerStyle(" "GetPropertyValue(" "GetNamedIntegerAt(" "GetNamedFloatAt(" "IsSelected(" "GetProperty(" "GetSelector(")
+  N_CALLS=0
+  for i in "${funcList[@]}"
+  do
+  N_CALLS=$(expr $N_CALLS + $(expr $(grep -c $Ali$i /Users/bdrum/Projects/alicesw/AliRoot/STAT/test/AliDrawStyleTest.C) / 3))
+  done
+
   N_GOOD=$(grep -cE 'Ali.*OK' AliDrawStyleTest.log)
   N_BAD=$(grep -c "E-Ali" AliDrawStyleTest.log)
   TEST_STATUS=0
-  if [[ $N_GOOD != 31 ]]; then
+  if [[ $N_GOOD != $N_CALLS ]]; then
     alilog_error "statTest.AliDrawStyleTest: Test FAILED"
     ((TEST_STATUS++))
   fi
