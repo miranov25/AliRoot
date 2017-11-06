@@ -82,6 +82,7 @@ public:
   static const std::vector<int> &    GetFillColors(const char *style){return AliDrawStyle::fFillColors[style];};
   // CSS like attribute fields parsing
   static TString GetProperty(const char * styleName, TString propertyName, TString elementName, TString className, TString objectName);
+  static Bool_t CheckProperty(const char *styleName, TString propertyName, TString elementName, TString className, TString objName);
   static TString  GetPropertyValue(TString input, TString propertyName);
   static Int_t    GetNamedIntegerAt(TString input, TString propertyName, Int_t index);
   static Float_t  GetNamedFloatAt(TString input, TString propertyName, Int_t index);
