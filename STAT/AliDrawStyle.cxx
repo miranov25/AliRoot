@@ -459,6 +459,12 @@ TStyle*  RegisterDefaultStyleFigTemplate(Bool_t grayPalette) {
 /// \param propertyName - name of property to find
 /// \return             - property propertyName from the input string using CSS like parsing, empty string in case not found
 ///
+/*!
+ ####  Example use:
+  TString input="{\nmarker_style:25,21,22,23; \nmarker_color:1,2,4,5; \n}";
+  AliDrawStyle::GetPropertyValue(input,"marker_style",0);  //  return  "25,21,22,23"
+  AliDrawStyle::GetPropertyValue(input,"marker_color",2);  //  return  "1,2,4,5"
+ */
 TString  AliDrawStyle::GetPropertyValue(TString input, TString propertyName){
   Int_t index0 = input.Index(propertyName.Data());
   if (index0<0) return "";
@@ -472,14 +478,14 @@ TString  AliDrawStyle::GetPropertyValue(TString input, TString propertyName){
 /// \param input    - input string (CSS record - find proper name in the w3c)
 /// \param propertyName  -  name of property to find
 /// \param index    - index of value to find
-/// \param status   - for opportunity to check returning value
+/// \param status   - predefined Bool_t variable, change initial value to false if value or property doesn't exist
 /// \return         - value as a integer  -1 if does not exist, resp , separated value at index index
 /*!
  ####  Example use:
   TString input="{\nmarker_style:25,21,22,23; \nmarker_color:1,2,4,5; \n}";
-  AliDrawStyle::GetNamedIntegerAt(input,"marker_style",0);  //  return  25
-  AliDrawStyle::GetNamedIntegerAt(input,"marker_style",3);  //  return  23
-  AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2);  //  return  4
+  AliDrawStyle::GetNamedIntegerAt(input,"marker_style",10,status);  //  return  -1, status will be false
+  AliDrawStyle::GetNamedIntegerAt(input,"marker_size",3,status);  //  return  -1, status will be false
+  AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2,status);  //  return  4, status will be true
  */
 Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString propertyName, Int_t index, Bool_t &status){
   status=kFALSE;
@@ -509,17 +515,17 @@ Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString propertyName, In
   }
 }
 
-/// \param input    - input string (CSS record - find proper name in the w3c)
+/// \param input         - input string (CSS record - find proper name in the w3c)
 /// \param propertyName  -  name of tag to find
-/// \param index    - index of value to find
-/// \param status   - for opportunity to check returning value
-/// \return         - value as a float  -1 if does not exist, resp , separated value at index index
+/// \param index         - index of value to find
+/// \param status        - predefined Bool_t variable, change initial value to false if value or property doesn't exist
+/// \return              - value as a float  -1 if does not exist, resp , separated value at index index
 /*!
  ####  Example use:
-  TString input="{\nmarker_style:25,21,22,23; \nmarker_color:1,2,4,5; \n}";
-  AliDrawStyle::GetNamedIntegerAt(input,"marker_style",0);  //  return  25
-  AliDrawStyle::GetNamedIntegerAt(input,"marker_style",3);  //  return  23
-  AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2);  //  return  4
+  TString input="{\nmarker_style:25.36,21,22,23.1; \nmarker_color:1,2,4,5; \n}";
+  AliDrawStyle::GetNamedFloatAt(input,"marker_style",10,status);  //  return  -1.0, status will be false
+  AliDrawStyle::GetNamedFloatAt(input,"marker_size",3,status);  //  return  -1.0, status will be false
+  AliDrawStyle::GetNamedFloatAt(input,"marker_color",2,status);  //  return  4.0, status will be true
  */
 Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString propertyName, Int_t index, Bool_t &status){
   status=kFALSE;
@@ -555,7 +561,6 @@ Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString propertyName, Int_
 ///   * code should not fail
 ///   * return 0 pointer if inconsistent content
 ///   * Use ::Error verbosity according debug level
-/// * proper CSS comments handling (Boris) @done
 /// * include CSS files  (should be included as )
 /// \param inputName     - input file to read
 /// \param verbose       - specify verbose level for ::error and ::info (Int_t should be interpreted as an bit-mask)
@@ -563,7 +568,7 @@ Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString propertyName, Int_
 TObjArray * AliDrawStyle::ReadCSSFile(const char *  inputName, TObjArray * cssArray, Int_t verbose){
   //check file exist
   if (gSystem->GetFromPipe(TString("[ -f ") + TString(inputName) +  TString(" ] && echo 1 || echo 0")) == "0") {
-    std::cout << "File doesn't exist" << std::endl;
+    ::Error("AliDrawStyle::ReadCSSFile","File %s doesn't exist", inputName);
     return NULL;
   }
   TString inputCSS = gSystem->GetFromPipe(TString::Format("cat %s",inputName).Data());     // I expect this variable is defined
@@ -571,7 +576,7 @@ TObjArray * AliDrawStyle::ReadCSSFile(const char *  inputName, TObjArray * cssAr
   while (inputCSS.Index("*/") > 0){
     inputCSS = inputCSS(0, inputCSS.Index("/*")) + inputCSS(inputCSS.Index("*/")+2, inputCSS.Length());
   }
-    //inputCSS.ReplaceAll("\n", ""); we can add this, in the other case ClassName will be like "\n .TH*", but I suppose it doesn't matter.
+  //inputCSS.ReplaceAll("\n", ""); //  check perfomance and implement better variant;
   TObjArray *tokenArray = inputCSS.Tokenize("{}");   //assuming we can not use {} symbols in the style IDS
   Int_t entries = tokenArray->GetEntries();
   if (cssArray==NULL) {
@@ -591,10 +596,7 @@ TObjArray * AliDrawStyle::ReadCSSFile(const char *  inputName, TObjArray * cssAr
 /// \param outputName  - output file
 /// \param pCssOut     - output stream ( )
 void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputName, fstream *pCssOut) {
-  // if (cssArray == NULL) {
-  //   std::cout << "null-pointer error" << std::endl;
-  //   return;
-  // }
+
   if (pCssOut == NULL) {
     pCssOut=new fstream;
     pCssOut->open(outputName, ios_base::out|ios_base::trunc);
@@ -618,110 +620,128 @@ void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputNam
   }
 }
 /// Function to check  match between "CSS" selector and pair of className, objectName
-/// \param selectors    - selector ID
+/// \param selectors   - selector ID
 /// \param elementName - name of element
 /// \param className   - name of class
 /// \param objectName  - object name
 /// \return            - kTRUE if selector match class name and object name
 /// TODO
-///   - pre-calculate the tree ? yes, in best practice we should use trees for css parsing. I think later we can implement simple variant.
+///   - pre-calculate the tree ?
+///   - try to use existing parsers (check bison, webKit).
+/*!
+ ####  Example use:
+ \code
+  TString selectors = "\n\n\nTH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3";
+  AliDrawStyle::IsSelected(selectors, "", "", "obj3")            // return true
+  AliDrawStyle::IsSelected(selectors, "TF1", "Warning", "obj3")  // return true
+  AliDrawStyle::IsSelected(selectors, "TH1C", "Warning", "obj1") // return false
+  \endcode
+ */
 Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementID, TString classID, TString objectID){
-    //TString selectors = "TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3"
 
-    Bool_t elementCatched;
-    Bool_t classCatched;
-    Bool_t objectCatched;
-    Ssiz_t fromStart=0;
-    Ssiz_t fromStart1;
+  Bool_t    elementCatched = false;
+  Bool_t    classCatched   = false;
+  Bool_t    objectCatched  = false;
+  Ssiz_t    fromStart0     = 0;
+  Ssiz_t    fromStart1     = 0;
+  TObjArray *classIDs      = classID.Tokenize(",");
+  Int_t     nC              = 0;
+  TString   subSelectors   = "";
+  TString   selector       = "";
+  TString   className      = "";
+  TPRegexp  elemPat(".*?[.]");
+  TPRegexp  classPat("[.].*[#]");
+  TPRegexp  objPat("[#].*");
 
-    TString subSelectors;
-    TString selector;
+  if (classIDs->GetEntriesFast() == 0) nC = 1;
+  else nC = classIDs->GetEntriesFast();
 
-    TPRegexp elemPat(".*?[.]");
-    TPRegexp classPat("[.].*[#]");
-    TPRegexp objPat("[#].*");
-
-    while(selectors.Tokenize(subSelectors,fromStart," \t")){
-        fromStart1 = 0;
-        while(subSelectors.Tokenize(selector,fromStart1,", ")){
-            selector = selector.Strip(TString::kBoth, ' ');
-            elementCatched = false;
-            classCatched = false;
-            objectCatched = false;
-
-            if(selector(objPat) == ""){
-                objectCatched = true;
-                selector.Append("#anyObjects");
-            }
-            else if (selector(objPat) == ("#" + objectID)) objectCatched = true;
-            if(selector(classPat) == ""){
-                classCatched = true;
-                selector.Insert(selector.Index("#"), ".anyClasses");
-            }
-            else if (selector(classPat) == ("." + classID + "#")) classCatched = true;
-            if(selector(elemPat) == "." || selector(elemPat) == "" || selector(elemPat) == (elementID + ".")) elementCatched = true;
-            if (elementCatched && classCatched && objectCatched)  return true;
-        }
+  for (Int_t i = 0; i < nC; i++) {
+    if (classIDs->GetEntriesFast() == 0) className = "";
+    else className = classIDs->At(i)->GetName();
+    while (selectors.Tokenize(subSelectors, fromStart0, " \t")) {
+      fromStart1 = 0;
+      while (subSelectors.Tokenize(selector, fromStart1, ", ")) {
+        selector = selector.Strip(TString::kBoth, ' ');
+        elementCatched = false;
+        classCatched = false;
+        objectCatched = false;
+        // check object
+        if (selector(objPat) == "" || objectID == "") {
+          objectCatched = true;
+          selector.Append("#anyObjects");
+        } else if (selector(objPat) == ("#" + objectID)) objectCatched = true;
+        // check class
+        if (selector(classPat) == "" || className == "") {
+          classCatched = true;
+          selector.Insert(selector.Index("#"), ".anyClasses");
+        } else if (selector(classPat) == ("." + className + "#")) classCatched = true;
+        //check element
+        if (selector(elemPat) == "." || selector(elemPat) == "" ||
+            selector(elemPat) == (elementID + ".") || elementID == "")
+          elementCatched = true;
+        if (elementCatched && classCatched && objectCatched) return true;
+      }
     }
+  }
     return false;
-}
+  }
 
 ///
-/// \param styleName
+/// \param styleName      - name of predefined array with styles (see. AliDrawStyle::SetCssStyle())
+/// \param propertyName   - name of property according to css notation
 /// \param elementID
 /// \param classID
 /// \param objectID
-/// \return
+/// \return TString with values according to input propertyName
 /*!
-\code
-AliDrawStyle::SetCssStyle("alirootTestStyle.css",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));
-AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "", "obj1");                     // "   1,1,1,1" as it should be
-AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "", "TPC.QA.dcar_posA_1");       // empty as it should
-AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "Status", "TPC.QA.dcar_posA_1"); // should be "   1,1,1,1"
-
-
-\endcode
+  ####  Example use:
+   \code
+   AliDrawStyle::SetCssStyle("alirootTestStyle.css",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));
+   AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "", "obj1");                      // "33,34,35,36"
+   AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "", "TPC.QA.dcar_posA_1");        // "1,2,3,4"
+   AliDrawStyle::GetProperty("alirootTestStyle.css","marker_size", "TGraph", "Warning", "TPC.QA.dcar_posA_1"); // ""
+    \endcode
 */
-TString AliDrawStyle::GetProperty(const char *styleName, TString propertyName, TString elementID, TString classID, TString objectID){
+TString AliDrawStyle::GetProperty(const char *styleName, TString propertyName,
+                                  TString elementID, TString classID, TString objectID){
   if (fCssStyleAlice[styleName] == NULL) return "";
-    TString value = "";
-    TString actProperty = "";
-    Int_t entries = fCssStyleAlice[styleName]->GetEntriesFast();
-    TString declaration="";
-    TString className = "";
-    Ssiz_t fromStart;
-    for(Int_t i = 0; i < entries; i++) {
-      fromStart = 0;
-      while (classID.Tokenize(className, fromStart, ",")) {
-        if (AliDrawStyle::IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, className,
-                                     objectID)) {
-          value = AliDrawStyle::GetPropertyValue(fCssStyleAlice[styleName]->At(i)->GetTitle(), propertyName);
-          if (value != "") actProperty = value.Strip(TString::kBoth, ' ');
-        }
-      }
+
+  TString value       = "";
+  TString actProperty = "";
+  Int_t   entries     = fCssStyleAlice[styleName]->GetEntriesFast();
+  TString declaration = "";
+
+  for(Int_t i = 0; i < entries; i++) {
+    if (AliDrawStyle::IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()),
+                                 elementID, classID, objectID)) {
+      value = AliDrawStyle::GetPropertyValue(fCssStyleAlice[styleName]->At(i)->GetTitle(), propertyName);
+      if (value != "") actProperty = value.Strip(TString::kBoth, ' ');
     }
-    return actProperty;
+  }
+
+  return actProperty;
 }
 
 ///
-/// \param styleName
-/// \param cGraph
-/// \param elementName
-/// \param className
-/// \param objName
-/// \param objNum
+/// \param styleName    - name of predefined array with styles (see. AliDrawStyle::SetCssStyle())
+/// \param cGraph       - object inherited from TGraph in which you want to change style
+/*!
+  ####  Example use:
+  See AliDrawStyle::ApplyCssStyle();
+*/
 void AliDrawStyle::TGraphApplyStyle(const char* styleName, TGraph *cGraph){
 
-  Bool_t status;
+  Bool_t  status    = false;
   TString elementID = "";
-  TString classID = "";
-  TString objectID = "";
-  Int_t objectNum = 0;
-  AliDrawStyle::GetIds(cGraph, elementID, classID, objectID, objectNum);
-  TString property = "";
-  Int_t valueI = 0;
-  Float_t valueF = 0.0;
+  TString classID   = "";
+  TString objectID  = "";
+  Int_t   objectNum = 0;
+  TString property  = "";
+  Int_t   valueI    = 0;
+  Float_t valueF    = 0.0;
 
+  AliDrawStyle::GetIds(cGraph, elementID, classID, objectID, objectNum);
 
   property = AliDrawStyle::GetProperty(styleName, "marker_color", elementID, classID, objectID);
   valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
@@ -757,22 +777,24 @@ void AliDrawStyle::TGraphApplyStyle(const char* styleName, TGraph *cGraph){
 }
 
 ///
-/// \param styleName
-/// \param cHis
-/// \param elementName
-/// \param className
-/// \param objName
-/// \param objNum
+/// \param styleName    - name of predefined array with styles (see. AliDrawStyle::SetCssStyle())
+/// \param cHis       - object inherited from TH1 in which you want to change style
+/*!
+  ####  Example use:
+  See AliDrawStyle::ApplyCssStyle();
+*/
 void AliDrawStyle::TH1ApplyStyle(const char* styleName, TH1 *cHis){
-  Bool_t status;
+
+  Bool_t  status    = false;
   TString elementID = "";
-  TString classID = "";
-  TString objectID = "";
-  Int_t objectNum = 0;
+  TString classID   = "";
+  TString objectID  = "";
+  Int_t   objectNum = 0;
+  TString property  = "";
+  Int_t   valueI    = 0;
+  Float_t valueF    = 0.0;
+
   AliDrawStyle::GetIds(cHis, elementID, classID, objectID, objectNum);
-  TString property = "";
-  Int_t valueI = 0;
-  Float_t valueF = 0.0;
 
   property = AliDrawStyle::GetProperty(styleName, "marker_color", elementID, classID, objectID);
   valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
@@ -808,23 +830,25 @@ void AliDrawStyle::TH1ApplyStyle(const char* styleName, TH1 *cHis){
 }
 
 ///
-/// \param styleName
-/// \param cFunc
-/// \param elementName
-/// \param className
-/// \param objName
-/// \param objNum
-void AliDrawStyle::TF1ApplyStyle(const char* styleName, TF1 *cFunc) {
+/// \param styleName    - name of predefined array with styles (see. AliDrawStyle::SetCssStyle())
+/// \param cFunc       - object inherited from TF1 in which you want to change style
+/*!
+  ####  Example use:
+  See AliDrawStyle::ApplyCssStyle();
   //still not implemented applyStyle for fitFunction for TH1
-  Bool_t status;
+*/
+void AliDrawStyle::TF1ApplyStyle(const char* styleName, TF1 *cFunc) {
+
+  Bool_t  status    = false;
   TString elementID = "";
-  TString classID = "";
-  TString objectID = "";
-  Int_t objectNum = 0;
+  TString classID   = "";
+  TString objectID  = "";
+  Int_t   objectNum = 0;
+  TString property  = "";
+  Int_t   valueI    = 0;
+  Float_t valueF    = 0.0;
+
   AliDrawStyle::GetIds(cFunc, elementID, classID, objectID, objectNum);
-  TString property = "";
-  Int_t valueI = 0;
-  Float_t valueF = 0.0;
 
   property = AliDrawStyle::GetProperty(styleName, "marker_color", elementID, classID, objectID);
   valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
@@ -860,19 +884,22 @@ void AliDrawStyle::TF1ApplyStyle(const char* styleName, TF1 *cFunc) {
 }
 
 ///
-/// \param styleName
-/// \param cPad
-/// \param elementName
-/// \param className
-/// \param objName
+/// \param styleName    - name of predefined array with styles (see. AliDrawStyle::SetCssStyle())
+/// \param cPad       - object inherited from TPad in which you want to change style
+/*!
+  ####  Example use:
+  See AliDrawStyle::ApplyCssStyle();
+*/
 void AliDrawStyle::TPadApplyStyle(const char* styleName, TPad *cPad){
-  Bool_t status;
+
+  Bool_t  status    = false;
   TString elementID = "";
-  TString classID = "";
-  TString objectID = "";
-  Int_t objectNum = 0;
+  TString classID   = "";
+  TString objectID  = "";
+  Int_t   objectNum = 0;
+  TString property  = "";
+
   AliDrawStyle::GetIds(cPad, elementID, classID, objectID, objectNum);
-  TString property = "";
 
   property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
   if (property != "") cPad->SetFillColor(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
@@ -919,19 +946,22 @@ void AliDrawStyle::TPadApplyStyle(const char* styleName, TPad *cPad){
 }
 
 ///
-/// \param styleName
-/// \param cCanvas
-/// \param elementName
-/// \param className
-/// \param objName
+/// \param styleName    - name of predefined array with styles (see. AliDrawStyle::SetCssStyle())
+/// \param cCanvas       - object inherited from TCanvas in which you want to change style
+/*!
+  ####  Example use:
+  See AliDrawStyle::ApplyCssStyle();
+*/
 void AliDrawStyle::TCanvasApplyCssStyle(const char* styleName, TCanvas *cCanvas){
-  Bool_t status;
+
+  Bool_t  status    = false;
   TString elementID = "";
-  TString classID = "";
-  TString objectID = "";
-  Int_t objectNum = 0;
+  TString classID   = "";
+  TString objectID  = "";
+  Int_t   objectNum = 0;
+  TString property  = "";
+
   AliDrawStyle::GetIds(cCanvas, elementID, classID, objectID, objectNum);
-  TString property = "";
 
   property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
   if (property != "") cCanvas->SetFillColor(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
@@ -943,51 +973,70 @@ void AliDrawStyle::TCanvasApplyCssStyle(const char* styleName, TCanvas *cCanvas)
   if (property != "") cCanvas->SetBorderMode(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
 }
 
-/*!
- *
- * @param cObj
- * @param elementID
- * @param classSet
- * @param objectID
- */
-void AliDrawStyle::GetIds(TObject *cObj, TString &elementID, TString &classID, TString &objectID, Int_t &objNum) {
+///
+/// \brief Method get IDs from the cObject->GetName() and parse it into input reference.
+///        Names of objects should according to css notation.
+///        #### Example of name:
+///        \code
+///           TH1F *hisArray[nHis];
+///           for (Int_t i=0; i<nHis; i++){
+///             hisArray[i] = new TH1F(TString::Format("his[%d].class(Raw,Error)",i).Data(),
+///                                    TString::Format("his[%d].class(Raw,Error)",i).Data(), 100, -2, 2);
+///           }
+///        \endcode
+///         Schema of parsing:
+///
+/// \param cObject    - input TObject
+/// \param elementID  - cObject->GetName()           (in example - TH1)
+/// \param classID    - values from .class(*)        (in example - Raw,Error)
+/// \param objectID   - value before number or class (in example - his )
+/// \param objNum     - number between [*]           (in example - i)
+void AliDrawStyle::GetIds(TObject *cObject, TString &elementID, TString &classID, TString &objectID, Int_t &objNum) {
 
-    elementID = cObj->ClassName();
-    objectID = TString(cObj->GetName());
-    TPRegexp classPat("[(].*[)]");
-    classID = objectID(classPat);
-    classID = classID(1, classID.Index(")") - 1);
-    TPRegexp numPat0("[[].*[]]");
-    TPRegexp numPat1("[0-9]+");
-    objNum = TString(TString(objectID(numPat0))(numPat1)).Atoi();
-    TPRegexp objPat(".*[[?]|.*[.]class|.*");
-    objectID = TString(objectID(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
+  elementID = cObject->ClassName();
+  objectID  = TString(cObject->GetName());
+  TPRegexp    classPat("[(].*[)]");
+  classID   = objectID(classPat);
+  classID   = classID(1, classID.Index(")") - 1);
+  TPRegexp    numPat0("[[].*[]]");
+  TPRegexp    numPat1("[0-9]+");
+  objNum    = TString(TString(objectID(numPat0))(numPat1)).Atoi();
+  TPRegexp    objPat(".*[[?]|.*[.]class|.*");
+  objectID  = TString(objectID(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
 
 }
 
-///
+/// \brief Applies style from css to all objects from Pad or Canvas.
+///        In case if pad inherited from TCanvas will work recursively for all pads from input canvas.
 /// \param pad
 /// \param styleName
+/*!
+  ####  Example use:
+   \code
+     .L $AliRoot_SRC/STAT/Macros/AliDrawStyleExample.C+
+     MakeTestPlot();
+     AliDrawStyle::SetCssStyle("testStyle", \
+     AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0))
+     AliDrawStyle::ApplyCssStyle(gPad->GetCanvas(), "testStyle")
+   \endcode
+*/
 void AliDrawStyle::ApplyCssStyle(TPad *pad, const char* styleName){
-  /// if property not found nothig will be
   if(pad == NULL){
-    std::cout << "Pad doesn't exist" << std::endl;
+    ::Error("AliDrawStyle::ApplyCssStyle","Pad doesn't exist");
     return;
   }
 
-  TObject *cObj = NULL;
-  TList *oList = NULL;
+  TObject *cObj     = NULL;
+  TList   *oList    = NULL;
   TString elementID = "";
-  TString objectID = "";
-  TString classID = "";
-  Int_t objectNum = 0;
+  TString objectID  = "";
+  TString classID   = "";
+  Int_t   objectNum = 0;
 
   oList = pad->GetListOfPrimitives();
-
   GetIds(pad, elementID, classID, objectID, objectNum);
 
   if (elementID == "TCanvas") {
-
     AliDrawStyle::TCanvasApplyCssStyle(styleName, (TCanvas *) pad);
     pad->Modified();
     for(Int_t c = 0; c < oList->GetEntries(); c++) {
@@ -997,55 +1046,12 @@ void AliDrawStyle::ApplyCssStyle(TPad *pad, const char* styleName){
 
   if (elementID == "TPad") AliDrawStyle::TPadApplyStyle(styleName, pad);
 
-  for (Int_t k = 0; k < oList->GetEntries(); k++)
-  {
+  for (Int_t k = 0; k < oList->GetEntries(); k++) {
       cObj = oList->At(k);
       GetIds(cObj, elementID, classID, objectID, objectNum);
       if (cObj->InheritsFrom("TH1")) AliDrawStyle::TH1ApplyStyle(styleName, (TH1 *) cObj);
       if (cObj->InheritsFrom("TGraph")) AliDrawStyle::TGraphApplyStyle (styleName, (TGraph *) cObj);
       if (cObj->InheritsFrom("TF1")) AliDrawStyle::TF1ApplyStyle(styleName, (TF1 *) cObj);
-
   }
   pad->Modified();
-}
-
-///
-/// \param pad
-/// \param division
-/// \param token
-void AliDrawStyle::DivideTPad(TPad*pad, const char *division, const char *token) {
-  // divide pads
-  Int_t nPads = 0, nRows = 0;
-  TObjArray *padRows = TString(division).Tokenize("[](),");
-  nRows = padRows->GetEntries();
-  for (Int_t iRow = 0; iRow < nRows; iRow++) {
-    Int_t nCols = TString(padRows->At(iRow)->GetName()).Atoi();
-    for (Int_t iCol = 0; iCol < nCols; iCol++) {
-      pad->cd();
-      TPad *newPad = new TPad(Form("pad%d", nPads), Form("pad%d", nPads), iCol / Double_t(nCols),
-                              (nRows - iRow - 1) / Double_t(nRows), (iCol + 1) / Double_t(nCols),
-                              (nRows - iRow) / Double_t(nRows));
-      newPad->Draw();
-      nPads++;
-      newPad->SetNumber(nPads);
-    }
-  }
-}
-
-
-///
-/// \param graph
-/// \param option
-void AliDrawStyle::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option){
-  TAxis *axis = NULL;
-  for (Int_t i=0; i<graph->GetListOfGraphs()->GetEntries(); i++) {
-    TGraph *cGraph=(TGraph *) graph->GetListOfGraphs()->At(i);
-    if (option.Contains("X")) axis = cGraph->GetXaxis();
-    if (option.Contains("Y")) axis = cGraph->GetYaxis();
-    if (axis) {
-      axis->SetNdivisions(510, kFALSE);
-      axis->SetTimeDisplay(1);
-      axis->SetTimeFormat("%d/%m");
-    }
-  }
 }

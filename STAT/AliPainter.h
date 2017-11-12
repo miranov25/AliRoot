@@ -20,9 +20,11 @@ class TMultiGraph;
 class AliPainter : public TObject{
 
 public:
-  static void DivideTPad(TPad*pad, const char *division, const char *token=",");
-  static void SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
-  static TObject* DrawHistogram(char *expresion, TObjArray* histogramArray=NULL, TObjArray *metaData=NULL, TObjArray * keepArray=NULL);
+  static void     DivideTPad(TPad*pad, const char *division);
+  static void     SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
+  static TObject* DrawHistogram(char *expresion, TObjArray* histogramArray=NULL, TObjArray *metaData=NULL,
+                                TObjArray * keepArray=NULL);
+  static TObject* SetHistogramRange(TObject *hisN, TString range);
 public:
 
 private:
