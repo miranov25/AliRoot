@@ -101,9 +101,6 @@ public:
   static Float_t GetLineWidth(const char *style, Int_t index);
   static void PrintLatexSymbols(Option_t *option,TPRegexp& regExp);
   static void PrintStyles(Option_t *option, TPRegexp& regExp);
-  // Drawing part - will be another class
-  static void DivideTPad(TPad*pad, const char *division, const char *token=",");
-  static void SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
 protected:
   static TString fDefaultTStyleID;                            ///< ID of the default TStyle
   static TString fDefaultArrayStyleID;                        ///< ID of the default array styles
