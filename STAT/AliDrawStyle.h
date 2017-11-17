@@ -61,6 +61,10 @@ class AliDrawStyle : public TObject{
 public:
   static void ApplyStyle(const char * styleName);
   static const TStyle *GetStyle(const char * styleName) {return fStyleAlice[styleName];}
+  /// \brief Get Css style by styleName.
+  ///  Getter for css style.
+  /// \param styleName  - name of style.
+  /// \return           - TObjArray with pair selector and declaration from css file.
   static const TObjArray *GetCssStyle(const char *styleName){return fCssStyleAlice[styleName];}
   static void TGraphApplyStyle(const char* styleName, TGraph *cGraph);
   static void TH1ApplyStyle(const char* styleName, TH1 *cHis);
@@ -68,6 +72,10 @@ public:
   static void TPadApplyStyle(const char* styleName, TPad *cPad);
   static void TCanvasApplyCssStyle(const char* styleName, TCanvas *cCanvas);
   static void ApplyCssStyle(TPad *pad, const char* styleName);
+  /// \brief Set Css style by styleName.
+  ///  Setter for css style.
+  /// \param styleName  - name of style.
+  /// \param array      - TObjArray with pair selector and declaration from css file.
   static void SetCssStyle(const char *styleName, TObjArray*array ){ fCssStyleAlice[styleName]=array;}
   static void SetDefaults();
   static void SetDefaultStyles(const char * styleName, const char* arrayName);

@@ -258,8 +258,6 @@ Float_t AliDrawStyle::GetLineWidth(const char *style, Int_t index){
   return  AliDrawStyle::fLineWidth[style][index];
 }
 
-
-
 void AliDrawStyle::PrintLatexSymbols(Option_t */*option*/, TPRegexp& regExp){
   //print latex symbols
   typedef std::map<TString,TString>::const_iterator it_type;
@@ -1008,15 +1006,14 @@ void AliDrawStyle::GetIds(TObject *cObject, TString &elementID, TString &classID
 
 /// \brief Applies style from css to all objects from Pad or Canvas.
 ///        In case if pad inherited from TCanvas will work recursively for all pads from input canvas.
-/// \param pad
-/// \param styleName
+/// \param pad       - Input TPad object. You can specify TCanvas in this case style will be apply recursively to all objects (TH1, TF1, TGraph) on pad.
+/// \param styleName - Name of style specify in AliDrawStyle::SetCssStyle()
 /*!
   ####  Example use:
    \code
      .L $AliRoot_SRC/STAT/Macros/AliDrawStyleExample.C+
-     MakeTestPlot();
-     AliDrawStyle::SetCssStyle("testStyle", \
-     AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0))
+     MakeTestPlot(); //           styleName,     ReadCssFile returns TOBjArray with set of attributes and values from css file.
+     AliDrawStyle::SetCssStyle("testStyle", AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));
      AliDrawStyle::ApplyCssStyle(gPad->GetCanvas(), "testStyle")
    \endcode
 */
