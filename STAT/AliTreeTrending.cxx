@@ -244,10 +244,9 @@ void AliTreeTrending::AppendStatusPad(Float_t padRatio, Float_t bottomMargin, Fl
   c1->cd(1);
   c1_clone->DrawClonePad();
   
-  AliDrawStyle::SetCssStyle("testStyle",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));//remove
+//  AliDrawStyle::SetCssStyle("testStyle",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));//remove
   pad1->SetName("Top.class(statusPad)");
-  AliDrawStyle::TPadApplyStyle("testStyle",pad1); //"testStyle" to be changed to fCurrentCSSStyle.Data()
-  ::Info("AppendStatusPad", fCurrentCSSStyle );
+  AliDrawStyle::TPadApplyStyle(fCurrentCSSStyle.Data(),pad1); //"testStyle" to be changed to fCurrentCSSStyle.Data()
 
 //  pad1->SetBottomMargin(0.001);
 //  pad1->SetRightMargin(rightMargin);
@@ -258,7 +257,7 @@ void AliTreeTrending::AppendStatusPad(Float_t padRatio, Float_t bottomMargin, Fl
 //  pad2->SetBottomMargin(bottomMargin); // for the long x-axis labels (run numbers)
 //  pad2->SetRightMargin(rightMargin);
   pad2->SetName("Bottom.class(statusPad)");
-  AliDrawStyle::TPadApplyStyle("testStyle",pad2); //"testStyle" to be changed to fCurrentCSSStyle.Data()
+  AliDrawStyle::TPadApplyStyle(fCurrentCSSStyle.Data(),pad2); //"testStyle" to be changed to fCurrentCSSStyle.Data()
   
   const Int_t nVars = fStatusGraphM->GetYaxis()->GetNbins();
   TGraph* grAxis = (TGraph*) fStatusGraphM->GetListOfGraphs()->At(0);
