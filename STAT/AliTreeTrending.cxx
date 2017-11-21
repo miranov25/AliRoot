@@ -243,14 +243,23 @@ void AliTreeTrending::AppendStatusPad(Float_t padRatio, Float_t bottomMargin, Fl
   // draw original canvas into first pad
   c1->cd(1);
   c1_clone->DrawClonePad();
-  pad1->SetBottomMargin(0.001);
-  pad1->SetRightMargin(rightMargin);
+  
+  AliDrawStyle::SetCssStyle("testStyle",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));//remove
+  pad1->SetName("Top.class(statusPad)");
+  AliDrawStyle::TPadApplyStyle("testStyle",pad1); //"testStyle" to be changed to fCurrentCSSStyle.Data()
+  ::Info("AppendStatusPad", fCurrentCSSStyle );
+
+//  pad1->SetBottomMargin(0.001);
+//  pad1->SetRightMargin(rightMargin);
   // set up second pad
   c1->cd(2);
-  pad2->SetGrid(3);
-  pad2->SetTopMargin(0);
-  pad2->SetBottomMargin(bottomMargin); // for the long x-axis labels (run numbers)
-  pad2->SetRightMargin(rightMargin);
+//  pad2->SetGrid(3);
+//  pad2->SetTopMargin(0);
+//  pad2->SetBottomMargin(bottomMargin); // for the long x-axis labels (run numbers)
+//  pad2->SetRightMargin(rightMargin);
+  pad2->SetName("Bottom.class(statusPad)");
+  AliDrawStyle::TPadApplyStyle("testStyle",pad2); //"testStyle" to be changed to fCurrentCSSStyle.Data()
+  
   const Int_t nVars = fStatusGraphM->GetYaxis()->GetNbins();
   TGraph* grAxis = (TGraph*) fStatusGraphM->GetListOfGraphs()->At(0);
   Int_t entries = grAxis->GetN();

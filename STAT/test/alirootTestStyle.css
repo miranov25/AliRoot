@@ -16,7 +16,7 @@ TGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1   {
 .deadBand   {
     marker_size:   1,1,1;
     marker_color:  400,632,416; /* marker_color defenition */
-    line_color:    400,632,416; /* line_color defenition */
+    line_color:    2,3,4;/* line_color defenition */
     line_style:    2,3,4;
 }
 
@@ -60,4 +60,17 @@ TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3   {
     marker_color:  53,54,55,56; /* marker_color defenition */
     line_color:    57,58,59,60;
     line_style:    61,62,63,64;
+}
+
+.statusPad#Top {
+    bottom_margin:   0.001;
+    right_margin:    0.05;
+}
+
+.statusPad#Bottom{
+    bottom_margin:   0.4;
+    right_margin:    0.05;
+    top_margin:      0.0;  
+    gridX:           3;   
+    gridY:           1;
 }
