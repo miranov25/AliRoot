@@ -45,44 +45,83 @@
 #include "AliTPC3DCylindricalInterpolatorIrregular.h"
 
 class TCollection;
+
 class TTimeStamp;
+
 class TFormula;
+
 class TH3F;
+
 class TH3;
+
 class TH2F;
+
 class TH2;
+
 class TF1;
 
 class AliTPCSpaceCharge3DDriftLine : public AliTPCCorrection {
 public:
   AliTPCSpaceCharge3DDriftLine();
+
   AliTPCSpaceCharge3DDriftLine(const char *name, const char *title);
+
   AliTPCSpaceCharge3DDriftLine(const char *name, const char *title, Int_t nRRow, Int_t nZColumn, Int_t nPhiSlice);
+
   AliTPCSpaceCharge3DDriftLine(const char *name, const char *title, Int_t nRRow, Int_t nZColumn, Int_t nPhiSlice,
                                Int_t interpolationOrder, Int_t irregularGridSize, Int_t rbfKernelType);
+
   virtual ~AliTPCSpaceCharge3DDriftLine();
+
   void InitSpaceCharge3DPoissonIntegralDz(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration,
                                           Double_t stopConvergence);
-  void InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence);
+
+  void InitSpaceCharge3DPoissonIntegralDz(
+    Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence,
+    TMatrixD **matricesDistDrDzA, TMatrixD **matricesDistDPhiRDzA, TMatrixD **matricesDistDzA,
+    TMatrixD **matricesCorrDrDzA, TMatrixD **matricesCorrDPhiRDzA, TMatrixD **matricesCorrDzA,
+    TMatrixD **matricesDistDrDzC, TMatrixD **matricesDistDPhiRDzC, TMatrixD **matricesDistDzC,
+    TMatrixD **matricesCorrDrDzC, TMatrixD **matricesCorrDPhiRDzC, TMatrixD **matricesCorrDzC,
+    TFormula *intErDzTestFunction, TFormula *intEPhiRDzTestFunction, TFormula *intDzTestFunction);
+
+  void
+  InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence);
+
   void ForceInitSpaceCharge3DPoissonIntegralDz(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration,
                                                Double_t stopConvergence);
+
   void GetDistortionCyl(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetCorrectionCyl(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetCorrectionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetCorrectionCylACIrregular(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetDistortion(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetCorrection(const Float_t x[], Short_t roc, Float_t dx[]);
+
   Double_t GetChargeCylAC(const Float_t x[], Short_t roc);
+
   Double_t GetInverseChargeCylAC(const Float_t x[], Short_t roc);
+
   void SetCorrectionType(Int_t correctionType) {
     fCorrectionType = correctionType;
   }
+
   TH2F *CreateHistogramDistDRInXY(Float_t z, Int_t nx, Int_t ny);
+
   TH2F *CreateHistogramDistDRPhiInXY(Float_t z, Int_t nx, Int_t ny);
+
   TH2F *CreateHistogramDistDZInXY(Float_t z, Int_t nx, Int_t ny);
+
   TH2F *CreateHistogramCorrDRInXY(Float_t z, Int_t nx, Int_t ny);
+
   TH2F *CreateHistogramCorrDRPhiInXY(Float_t z, Int_t nx, Int_t ny);
+
   TH2F *CreateHistogramCorrDZInXY(Float_t z, Int_t nx, Int_t ny);
 
   enum {
@@ -95,36 +134,51 @@ public:
   };
 
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Double_t norm);
+
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D) { SetInputSpaceCharge(hisSpaceCharge3D, 1); }
 
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Double_t norm, Int_t side);
+
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Int_t side) { SetInputSpaceCharge(hisSpaceCharge3D, 1, side); }
+
   void SetInputSpaceChargeA(TMatrixD **matricesLookUpCharge) {
     fInterpolatorChargeA->SetValue(matricesLookUpCharge);
     fInterpolatorChargeA->InitCubicSpline();
   }
+
   void SetInputSpaceChargeC(TMatrixD **matricesLookUpCharge) {
     fInterpolatorChargeC->SetValue(matricesLookUpCharge);
     fInterpolatorChargeC->InitCubicSpline();
   }
 
   TTree *CreateDistortionTree(Double_t step);
+
   TTree *CreateDistortionTree(const Int_t nRRowTest, const Int_t nZColTest, const Int_t nPhiSliceTest);
 
   TH2F *CreateHistogramSCInXY(Float_t z, Int_t nx, Int_t ny);
+
   TH2F *CreateHistogramSCInZR(Float_t phi, Int_t nz, Int_t nr);
 
   void SetNRRows(Int_t nRRow) { fNRRows = nRRow; }
+
   void SetNPhiSlices(Int_t nPhiSlice) { fNPhiSlices = nPhiSlice; }
+
   void SetNZColumns(Int_t nZColumn) { fNZColumns = nZColumn; }
+
   Int_t GetNRRows() { return fNRRows; }
+
   Int_t GetNPhiSlices() { return fNPhiSlices; }
+
   Int_t GetNZColumns() { return fNZColumns; }
 
   void SetPoissonSolver(AliTPCPoissonSolver *poissonSolver) { fPoissonSolver = poissonSolver; }
+
   AliTPCPoissonSolver *GetPoissonSolver() { return fPoissonSolver; }
+
   void SetInterpolationOrder(Int_t order) { fInterpolationOrder = order; }
+
   Int_t GetInterpolationOrder() { return fInterpolationOrder; }
+
   void SetOmegaTauT1T2(Float_t omegaTau, Float_t t1, Float_t t2) {
     fT1 = t1;
     fT2 = t2;
@@ -140,8 +194,11 @@ public:
   }
 
   Float_t GetC0() const { return fC0; }
+
   Float_t GetC1() const { return fC1; }
+
   void SetCorrectionFactor(Float_t correctionFactor) { fCorrectionFactor = correctionFactor; }
+
   Float_t GetCorrectionFactor() const { return fCorrectionFactor; }
 
   void InverseDistortionMaps(TMatrixD **matricesCharge, TMatrixD **matricesEr, TMatrixD **matricesEPhi,
@@ -159,44 +216,61 @@ public:
                                     const Int_t phiSlice);
 
   void GetCorrectionCylNoDrift(const Float_t x[], const Short_t roc, Float_t dx[]);
+
   void GetDistortionCylNoDrift(const Float_t x[], Short_t roc, Float_t dx[]);
 
   void InverseGlobalToLocalDistortionNoDrift(TMatrixD **matricesDistDrDz, TMatrixD **matricesDistDPhiRDz,
                                              TMatrixD **matricesDistDz, Double_t *rList, Double_t *zList,
                                              Double_t *phiList, const Int_t nRRow, const Int_t nZColumn,
                                              const Int_t phiSlice);
+
   void GetChargeDensity(TMatrixD **matricesChargeA, TMatrixD **matricesChargeC, TH3 *spaceChargeHistogram3D,
                         const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice);
+
   void GetInverseLocalDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void GetLocalDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
+
   void SetIrregularGridSize(Int_t size) { fIrregularGridSize = size; }
+
   Int_t GetIrregularGridSize() { return fIrregularGridSize; }
+
   Int_t GetRBFKernelType() { return fRBFKernelType; }
+
   void SetPotentialBoundaryAndCharge(TFormula *vTestFunction, TFormula *rhoTestFunction);
+
   void SetBoundaryIFCA(TF1 *f1) {
     fFormulaBoundaryIFCA = new TF1(*f1);
   }
+
   void SetBoundaryIFCC(TF1 *f1) {
     fFormulaBoundaryIFCC = new TF1(*f1);
   }
+
   void SetBoundaryOFCA(TF1 *f1) {
     fFormulaBoundaryOFCA = new TF1(*f1);
   }
+
   void SetBoundaryOFCC(TF1 *f1) {
     fFormulaBoundaryOFCC = new TF1(*f1);
   }
+
   void SetBoundaryROCA(TF1 *f1) {
     fFormulaBoundaryROCA = new TF1(*f1);
   }
+
   void SetBoundaryROCC(TF1 *f1) {
     fFormulaBoundaryROCC = new TF1(*f1);
   }
+
   void SetBoundaryCE(TF1 *f1) {
     fFormulaBoundaryCE = new TF1(*f1);
   }
+
   Float_t GetSpaceChargeDensity(Float_t r, Float_t phi, Float_t z);
 
   void Init();
+
 private:
   static const Int_t kNMaxPhi = 360;
 
@@ -221,7 +295,7 @@ private:
   Int_t fIrregularGridSize; ///>  Size of irregular grid cubes for interpolation (min 3)
   Int_t fRBFKernelType; ///>  RBF kernel type
 
-  
+
   TMatrixD *fMatrixIntDistDrEzA[kNMaxPhi];  //[kNMaxPhi] Matrices for storing Global distortion  \f$ R \f$ direction for Side A
   TMatrixD *fMatrixIntDistDPhiREzA[kNMaxPhi]; //[kNMaxPhi] Matrices for storing Global \f$ \phi R \f$ Distortion for Side A
   TMatrixD *fMatrixIntDistDzA[kNMaxPhi]; //[kNMaxPhi] Matrices for storing Global \f$ z \f$ Distortion for Side A
@@ -246,7 +320,7 @@ private:
   TMatrixD *fMatrixIntCorrDrEzC[kNMaxPhi]; //[kNMaxPhi]  Matrices for storing Global  \f$  R \f$ correction for side C
   TMatrixD *fMatrixIntCorrDPhiREzC[kNMaxPhi];   //[kNMaxPhi] Matrices for storing Global  \f$ \phi R \f$  correction for side C
   TMatrixD *fMatrixIntCorrDzC[kNMaxPhi];  //[kNMaxPhi] Matrices for storing Global  \f$ X \f$ correction for side C
-  
+
   TMatrixD *fMatrixIntCorrDrEzIrregularA[kNMaxPhi]; //[kNMaxPhi] Matrices for storing global  \f$ R \f$ correction irregular type for side A
   TMatrixD *fMatrixIntCorrDPhiREzIrregularA[kNMaxPhi];   //[kNMaxPhi] Matrices for storing Global \f$ \phi R \f$ correction irregular type for side A
   TMatrixD *fMatrixIntCorrDzIrregularA[kNMaxPhi]; //[kNMaxPhi] Matrices for storing Global \f$ z \f$ correction irregular type for side A
@@ -328,15 +402,20 @@ private:
                                     const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice,
                                     const Double_t *rList, const Double_t *phiList, const Double_t *zList);
 
+  void IntegrateDistCorrDriftLineDz(
+    TFormula *intErDzTestFunction, TFormula *intEPhiRDzTestFunction, TFormula *intDzTestFunction,
+    const Double_t ezField, TMatrixD **matricesGDistDrDz, TMatrixD **matricesGDistDPhiRDz, TMatrixD **matricesGDistDz,
+    TMatrixD **matricesGCorrDrDz, TMatrixD **matricesGCorrDPhiRDz, TMatrixD **matricesGCorrDz,
+    TMatrixD **matricesGCorrIrregularDrDz, TMatrixD **matricesGCorrIrregularDPhiRDz,
+    TMatrixD **matricesGCorrIrregularDz, TMatrixD **matricesRIrregular, TMatrixD **matricesPhiIrregular,
+    TMatrixD **matricesZIrregular, const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice, const Double_t *rList,
+    const Double_t *phiList, const Double_t *zList);
 
   void FillLookUpTable(AliTPCLookUpTable3DInterpolatorD *lookupGlobal, TMatrixD **lookupRDz, TMatrixD **lookupPhiRDz,
-                        TMatrixD **lookupDz, const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice,
-                        const Double_t *rList, const Double_t *phiList, const Double_t *zList);
-
+                       TMatrixD **lookupDz, const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice,
+                       const Double_t *rList, const Double_t *phiList, const Double_t *zList);
 
   Double_t InterpolatePhi(TH3 *h3, const Double_t r, const Double_t phi, const Double_t z);
-
-
 
   void InverseGlobalToLocalDistortionGlobalInvTable(TMatrixD **matricesDistDrDz, TMatrixD **matricesDistDPhiRDz,
                                                     TMatrixD **matricesDistDz, Double_t *rList, Double_t *zList,
@@ -366,7 +445,8 @@ private:
   void InitAllocateMemory();
 
 /// \cond CLASSIMP
-  ClassDef(AliTPCSpaceCharge3DDriftLine,1);
+  ClassDef(AliTPCSpaceCharge3DDriftLine,
+  1);
 /// \endcond
 };
 

@@ -29,22 +29,20 @@ testAliTPCSpaceCharge3DDriftLine() {
     .x ./AliTPCSpaceCharge3DDriftLineTest.C+
 EOF
   N_GOOD=$(grep -cE 'AliTPCSpaceCharge3DDriftLineTest.*Test.*OK.*' testAliTPCSpaceCharge3DDriftLineTest.log)
-  echo $N_GOOD
   N_BAD=$(grep -cE 'AliTPCSpaceCharge3DDriftLineTest.*Test.*FAILED.*' testAliTPCSpaceCharge3DDriftLineTest.log)
-  echo $N_BAD
   TEST_STATUS=0
-  if [[ $N_GOOD != 1 ]]; then
-    alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: Invariant test failed"
+  if [[ $N_GOOD < 6 ]]; then
+    # alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: Invariant test failed"
     ((TEST_STATUS++))
   fi
-  if [[ $N_BAD != 0 ]]; then
-    alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: Invariant test failed"
+  if [[ $N_BAD > 0 ]]; then
+    # alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: Invariant test failed"
     ((TEST_STATUS+=2))
   fi
   if [[ $TEST_STATUS == 0 ]]; then
     alilog_success "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: All OK"
   else
-    alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: FAILED (code $TEST_STATUS)"
+    alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: FAILED (N_GOOD=$N_GOOD, N_BAD=$N_BAD)"
   fi
   exit $TEST_STATUS
 }
