@@ -1268,6 +1268,10 @@ TObjArray  * AliTreePlayer::MakeHistograms(TTree * tree, TString hisString, TStr
       }
     }
     //    2.3 fill histograms
+    if (tree->GetVal(0)==NULL){
+      ::Error(" AliTreePlayer::MakeHistograms","Info  not available"); // TODO - fix the logic
+      continue;
+    }
     Double_t values[kMaxDim];
     for (Int_t iHis=0; iHis<nHistograms; iHis++){
       Int_t indeces[kMaxDim+1];
