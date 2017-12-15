@@ -1,3 +1,7 @@
+#include <TMath.h>
+#include "AliLog.h"
+#include <AliSysInfo.h>
+
 #include "AliTPCPoissonSolver.h"
 
 /// \cond CLASSIMP

@@ -29,34 +29,8 @@
 
 #include <TNamed.h>
 #include "TMatrixD.h"
-#include "TMatrixF.h"
-#include "TObjArray.h"
-
 #include "TVectorD.h"
 #include "Riostream.h"
-
-#include <TH2F.h>
-#include <TMath.h>
-#include <TCanvas.h>
-#include <TGraph.h>
-#include <TROOT.h>
-#include <TTreeStream.h>
-#include <TTree.h>
-#include <TFile.h>
-#include <TTimeStamp.h>
-#include "TVectorD.h"
-
-#include "AliLog.h"
-#include "TF1.h"
-#include "TRandom.h"
-#include <AliSysInfo.h>
-
-class TH2F;
-class TTimeStamp;
-class TCollection;
-class TTreeSRedirector;
-class TTree;
-
 
 /// \class AliPoissonSolver
 /// \brief Provides poisson solver with many strategies (relaxation, multi grid, fft, cpu and gpu)
@@ -247,8 +221,7 @@ private:
   Double_t fMaxExact;
   Bool_t fExactPresent;
 /// \cond CLASSIMP
-  ClassDef(AliTPCPoissonSolver,
-  5);
+  ClassDef(AliTPCPoissonSolver,5);
 /// \endcond
 };
 
