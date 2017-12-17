@@ -13,6 +13,27 @@
 * provided "as is" without express or implied warranty.                  *
 **************************************************************************/
 
+
+/* $Id$ */
+
+/// \class AliTPCSpaceCharge3DDriftLine
+/// \brief This class provides distortion and correction map with integration following electron drift
+///
+/// \author Rifki Sadikin <rifki.sadikin@cern.ch>, Indonesian Institute of Sciences
+/// \date Nov 20, 2017
+
+#include "TStopwatch.h"
+#include "TGeoGlobalMagField.h"
+#include "TFile.h"
+#include "TStopwatch.h"
+#include "TMath.h"
+#include "AliMagF.h"
+#include "AliSysInfo.h"
+#include "AliTPCROC.h"
+#include "AliTPCParam.h"
+#include "AliTPCParamSR.h"
+#include "AliTPCcalibDB.h"
+#include "AliLog.h"
 #include "AliTPCSpaceCharge3DDriftLine.h"
 
 /// \cond CLASSIMP
@@ -617,7 +638,8 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       (fPoissonSolver->fMgParameters).maxLoop = 6;
 
       w.Start();
-      fPoissonSolver->PoissonSolver3D(matricesV, matricesCharge, nRRow, nZColumn, phiSlice, maxIteration, symmetry);
+      fPoissonSolver->PoissonSolver3D(matricesV, matricesCharge, nRRow, nZColumn, phiSlice, maxIteration,
+                                      symmetry);
       w.Stop();
 
       AliInfo(Form("Step 1: Poisson solver: %f\n", w.CpuTime()));
@@ -822,12 +844,14 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 
   AliTPCLookUpTable3DInterpolatorD *lookupGlobalDist =
     new AliTPCLookUpTable3DInterpolatorD(
-      nRRow, matricesGDistDrDz, rList, phiSlice, matricesGDistDPhiRDz, phiList, nZColumn, matricesGDistDz, zedList,
+      nRRow, matricesGDistDrDz, rList, phiSlice, matricesGDistDPhiRDz, phiList, nZColumn, matricesGDistDz,
+      zedList,
       fInterpolationOrder);
 
   AliTPCLookUpTable3DInterpolatorD *lookupGlobalCorr =
     new AliTPCLookUpTable3DInterpolatorD(
-      nRRow, matricesGCorrDrDz, rList, phiSlice, matricesGCorrDPhiRDz, phiList, nZColumn, matricesGCorrDz, zedList,
+      nRRow, matricesGCorrDrDz, rList, phiSlice, matricesGCorrDPhiRDz, phiList, nZColumn, matricesGCorrDz,
+      zedList,
       fInterpolationOrder);
 
 
@@ -888,10 +912,12 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       }
 
       lookupLocalDist = new AliTPCLookUpTable3DInterpolatorD(
-        nRRow, matricesDistDrDz, rList, phiSlice, matricesDistDPhiRDz, phiList, nZColumn, matricesDistDz, zedList,
+        nRRow, matricesDistDrDz, rList, phiSlice, matricesDistDPhiRDz, phiList, nZColumn, matricesDistDz,
+        zedList,
         fInterpolationOrder);
       lookupLocalCorr = new AliTPCLookUpTable3DInterpolatorD(
-        nRRow, matricesCorrDrDz, rList, phiSlice, matricesCorrDPhiRDz, phiList, nZColumn, matricesCorrDz, zedList,
+        nRRow, matricesCorrDrDz, rList, phiSlice, matricesCorrDPhiRDz, phiList, nZColumn, matricesCorrDz,
+        zedList,
         fInterpolationOrder);
 
       //// copy to 1D interpolator /////
@@ -911,7 +937,8 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       IntegrateDistCorrDriftLineDz(
         intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction, ezField, matricesGDistDrDz,
         matricesGDistDPhiRDz, matricesGDistDz, matricesGCorrDrDz, matricesGCorrDPhiRDz, matricesGCorrDz,
-        matricesIrregularDrDz, matricesIrregularDPhiRDz, matricesIrregularDz, matricesRIrregular, matricesPhiIrregular,
+        matricesIrregularDrDz, matricesIrregularDPhiRDz, matricesIrregularDz, matricesRIrregular,
+        matricesPhiIrregular,
         matricesZIrregular, nRRow, nZColumn, phiSlice, rList, phiList, zedList);
 
 
@@ -924,14 +951,13 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 
       AliInfo("Step 5: Fill look up table for distortion and correction");
 
-
       if (side == 0) {
         FillLookUpTable(lookupGlobalDist,
-                         fMatrixIntDistDrEzA, fMatrixIntDistDPhiREzA, fMatrixIntDistDzA,
-                         nRRow, nZColumn, phiSlice, rList, phiList, zedList);
+                        fMatrixIntDistDrEzA, fMatrixIntDistDPhiREzA, fMatrixIntDistDzA,
+                        nRRow, nZColumn, phiSlice, rList, phiList, zedList);
         FillLookUpTable(lookupGlobalCorr,
-                         fMatrixIntCorrDrEzA, fMatrixIntCorrDPhiREzA, fMatrixIntDistDzA,
-                         nRRow, nZColumn, phiSlice, rList, phiList, zedList);
+                        fMatrixIntCorrDrEzA, fMatrixIntCorrDPhiREzA, fMatrixIntDistDzA,
+                        nRRow, nZColumn, phiSlice, rList, phiList, zedList);
         fLookupIntDistA->CopyFromMatricesToInterpolator();
         fLookupIntCorrA->CopyFromMatricesToInterpolator();
         fLookupIntCorrIrregularA->CopyFromMatricesToInterpolator();
@@ -939,11 +965,11 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       }
       if (side == 1) {
         FillLookUpTable(lookupGlobalDist,
-                         fMatrixIntDistDrEzC, fMatrixIntDistDPhiREzC, fMatrixIntDistDzC,
-                         nRRow, nZColumn, phiSlice, rList, phiList, zedList);
+                        fMatrixIntDistDrEzC, fMatrixIntDistDPhiREzC, fMatrixIntDistDzC,
+                        nRRow, nZColumn, phiSlice, rList, phiList, zedList);
         FillLookUpTable(lookupGlobalCorr,
-                         fMatrixIntCorrDrEzC, fMatrixIntCorrDPhiREzC, fMatrixIntCorrDzC,
-                         nRRow, nZColumn, phiSlice, rList, phiList, zedList);
+                        fMatrixIntCorrDrEzC, fMatrixIntCorrDPhiREzC, fMatrixIntCorrDzC,
+                        nRRow, nZColumn, phiSlice, rList, phiList, zedList);
         fLookupIntDistC->CopyFromMatricesToInterpolator();
         fLookupIntCorrC->CopyFromMatricesToInterpolator();
         fLookupIntCorrIrregularC->CopyFromMatricesToInterpolator();
@@ -963,7 +989,6 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       delete lookupLocalDist;
       delete lookupLocalCorr;
     }
-
 
     fInitLookUp = kTRUE;
   }
@@ -1074,7 +1099,8 @@ AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColu
         );
 
       AliInfo("Step 1: Solving poisson solver");
-      fPoissonSolver->PoissonSolver3D(matricesV, matricesCharge, nRRow, nZColumn, phiSlice, maxIteration, symmetry);
+      fPoissonSolver->PoissonSolver3D(matricesV, matricesCharge, nRRow, nZColumn, phiSlice, maxIteration,
+                                      symmetry);
       AliInfo("Step 2: Calculate electric field");
       CalculateEField(
         matricesV,
@@ -1246,7 +1272,8 @@ void AliTPCSpaceCharge3DDriftLine::ElectricField(TMatrixD **matricesV, TMatrixD 
     for (Int_t i = 0; i < nRRow; i++) {
       matrixEz(i, 0) = -1 * (-0.5 * arrayV(i, 2) + 2.0 * arrayV(i, 1) - 1.5 * arrayV(i, 0)) / gridSizeZ;
       matrixEz(i, nZColumn - 1) =
-        -1 * (1.5 * arrayV(i, nZColumn - 1) - 2.0 * arrayV(i, nZColumn - 2) + 0.5 * arrayV(i, nZColumn - 3)) /
+        -1 *
+        (1.5 * arrayV(i, nZColumn - 1) - 2.0 * arrayV(i, nZColumn - 2) + 0.5 * arrayV(i, nZColumn - 3)) /
         gridSizeZ;
     }
 
@@ -1504,7 +1531,8 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
   AliTPCLookUpTable3DInterpolatorD *lookupLocalDist, TMatrixD **matricesGDistDrDz,
   TMatrixD **matricesGDistDPhiRDz, TMatrixD **matricesGDistDz, AliTPCLookUpTable3DInterpolatorD *lookupLocalCorr,
   TMatrixD **matricesGCorrDrDz, TMatrixD **matricesGCorrDPhiRDz, TMatrixD **matricesGCorrDz,
-  TMatrixD **matricesGCorrIrregularDrDz, TMatrixD **matricesGCorrIrregularDPhiRDz, TMatrixD **matricesGCorrIrregularDz,
+  TMatrixD **matricesGCorrIrregularDrDz, TMatrixD **matricesGCorrIrregularDPhiRDz,
+  TMatrixD **matricesGCorrIrregularDz,
   TMatrixD **matricesRIrregular, TMatrixD **matricesPhiIrregular, TMatrixD **matricesZIrregular,
   const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice,
   const Double_t *rList, const Double_t *phiList, const Double_t *zList) {
@@ -1712,7 +1740,8 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
 /// \param phiList 
 /// \param zList 
 void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
-  TFormula *intDrDzF, TFormula *intDPhiDzF, TFormula *intDzDzF, const Double_t ezField, TMatrixD **matricesGDistDrDz,
+  TFormula *intDrDzF, TFormula *intDPhiDzF, TFormula *intDzDzF, const Double_t ezField,
+  TMatrixD **matricesGDistDrDz,
   TMatrixD **matricesGDistDPhiRDz, TMatrixD **matricesGDistDz, TMatrixD **matricesGCorrDrDz,
   TMatrixD **matricesGCorrDPhiRDz, TMatrixD **matricesGCorrDz, TMatrixD **matricesGCorrIrregularDrDz,
   TMatrixD **matricesGCorrIrregularDPhiRDz, TMatrixD **matricesGCorrIrregularDz, TMatrixD **matricesRIrregular,
@@ -1752,7 +1781,7 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
     mDistDPhiRDz = matricesGDistDPhiRDz[m];
     mDistDz = matricesGDistDz[m];
 
-    // 
+    //
     mCorrDrDz = matricesGCorrDrDz[m];
     mCorrDPhiRDz = matricesGCorrDPhiRDz[m];
     mCorrDz = matricesGCorrDz[m];
@@ -1785,7 +1814,7 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
 
 
 //////////////// use irregular grid look up table for correction
-      // set 
+      // set
       (*mCorrIrregularDrDz)(i, j) = -dr;
       (*mCorrIrregularDPhiRDz)(i, j) = -dPhiR;
       (*mCorrIrregularDz)(i, j) = -dz;
@@ -1852,13 +1881,15 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
           //				lookupLocalDist->GetValue(radius,phi,z,ddr,ddRPhi,ddz);
           // get from exact function
 
-          localIntErOverEz = (intDrDzF->Eval(radius, phi, z1) - intDrDzF->Eval(radius, phi, z)) / (-1 * ezField);
-          localIntEPhiOverEz = (intDPhiDzF->Eval(radius, phi, z1) - intDPhiDzF->Eval(radius, phi, z)) / (-1 * ezField);
+          localIntErOverEz =
+            (intDrDzF->Eval(radius, phi, z1) - intDrDzF->Eval(radius, phi, z)) / (-1 * ezField);
+          localIntEPhiOverEz =
+            (intDPhiDzF->Eval(radius, phi, z1) - intDPhiDzF->Eval(radius, phi, z)) / (-1 * ezField);
           localIntDeltaEz = intDzDzF->Eval(radius, phi, z1) - intDzDzF->Eval(radius, phi, z);
 
           ddr = fC0 * localIntErOverEz + fC1 * localIntEPhiOverEz;
           ddRPhi = fC0 * localIntEPhiOverEz - fC1 * localIntErOverEz;
-          ddz = localIntDeltaEz * fgkdvdE * fgkdvdE; // two times?				
+          ddz = localIntDeltaEz * fgkdvdE * fgkdvdE; // two times?
 
           dr += ddr;
           dPhiR += ddRPhi;
@@ -1891,7 +1922,7 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
 
         if (j == nZColumn - 2) {
           radiusCorrection = radius0;
-          //z0 = 
+          //z0 =
         }
 
         if (j < nZColumn - 1) {
@@ -1905,15 +1936,15 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
 
           z1 = z - gridZSize;
 
-
-          
-          localIntErOverEz = (intDrDzF->Eval(radius, phi, z1) - intDrDzF->Eval(radius, phi, z)) / (-1 * ezField);
-          localIntEPhiOverEz = (intDPhiDzF->Eval(radius, phi, z1) - intDPhiDzF->Eval(radius, phi, z)) / (-1 * ezField);
+          localIntErOverEz =
+            (intDrDzF->Eval(radius, phi, z1) - intDrDzF->Eval(radius, phi, z)) / (-1 * ezField);
+          localIntEPhiOverEz =
+            (intDPhiDzF->Eval(radius, phi, z1) - intDPhiDzF->Eval(radius, phi, z)) / (-1 * ezField);
           localIntDeltaEz = intDzDzF->Eval(radius, phi, z1) - intDzDzF->Eval(radius, phi, z);
 
           ddr = fC0 * localIntErOverEz + fC1 * localIntEPhiOverEz;
           ddRPhi = fC0 * localIntEPhiOverEz - fC1 * localIntErOverEz;
-          ddz = localIntDeltaEz * fgkdvdE * fgkdvdE; // two times?				
+          ddz = localIntDeltaEz * fgkdvdE * fgkdvdE; // two times?
 
 
           dr += ddr;
@@ -3235,9 +3266,11 @@ void AliTPCSpaceCharge3DDriftLine::InverseLocalDistortionToElectricField(
         ((-0.5 * (*distDrDz)(i, nZColumn - 3) + 1.5 * (*distDrDz)(i, nZColumn - 2)) / gridSizeZ) * -1 *
         ezField;
       (*mEPhi)(i, nZColumn - 1) =
-        ((-0.5 * (*distDPhiRDz)(i, nZColumn - 3) + 1.5 * (*distDPhiRDz)(i, nZColumn - 2)) / gridSizeZ) * -1 *
+        ((-0.5 * (*distDPhiRDz)(i, nZColumn - 3) + 1.5 * (*distDPhiRDz)(i, nZColumn - 2)) / gridSizeZ) *
+        -1 *
         ezField;
-      (*mEz)(i, nZColumn - 1) = (-0.5 * (*distDz)(i, nZColumn - 3) + 1.5 * (*distDz)(i, nZColumn - 2)) / gridSizeZ;
+      (*mEz)(i, nZColumn - 1) =
+        (-0.5 * (*distDz)(i, nZColumn - 3) + 1.5 * (*distDz)(i, nZColumn - 2)) / gridSizeZ;
     }
 
     for (Int_t i = 0; i < nRRow; i++) {
@@ -3377,7 +3410,8 @@ void AliTPCSpaceCharge3DDriftLine::InverseElectricFieldToCharge(
       radius = fgkIFCRadius + (nRRow - 1) * gridSizeR;
       //drDist =  ( 1.5*matrixEr(nRRow-1,j) - 2.0*matrixEr(nRRow-2,j) + 0.5*matrixEr(nRRow-3,j) ) / gridSizeR ; // backward difference
       drDist =
-        (-(11.0 / 6.0) * matrixEr(nRRow - 1, j) + (3.0 * matrixEr(nRRow - 2, j)) - (1.5 * matrixEr(nRRow - 3, j)) +
+        (-(11.0 / 6.0) * matrixEr(nRRow - 1, j) + (3.0 * matrixEr(nRRow - 2, j)) -
+         (1.5 * matrixEr(nRRow - 3, j)) +
          ((1.0 / 3.0) * matrixEr(nRRow - 4, j))) / (-1 * gridSizeR);
 
       //dzDist    =  ( matrixEz(nRRow-1,j+1) - matrixEz(nRRow-1,j-1) ) / (2*gridSizeZ) ; // z direction
@@ -3411,43 +3445,52 @@ void AliTPCSpaceCharge3DDriftLine::InverseElectricFieldToCharge(
 
       dzDist = (matrixEz(i, nZColumn - 1) - matrixEz(i, nZColumn - 3)) / (2.0 * gridSizeZ); // forward difference
 
-      drDist = (-matrixEr(i + 2, nZColumn - 2) + 8 * matrixEr(i + 1, nZColumn - 2) - 8 * matrixEr(i - 1, nZColumn - 2) +
+      drDist = (-matrixEr(i + 2, nZColumn - 2) + 8 * matrixEr(i + 1, nZColumn - 2) -
+                8 * matrixEr(i - 1, nZColumn - 2) +
                 matrixEr(i - 2, nZColumn - 2)) / (12 * gridSizeR);; // z direction
-      dPhi = (-matrixEPhiP2(i, nZColumn - 2) + 8 * matrixEPhiP(i, nZColumn - 2) - 8 * matrixEPhiM(i, nZColumn - 2) +
+      dPhi = (-matrixEPhiP2(i, nZColumn - 2) + 8 * matrixEPhiP(i, nZColumn - 2) -
+              8 * matrixEPhiM(i, nZColumn - 2) +
               matrixEPhiM2(i, nZColumn - 2)) / (12 * gridSizePhi);
       matrixCharge(i, nZColumn - 2) = -1 * (matrixEr(i, nZColumn - 2) / radius + drDist + dPhi / radius + dzDist);
 
       dzDist = (-(11.0 / 6.0) * matrixEz(i, nZColumn - 1) + (3.0 * matrixEz(i, nZColumn - 2)) -
                 (1.5 * matrixEz(i, nZColumn - 3)) + ((1.0 / 3.0) * matrixEz(i, nZColumn - 4))) /
                (-gridSizeZ); // backward difference
-      drDist = (-matrixEr(i + 2, nZColumn - 1) + 8 * matrixEr(i + 1, nZColumn - 1) - 8 * matrixEr(i - 1, nZColumn - 1) +
+      drDist = (-matrixEr(i + 2, nZColumn - 1) + 8 * matrixEr(i + 1, nZColumn - 1) -
+                8 * matrixEr(i - 1, nZColumn - 1) +
                 matrixEr(i - 2, nZColumn - 1)) / (12 * gridSizeR);; // z direction
-      dPhi = (-matrixEPhiP2(i, nZColumn - 1) + 8 * matrixEPhiP(i, nZColumn - 1) - 8 * matrixEPhiM(i, nZColumn - 1) +
+      dPhi = (-matrixEPhiP2(i, nZColumn - 1) + 8 * matrixEPhiP(i, nZColumn - 1) -
+              8 * matrixEPhiM(i, nZColumn - 1) +
               matrixEPhiM2(i, nZColumn - 1)) / (12 * gridSizePhi);
       matrixCharge(i, nZColumn - 1) = -1 * (matrixEr(i, nZColumn - 1) / radius + drDist + dPhi / radius + dzDist);
     }
     // for corner points
     // corner points for EPhi
     radius = fgkIFCRadius;
-    drDist = (-0.5 * matrixEr(2, 0) + 2.0 * matrixEr(1, 0) - 1.5 * matrixEr(0, 0)) / gridSizeR; // forward difference
-    dzDist = (-0.5 * matrixEz(0, 2) + 2.0 * matrixEz(0, 1) - 1.5 * matrixEz(0, 0)) / gridSizeZ; // forward difference
+    drDist =
+      (-0.5 * matrixEr(2, 0) + 2.0 * matrixEr(1, 0) - 1.5 * matrixEr(0, 0)) / gridSizeR; // forward difference
+    dzDist =
+      (-0.5 * matrixEz(0, 2) + 2.0 * matrixEz(0, 1) - 1.5 * matrixEz(0, 0)) / gridSizeZ; // forward difference
     dPhi = (-matrixEPhiP2(0, 0) + 8 * matrixEPhiP(0, 0) - 8 * matrixEPhiM(0, 0) + matrixEPhiM2(0, 0)) /
            (12 * gridSizePhi);
     matrixCharge(0, 0) = -1 * (matrixEr(0, 0) / radius + drDist + dPhi / radius + dzDist);
-    drDist = (-0.5 * matrixEr(2, 1) + 2.0 * matrixEr(1, 1) - 1.5 * matrixEr(0, 1)) / gridSizeR; // forward difference
+    drDist =
+      (-0.5 * matrixEr(2, 1) + 2.0 * matrixEr(1, 1) - 1.5 * matrixEr(0, 1)) / gridSizeR; // forward difference
     dzDist = (matrixEz(0, 2) - matrixEz(0, 0)) / (2.0 * gridSizeZ); // forward difference
     dPhi = (-matrixEPhiP2(0, 1) + 8 * matrixEPhiP(0, 1) - 8 * matrixEPhiM(0, 1) + matrixEPhiM2(0, 1)) /
            (12 * gridSizePhi);
     matrixCharge(0, 1) = -1 * (matrixEr(0, 1) / radius + drDist + dPhi / radius + dzDist);
-    drDist = (-0.5 * matrixEr(2, nZColumn - 2) + 2.0 * matrixEr(1, nZColumn - 2) - 1.5 * matrixEr(0, nZColumn - 2)) /
-             gridSizeR; // forward difference
+    drDist =
+      (-0.5 * matrixEr(2, nZColumn - 2) + 2.0 * matrixEr(1, nZColumn - 2) - 1.5 * matrixEr(0, nZColumn - 2)) /
+      gridSizeR; // forward difference
     dzDist = (2.0 * matrixEz(0, nZColumn - 1) + 3.0 * matrixEz(0, nZColumn - 2) - 6.0 * matrixEz(0, nZColumn - 3) +
               matrixEz(0, nZColumn - 4)) / (6.0 * gridSizeZ); // backward difference
     dPhi = (-matrixEPhiP2(0, nZColumn - 2) + 8 * matrixEPhiP(0, nZColumn - 2) - 8 * matrixEPhiM(0, nZColumn - 2) +
             matrixEPhiM2(0, nZColumn - 2)) / (12 * gridSizePhi);
     matrixCharge(0, nZColumn - 2) = -1 * (matrixEr(0, nZColumn - 2) / radius + drDist + dPhi / radius + dzDist);
-    drDist = (-0.5 * matrixEr(2, nZColumn - 1) + 2.0 * matrixEr(1, nZColumn - 1) - 1.5 * matrixEr(0, nZColumn - 1)) /
-             gridSizeR; // forward difference
+    drDist =
+      (-0.5 * matrixEr(2, nZColumn - 1) + 2.0 * matrixEr(1, nZColumn - 1) - 1.5 * matrixEr(0, nZColumn - 1)) /
+      gridSizeR; // forward difference
     dzDist = (1.5 * matrixEz(0, nZColumn - 1) - 2.0 * matrixEz(0, nZColumn - 2) + 0.5 * matrixEz(0, nZColumn - 3)) /
              gridSizeZ; // backward difference
     dPhi = (-matrixEPhiP2(0, nZColumn - 1) + 8 * matrixEPhiP(0, nZColumn - 1) - 8 * matrixEPhiM(0, nZColumn - 1) +
@@ -3457,7 +3500,8 @@ void AliTPCSpaceCharge3DDriftLine::InverseElectricFieldToCharge(
     radius = fgkIFCRadius + gridSizeR;
     drDist = (-matrixEr(3, 0) + 6.0 * matrixEr(2, 0) - 3.0 * matrixEr(1, 0) - 2 * matrixEr(0, 0)) /
              (6.0 * gridSizeR); // forward difference
-    dzDist = (-0.5 * matrixEz(1, 2) + 2.0 * matrixEz(1, 1) - 1.5 * matrixEz(1, 0)) / gridSizeZ; // forward difference
+    dzDist =
+      (-0.5 * matrixEz(1, 2) + 2.0 * matrixEz(1, 1) - 1.5 * matrixEz(1, 0)) / gridSizeZ; // forward difference
     dPhi = (-matrixEPhiP2(1, 0) + 8 * matrixEPhiP(1, 0) - 8 * matrixEPhiM(1, 0) + matrixEPhiM2(1, 0)) /
            (12 * gridSizePhi);
     matrixCharge(1, 0) = -1 * (matrixEr(1, 0) / radius + drDist + dPhi / radius + dzDist);

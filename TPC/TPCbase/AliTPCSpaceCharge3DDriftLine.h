@@ -1,81 +1,45 @@
 #ifndef ALI_TPC_SPACECHARGE3D_DRIFTLINE_H
 #define ALI_TPC_SPACECHARGE3D_DRIFTLINE_H
 
-/* Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved.  *
- * See cxx source for full Copyright notice                                */
+
+/* Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
+ * See cxx source for full Copyright notice                               */
+
+/* $Id$ */
 
 /// \class AliTPCSpaceCharge3DDriftLine
-/// \brief This class provides correction-distortion following the drift line          
-///  
-/// Usage:
-///
+/// \brief This class provides distortion and correction map with integration following electron drift
 ///
 /// \author Rifki Sadikin <rifki.sadikin@cern.ch>, Indonesian Institute of Sciences
-/// \date November 11, 2015///
+/// \date Nov 20, 2017
 
-#include "TVectorD.h"
 #include "TFormula.h"
-#include "AliTPCCorrection.h"
-#include "TStopwatch.h"
-#include "AliMagF.h"
-#include "TGeoGlobalMagField.h"
-#include "AliTPCcalibDB.h"
-#include "AliTPCParam.h"
-#include "AliLog.h"
+#include "TF1.h"
 #include "TH2F.h"
 #include "TH3F.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TBranch.h"
-#include "TVector.h"
-#include "TVector3.h"
-#include "TMatrix.h"
 #include "TMatrixD.h"
-#include "TCanvas.h"
-#include "TStopwatch.h"
-#include "TMath.h"
-#include "AliSysInfo.h"
-#include "AliTPCROC.h"
-#include "AliTPCParam.h"
-#include "AliTPCParamSR.h"
+#include "AliTPCCorrection.h"
 #include "AliTPCPoissonSolver.h"
 #include "AliTPCLookUpTable3DInterpolatorD.h"
 #include "AliTPC3DCylindricalInterpolator.h"
 #include "AliTPCLookUpTable3DInterpolatorIrregularD.h"
 #include "AliTPC3DCylindricalInterpolatorIrregular.h"
 
-class TCollection;
-
-class TTimeStamp;
-
 class TFormula;
-
-class TH3F;
-
-class TH3;
-
 class TH2F;
-
-class TH2;
-
+class TH3F;
 class TF1;
 
 class AliTPCSpaceCharge3DDriftLine : public AliTPCCorrection {
 public:
   AliTPCSpaceCharge3DDriftLine();
-
   AliTPCSpaceCharge3DDriftLine(const char *name, const char *title);
-
   AliTPCSpaceCharge3DDriftLine(const char *name, const char *title, Int_t nRRow, Int_t nZColumn, Int_t nPhiSlice);
-
   AliTPCSpaceCharge3DDriftLine(const char *name, const char *title, Int_t nRRow, Int_t nZColumn, Int_t nPhiSlice,
                                Int_t interpolationOrder, Int_t irregularGridSize, Int_t rbfKernelType);
-
   virtual ~AliTPCSpaceCharge3DDriftLine();
-
   void InitSpaceCharge3DPoissonIntegralDz(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration,
                                           Double_t stopConvergence);
-
   void InitSpaceCharge3DPoissonIntegralDz(
     Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence,
     TMatrixD **matricesDistDrDzA, TMatrixD **matricesDistDPhiRDzA, TMatrixD **matricesDistDzA,
@@ -86,20 +50,13 @@ public:
 
   void
   InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence);
-
   void ForceInitSpaceCharge3DPoissonIntegralDz(Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration,
                                                Double_t stopConvergence);
-
   void GetDistortionCyl(const Float_t x[], Short_t roc, Float_t dx[]);
-
   void GetDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
-
   void GetCorrectionCyl(const Float_t x[], Short_t roc, Float_t dx[]);
-
   void GetCorrectionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
-
   void GetCorrectionCylACIrregular(const Float_t x[], Short_t roc, Float_t dx[]);
-
   void GetDistortion(const Float_t x[], Short_t roc, Float_t dx[]);
 
   void GetCorrection(const Float_t x[], Short_t roc, Float_t dx[]);
@@ -134,11 +91,8 @@ public:
   };
 
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Double_t norm);
-
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D) { SetInputSpaceCharge(hisSpaceCharge3D, 1); }
-
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Double_t norm, Int_t side);
-
   void SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Int_t side) { SetInputSpaceCharge(hisSpaceCharge3D, 1, side); }
 
   void SetInputSpaceChargeA(TMatrixD **matricesLookUpCharge) {
@@ -404,11 +358,13 @@ private:
 
   void IntegrateDistCorrDriftLineDz(
     TFormula *intErDzTestFunction, TFormula *intEPhiRDzTestFunction, TFormula *intDzTestFunction,
-    const Double_t ezField, TMatrixD **matricesGDistDrDz, TMatrixD **matricesGDistDPhiRDz, TMatrixD **matricesGDistDz,
+    const Double_t ezField, TMatrixD **matricesGDistDrDz, TMatrixD **matricesGDistDPhiRDz,
+    TMatrixD **matricesGDistDz,
     TMatrixD **matricesGCorrDrDz, TMatrixD **matricesGCorrDPhiRDz, TMatrixD **matricesGCorrDz,
     TMatrixD **matricesGCorrIrregularDrDz, TMatrixD **matricesGCorrIrregularDPhiRDz,
     TMatrixD **matricesGCorrIrregularDz, TMatrixD **matricesRIrregular, TMatrixD **matricesPhiIrregular,
-    TMatrixD **matricesZIrregular, const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice, const Double_t *rList,
+    TMatrixD **matricesZIrregular, const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice,
+    const Double_t *rList,
     const Double_t *phiList, const Double_t *zList);
 
   void FillLookUpTable(AliTPCLookUpTable3DInterpolatorD *lookupGlobal, TMatrixD **lookupRDz, TMatrixD **lookupPhiRDz,

@@ -1,11 +1,33 @@
-#include "TStopwatch.h"
-#include "AliTPCPoissonSolver.h"
-#include "AliTPC3DCylindricalInterpolatorIrregular.h"
+/*************************************************************************
+* Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
+*                                                                        *
+* Author: The ALICE Off-line Project.                                    *
+* Contributors are mentioned in the code where appropriate.              *
+*                                                                        *
+* Permission to use, copy, modify and distribute this software and its   *
+* documentation strictly for non-commercial purposes is hereby granted   *
+* without fee, provided that the above copyright notice appears in all   *
+* copies and that both the copyright notice and this permission notice   *
+* appear in the supporting documentation. The authors make no claims     *
+* about the suitability of this software for any purpose. It is          *
+* provided "as is" without express or implied warranty.                  *
+**************************************************************************/
+
+/// \class AliTPC3DInterpolatorIrregular
+/// \brief Irregular grid interpolator for cylindrical coordinate with r,phi,z different coordinates
+///        RBF-based interpolation
+///
+/// \author Rifki Sadikin <rifki.sadikin@cern.ch>, Indonesian Institute of Sciences
+/// \date Jan 5, 2016
+
+#include "TMath.h"
 #include "TVector.h"
 #include "TVectorD.h"
 #include "TMatrix.h"
 #include "TMatrixD.h"
 #include "TDecompSVD.h"
+#include "AliTPCPoissonSolver.h"
+#include "AliTPC3DCylindricalInterpolatorIrregular.h"
 
 /// \cond CLASSIMP3
 ClassImp(AliTPC3DCylindricalInterpolatorIrregular)
