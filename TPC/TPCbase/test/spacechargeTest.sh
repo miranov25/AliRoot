@@ -47,8 +47,8 @@ EOF
     alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: FAILED (N_GOOD=$N_GOOD, N_BAD=$N_BAD)"
   fi
 
-  # exit $TEST_STATUS # to do fix test
-  exit 0  # This is hack - we need test to be running correctly or increase threshold  
+  exit $TEST_STATUS # test fix
+ # exit 0  # This is hack - we need test to be running correctly or increase threshold  
 }
 
 [[ $1 ]] && $1

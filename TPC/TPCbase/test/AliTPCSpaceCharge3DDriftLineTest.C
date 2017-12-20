@@ -60,24 +60,29 @@ void AliTPCSpaceCharge3DDriftLineTest() {
   UnitTestConsistencyCorrectnessDistortion();
 }
 
+
+
+
+
+
 /// unit test for R distortion
 void UnitTestConsistencyCorrectnessDistortion() {
   //
   // Unit Test Check the Consistency of correction --
   // generate nPoints of point, calculate its distortion
   // calculate correction for distorted points (R direction)
-  // return OK if  distance(corrected distorted point, original point)  < epsilon
+ // return OK if  distance(corrected distorted point, original point)  < epsilon
   // constructor with parameters: number of grids
 
-  const Int_t phiSlice = 18;
-  const Int_t rRow = 9;
-  const Int_t zColumn = 9;
-  const Int_t maxIter = 200;
+  const Int_t phiSlice = 36;
+  const Int_t rRow = 33;
+  const Int_t zColumn = 33;
+  const Int_t maxIter = 100;
   const Float_t convergenceError = 1e-8;
 
-  const Int_t nPhiSliceTest = 18;
-  const Int_t nRRowTest = 9;
-  const Int_t nZColumnTest = 9;
+  const Int_t nPhiSliceTest = 36;
+  const Int_t nRRowTest = 33;
+  const Int_t nZColumnTest = 33;
   const Int_t nPoints = nPhiSliceTest * nRRowTest * nZColumnTest;
   const Double_t maxEpsilon = 1e-2;
 
@@ -90,22 +95,22 @@ void UnitTestConsistencyCorrectnessDistortion() {
                                                                            zColumn,
                                                                            phiSlice);
 
-  TFormula vTestFunction1("v", " [0]*(-x^4 + 338.0 *x^3 - 21250.75 * x^2)*cos([1]* y)^2*exp(-1* [2] * z^2)");
-  TFormula rhoTestFunction1("rho",
-                           "[0]*(((-16.0 * x^2 + 9.0 * 338.0 * x - 4.0*21250.75) *cos([1] * y)^2 * exp(-1 *[2]*z^2)) - ((-1* x^2 + 338.0 * x - 21250.75) * 2 * [1]^2 * cos(2 * [1] * y) * exp(-1 *[2]*z^2)) + ((-1* x^4 +  338.0 * x^3 - 21250.75 * x^2) * cos([1] * y)^2 * (4*[2]^2*z^2 - 2 * [2]) * exp(-1 *[2]*z^2)))");
+  
+  TFormula vTestFunction1("f1", "[0]*(x^4 - 338.0 *x^3 + 21250.75 * x^2)*cos([1]* y)^2*exp(-1* [2] * z^2)");
+  TFormula rhoTestFunction1("ff1", "[0]*(((16.0 * x^2 - 9.0 * 338.0 * x + 4.0*21250.75) *cos([1] * y)^2 * exp(-1 *[2]*z^2)) - ((x^2 -  338.0 * x + 21250.75) * 2 * [1]^2 * cos(2 * [1] * y) * exp(-1 *[2]*z^2)) + ((x^4 -  338.0 * x^3 + 21250.75 * x^2) * cos([1] * y)^2 * (4*[2]^2*z^2 - 2 * [2]) * exp(-1 *[2]*z^2)))");
 
-  TFormula erTestFunction1("er", " [0]*(-4*x^3 + 3 * 338.0 *x^2 - 2 * 21250.75 * x)*cos([1]* y)^2*exp(-1* [2] * z^2)");
+  TFormula erTestFunction1("er", " [0]*(4*x^3 - 3 * 338.0 *x^2 + 2 * 21250.75 * x)*cos([1]* y)^2*exp(-1* [2] * z^2)");
   TFormula ePhiTestFunction1("ePhi",
-                            "  [0]*(-x^3 + 338.0 *x^2 -  21250.75 * x)* -1  * [1] * sin(2 * [1]* y)*exp(-1* [2] * z^2)");
+                            "  [0]*(x^3 - 338.0 *x^2 +  21250.75 * x)* -1  * [1] * sin(2 * [1]* y)*exp(-1* [2] * z^2)");
   TFormula ezTestFunction1("ez",
-                          " [0]*(-x^4 + 338.0 *x^3 - 21250.75 * x^2)*cos([1]* y)^2*-1*2*[2]*z*exp(-1* [2] * z^2)");
+                          " [0]*(x^4 - 338.0 *x^3 + 21250.75 * x^2)*cos([1]* y)^2*-1*2*[2]*z*exp(-1* [2] * z^2)");
 
   TFormula intErDzTestFunction1("intErDz",
-                               "  -1 * [0]*(-4*x^3 + 3 * 338.0 *x^2 - 2 * 21250.75 * x)*cos([1]* y)^2*((sqrt(pi)*TMath::Erf(sqrt([2]) * z))/(2 * sqrt([2]))) ");
+                               " [0]*(4*x^3 - 3 * 338.0 *x^2 + 2 * 21250.75 * x)*cos([1]* y)^2*((sqrt(pi)*TMath::Erf(sqrt([2]) * z))/(2 * sqrt([2]))) ");
   TFormula intEPhiRDzTestFunction1("intEPhiDz",
-                                  " -1 *   [0]*(-x^3 + 338.0 *x^2 -  21250.75 * x)* -1  * [1] * sin(2 * [1]* y)*((sqrt(pi)*TMath::Erf(sqrt([2]) * z))/(2 * sqrt([2])))");
+                                  "[0]* (x^3 - 338.0 *x^2 +  21250.75 * x)* -1  * [1] * sin(2 * [1]* y)*((sqrt(pi)*TMath::Erf(sqrt([2]) * z))/(2 * sqrt([2])))");
   TFormula intDzTestFunction1("intEzDz",
-                             " -1 * [0]*(-x^4 + 338.0 *x^3 - 21250.75 * x^2)*cos([1]* y)^2*exp(-1* [2] * z^2)");
+                             "[0]* (x^4 - 338.0 *x^3 + 21250.75 * x^2)*cos([1]* y)^2*exp(-1* [2] * z^2)");
 
 
   // set parameters for function
@@ -113,11 +118,14 @@ void UnitTestConsistencyCorrectnessDistortion() {
   a *= (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius);
   a *= (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius);
   a =  (1000.0 / a);
+  a = 1e-7;
   Double_t b = 0.5;
   Double_t c = 1.0 / (((AliTPCPoissonSolver::fgkTPCZ0) / 2.0) * ((AliTPCPoissonSolver::fgkTPCZ0) / 2.0));
+  c = 1e-4;
 
-  vTestFunction1.SetParameters(-a, b, c);
-  rhoTestFunction1.SetParameters(-a, b, c);
+  vTestFunction1.SetParameters(a, b, c);
+  rhoTestFunction1.SetParameters(a, b, c);
+
   erTestFunction1.SetParameters(-a, b, c);
   ePhiTestFunction1.SetParameters(-a, b, c);
   ezTestFunction1.SetParameters(-a, b, c);
@@ -249,7 +257,9 @@ void UnitTestConsistencyCorrectnessDistortion() {
   ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyCorrectnessDistortion", "Creating test points");
 
   sc->CreateDistortionTree(nRRowTest,nZColumnTest,nPhiSliceTest);
+  ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyCorrectnessDistortion", "Finish for numeric");
   scExact->CreateDistortionTree(nRRowTest,nZColumnTest,nPhiSliceTest);
+  ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyCorrectnessDistortion", "Finish for exact");
 
   // calculate error for
   TFile fileNumeric(TString::Format("distortion%s.root",sc->GetName()));

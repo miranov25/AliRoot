@@ -295,7 +295,7 @@ Double_t AliTPC3DCylindricalInterpolator::InterpolateCubicSpline
 
   h = xArray[khi] - xArray[klo];
 
-  if (h < 1e-10) {
+  if (TMath::Abs(h) < 1e-10) {
     return 0.0;
   }
 
@@ -329,7 +329,7 @@ void AliTPC3DCylindricalInterpolator::InitCubicSpline() {
                 (1.5 * fValue[(m * (fNZ * fNR) + i * fNZ) + (fNZ - 3)]) +
                 ((1.0 / 3.0) * fValue[(m * (fNZ * fNR) + i * fNZ) + (fNZ - 4)])) / (fZList[0] - fZList[1]);
         InitCubicSpline(fZList, &fValue[m * (fNZ * fNR) + i * fNZ], fNZ,
-                        &fSecondDerZ[m * (fNZ * fNR) + i * fNZ], 1, yp0, ypn1);
+                        &fSecondDerZ[m * (fNZ * fNR) + i * fNZ], 1);
       }
 
     }
