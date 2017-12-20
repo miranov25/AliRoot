@@ -13,14 +13,9 @@
 ///
 /// \author Rifki Sadikin <rifki.sadikin@cern.ch>, Indonesian Institute of Sciences
 /// \date Nov 20, 2017
-
-
-
 #include <TNamed.h>
 #include "TMatrixD.h"
 #include "TVectorD.h"
-
-
 
 class AliTPCPoissonSolver : public TNamed {
 public:
@@ -204,8 +199,7 @@ private:
   Double_t fMaxExact;
   Bool_t fExactPresent;
 /// \cond CLASSIMP
-  ClassDef(AliTPCPoissonSolver,
-  5);
+  ClassDef(AliTPCPoissonSolver,5);
 /// \endcond
 };
 
