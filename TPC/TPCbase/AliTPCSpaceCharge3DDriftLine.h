@@ -126,7 +126,10 @@ public:
 
   Int_t GetNZColumns() { return fNZColumns; }
 
-  void SetPoissonSolver(AliTPCPoissonSolver *poissonSolver) { fPoissonSolver = poissonSolver; }
+  void SetPoissonSolver(AliTPCPoissonSolver *poissonSolver) {
+    if (fPoissonSolver != NULL) delete fPoissonSolver;
+    fPoissonSolver= poissonSolver;
+  }
 
   AliTPCPoissonSolver *GetPoissonSolver() { return fPoissonSolver; }
 

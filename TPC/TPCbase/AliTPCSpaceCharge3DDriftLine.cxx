@@ -120,6 +120,9 @@ AliTPCSpaceCharge3DDriftLine::AliTPCSpaceCharge3DDriftLine(
 /// Memory allocation for working/output memory
 ///
 void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
+  fPoissonSolver = new AliTPCPoissonSolver();;
+
+
   fListR = new Double_t[fNRRows];
   fListPhi = new Double_t[fNPhiSlices];
   fListZ = new Double_t[fNZColumns];
@@ -318,6 +321,10 @@ void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
 /// Deallocate memory for lookup table and charge distribution
 ///
 AliTPCSpaceCharge3DDriftLine::~AliTPCSpaceCharge3DDriftLine() {
+
+  if (fPoissonSolver != NULL)
+    delete fPoissonSolver;
+
   for (Int_t k = 0; k < fNPhiSlices; k++) {
     delete fMatrixIntDistDrEzA[k];
     delete fMatrixIntDistDPhiREzA[k];
@@ -2842,8 +2849,10 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
         z0 = dZ * j;
         charge = GetSpaceChargeDensity(r0, phi0, z0);
         potential = GetPotential(r0, phi0, z0);
-	chargeFormula = fFormulaChargeRho->Eval(r0,phi0,z0);
-	potentialFormula = fFormulaPotentialV->Eval(r0,phi0,z0);
+        if (!(fFormulaChargeRho == NULL))
+	        chargeFormula = fFormulaChargeRho->Eval(r0,phi0,z0);
+        if (!(fFormulaPotentialV == NULL))
+          potentialFormula = fFormulaPotentialV->Eval(r0, phi0, z0);
         point0[0] = r0;
         point0[1] = phi0;
         point0[2] = z0;
