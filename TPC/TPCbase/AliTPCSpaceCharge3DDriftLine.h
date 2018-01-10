@@ -62,6 +62,7 @@ public:
   void GetCorrection(const Float_t x[], Short_t roc, Float_t dx[]);
 
   Double_t GetChargeCylAC(const Float_t x[], Short_t roc);
+  Double_t GetPotentialCylAC(const Float_t x[], Short_t roc);
 
   Double_t GetInverseChargeCylAC(const Float_t x[], Short_t roc);
 
@@ -125,7 +126,10 @@ public:
 
   Int_t GetNZColumns() { return fNZColumns; }
 
-  void SetPoissonSolver(AliTPCPoissonSolver *poissonSolver) { fPoissonSolver = poissonSolver; }
+  void SetPoissonSolver(AliTPCPoissonSolver *poissonSolver) {
+    if (fPoissonSolver != NULL) delete fPoissonSolver;
+    fPoissonSolver= poissonSolver;
+  }
 
   AliTPCPoissonSolver *GetPoissonSolver() { return fPoissonSolver; }
 
@@ -222,6 +226,7 @@ public:
   }
 
   Float_t GetSpaceChargeDensity(Float_t r, Float_t phi, Float_t z);
+  Float_t GetPotential(Float_t r, Float_t phi, Float_t z);
 
   void Init();
 
@@ -299,6 +304,8 @@ private:
 
   AliTPC3DCylindricalInterpolator *fInterpolatorChargeA; //-> interpolator for charge densities side A
   AliTPC3DCylindricalInterpolator *fInterpolatorChargeC; //-> interpolator for charge densities side C
+  AliTPC3DCylindricalInterpolator *fInterpolatorPotentialA; //-> interpolator for charge densities side A
+  AliTPC3DCylindricalInterpolator *fInterpolatorPotentialC; //-> interpolator for charge densities side C
   AliTPC3DCylindricalInterpolator *fInterpolatorInverseChargeA; //-> interpolator for inverse charge densities side A
   AliTPC3DCylindricalInterpolator *fInterpolatorInverseChargeC; //-> interpolator for inverse charge densities side C
 
