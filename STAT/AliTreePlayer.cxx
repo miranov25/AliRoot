@@ -115,7 +115,7 @@ Int_t AliTreeFormulaF::Compile(const char *expression) {
 /// \param mode
 /// \return
 char *AliTreeFormulaF::PrintValue(Int_t mode) const {
-   PrintValue(mode, 0, "");
+  PrintValue(mode, 0, "");
 }
 
 /// Overwrite TTreeFormula PrintValue
@@ -656,101 +656,6 @@ Int_t  AliTreePlayer::selectWhatWhereOrderBy(TTree * tree, TString what, TString
   }
 
 
-=======
-    }
-    if (fieldName.Contains(indexPattern)){             // variable is index
-      isIndex[iCol]=kTRUE;
-      indexPattern.Substitute(fieldName,"");
-    }else{
-      isIndex[iCol]=kFALSE;
-    }
-    if (fieldName.Contains(parentPattern)){             // variable is parent
-      isParent[iCol]=kTRUE;
-      parentPattern.Substitute(fieldName,"");
-    }else{
-      isParent[iCol]=kFALSE;
-    }
-    TTreeFormula * formula = NULL;
-    TNamed* htmlTag=TStatToolkit::GetMetadata(tree,(fieldName+".html").Data());
-    Bool_t isFormulaF= (fieldName[0]=='#') || htmlTag!=NULL;
-
-    if (!isFormulaF) {
-      formula=new TTreeFormula(fieldName.Data(), fieldName.Data(), tree);
-    }else {
-      TString fstring = fieldName;
-      if (htmlTag) {
-        fstring=htmlTag->GetTitle();
-      } else {
-        fieldName.Replace(0, 1, "");
-        if (tree->GetAlias(fieldName.Data())) {
-          fstring = tree->GetAlias(fieldName.Data());
-        }
-      }
-      formula=new AliTreeFormulaF(fieldName.Data(), fstring.Data(), tree);
-    }
-
-    if (formula->GetTree()==NULL){
-      ::Error("AliTreePlayer::selectWhatWhereOrderBy","Invalid formula %s, parsed from the original string %s",fieldName.Data(),what.Data());
-      if (isJSON==kFALSE) return -1;
-    }
-    TString  printFormat="";                       // printing format          - column 1 - use default if not specified
-    TString  colName=arrayDesc->At(0)->GetName();  // variable name in ouptut  - column 2 - using defaut ("variable name") as in input
-    TString  outputFormat="";                      // output column format specification for TLeaf (see also reading using TTree::ReadFile)
-    if (arrayDesc->At(1)!=NULL){  // format
-      printFormat=arrayDesc->At(1)->GetName();
-    }else{
-      if (formula->IsInteger()) {
-        printFormat="1.20";
-      }else{
-        printFormat="1.20";
-      }
-    }
-    if (arrayDesc->At(2)!=NULL)  {
-      colName=arrayDesc->At(2)->GetName();
-    }else{
-      colName=arrayDesc->At(0)->GetName();
-    }
-    //colName = (arrayDesc->GetEntries()>1) ? arrayDesc->At(2)->GetName() : arrayDesc->At(0)->GetName();
-    if (arrayDesc->At(3)!=NULL){  //outputFormat (for csv)
-      outputFormat= arrayDesc->At(3)->GetName();
-    }else{
-      outputFormat="/D";
-      if (formula->IsInteger()) outputFormat="/I";
-      if (formula->IsString())  outputFormat="/C";
-    }
-    fFormulaList->AddAt(formula,iCol);
-    rFormulaList[iCol]=formula;
-    printFormatList[iCol]=new TObjString(printFormat);
-    outputFormatList[iCol]=new TObjString(outputFormat);
-    columnNameList[iCol]=new TObjString(colName);
-  }
-  TTreeFormula *select = new TTreeFormula("Selection",where.Data(),tree);
-  fFormulaList->AddLast(select);
-  rFormulaList[nCols]=select;
-
-
-  Bool_t hasArray = kFALSE;
-  Bool_t forceDim = kFALSE;
-  for (Int_t iCol=0; iCol<nCols; iCol++){
-    if (rFormulaList[iCol]!=NULL) rFormulaList[iCol]->UpdateFormulaLeaves();
-    if (rFormulaList[iCol]->GetManager()==NULL) continue;   // TODO - check of needed for AliTreeFormulaF
-    // if ->GetManager()->GetMultiplicity()>0 mean there is at minimum one array
-    switch( rFormulaList[iCol]->GetManager()->GetMultiplicity() ) {
-      case  1:
-      case  2:
-        hasArray = kTRUE;
-        forceDim = kTRUE;
-        break;
-      case -1:
-        forceDim = kTRUE;
-        break;
-      case  0:
-        break;
-    }
-  }
-
-
->>>>>>> fd06fc1bb7a4fc125db95647976d94fca0f41d86
   // print header
   if (isHTML){
     fprintf(default_fp,"<table class=\"display\" cellspacing=\"0\" width=\"100%\">\n"); // add metadata info
@@ -1415,7 +1320,7 @@ TPad *  AliTreePlayer::DrawHistograms(TPad  * pad, TObjArray * hisArray, TString
   // Example usage:
   /*
     TPad *pad= 0;    TString drawExpression="";
-    drawExpression="[1,1,1]:" 
+    drawExpression="[1,1,1]:"
     drawExpression+="hisPtAll(0,10)(0)(errpl);hisPtITS(0,10)(0)(err);hisPtPhiThetaAll(0,10,-3.2,3.2,-1.2,1.2)(0)(err):";
     drawExpression+="hisAlpha(-3.2,3.2)(0)(errpl);hisPtPhiThetaAll(0,10,-3.2,3.2,-1.2,1.2)(1)(err):";
     drawExpression+="hisTgl(-1,1)(0)(errpl);hisPtPhiThetaAll(0,10,-3.2,3.2,-1.2,1.2)(2)(err):";
@@ -1453,7 +1358,7 @@ TPad *  AliTreePlayer::DrawHistograms(TPad  * pad, TObjArray * hisArray, TString
   for (Int_t iPad=0; iPad<nPads; iPad++){
     Int_t nGraphs=0, nHistos=0;
     if (drawList->At(iPad+1)==NULL) break;
-    //TVirtualPad  *cPad = 
+    //TVirtualPad  *cPad =
     TVirtualPad *cPad = pad->cd(iPad+1);
     TLegend * legend = new TLegend(cPad->GetLeftMargin()+0.02,0.7,1-cPad->GetRightMargin()-0.02 ,1-cPad->GetTopMargin()-0.02, TString::Format("Pad%d",iPad));
     legend->SetNColumns(2);
@@ -1659,7 +1564,6 @@ void AliTreePlayer::MakeCacheTree(TTree * tree, TString varList, TString outFile
   }
   delete pcstream;
 }
-
 
 
 
