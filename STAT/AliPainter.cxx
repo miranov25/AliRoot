@@ -14,7 +14,7 @@
  **************************************************************************/
 
 #include "AliPainter.h"
-#include <iostream>
+#include "AliTMinuitToolkit.h"
 #include "TPad.h"
 #include "TList.h"
 #include "TAxis.h"
@@ -26,6 +26,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
+#include <vector>
 
 ///
 /// \brief Method allow to divide pad according to specify properties.
@@ -297,23 +298,44 @@ void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option){
   }
 }
 
+///TODO - parser for such fit string and implement via interface @Boris
+///axis title, title, entries, description, all info from histogram
+/// 2.) Test different fit strategies
+///AliTMinuitToolkit::SetPredefinedFitter("ExpFit",fitter);
+///AliTMinuitToolkit::Fit(hist,"ExpFit","misac(10,50)",NULL,"funOption(2,1,6)");
+///AliTMinuitToolkit::Fit(hist,"ExpFit","misac(10,50)",NULL,"funOption(4,1,6)");
+///AliTMinuitToolkit::Fit(hist,"ExpFit","bootstrap20",NULL,"funOption(6,1,6)");
 ///
 /// \brief Method find histogram in inputArray and draw specified projection according to properties.
 /// \param expresion        - histogram draw expression
 ///                         - syntax
-///                           histogramName(<axisRange>)(<projection string>)(operation)(option)
+///                           histogramName(<axisRange>)(<projection string>)(<fitting string>)(option)
 ///                             axisRange: @done
 ///                                if integer bin range   - TAxis::SetRange(min, max)
 ///                                if float   user range  - TAxis::SetRangeUser(min,max)
 ///                                if Expression is empty - do not specify anything
-///                             projectionString (i0,i1) @done
+///                             projectionString: (i0,i1) @done
 ///                                new projection created THn his = hisInput->Projection(i0,i1....)
 ///                                at minimum one dimension should be specified, maximum 3D
-///                             operation
-///
+///                             fitting string: (fitterName,fitOption,range,initialParam)
+///                                fitterName - whatever fitter registered in the list of fitters
+///                                             (defined in AliTMinuitToolkit , maybe also support
+///                                              root fit functions)
+///                                fitOption - see AliTMinuitToolkit fitOptions
+///                                            we should put there checks of correctness of fit
+///                                            options
+///                                range - {x0min,x0max,x1min,xm1max,...}
+///                                         in case not specified - range is not set
+///                                intitialParam - {p0,p1;p2,...;ep0,ep1,...;minp0,minp1,...;
+///                                                 maxp0,maxp1 ...}
+///                                                 there are options- use only in case they are
+///                                                 specified
+///                                                 errors, min and max are optionals
+///                             option TODO - ???
 /// \param inputArray       - array of input objects
 ///                         - Object to draw - histogramArray->FindObject(histogramName)
-///                         - in case histogramArray is NULL or histogram not found gROOT->FindObject() will be used
+///                         - in case histogramArray is NULL or histogram not found gROOT->FindObject()
+///                           will be used
 /// \param metaData         - array with metadata describing histogram axis
 ///                         - for example in the trees we optionally keep metadata (array of TNamed ()tag,value) in the array "metaTable"
 ///                         - in case not specified -"metaTable" object from the histogramArray used
@@ -323,6 +345,7 @@ void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option){
 /*!
    #### Example use:
    \code
+   {
    TFile::SetCacheFileDir(".");
    TFile * finput = TFile::Open("http://aliqatrkeos.web.cern.ch/aliqatrkeos/performance/alice/data/2015/LHC15o/pass1/LHC15o.pass1.B1.Bin0/performanceHisto.root", "CACHEREAD");
    TTree* tree=(TTree*) finput.Get("hisPtAll");
@@ -332,20 +355,24 @@ void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option){
     TObject *o = finput->Get(TString::Format("%s;%d", keys->At(iKey)->GetName(), ((TKey *) keys->At(iKey))->GetCycle()).Data());
     hisArray->AddLast(o);
    }
-   AliPainter::DrawHistogram("hisK0DMassQPtTgl()(0)()(err)", hisArray, NULL, NULL);
+    AliTMinuitToolkit *fitter = new AliTMinuitToolkit();
+  TF1 *aFormExp = new TF1("formExp", "[0]*TMath::Exp(-[1]*x)");
+  fitter->SetFitFunction(aFormExp, 0);
+  AliTMinuitToolkit::SetPredefinedFitter("ExpFit", fitter);
+   AliPainter::DrawHistogram("hisK0DMassQPtTgl()(0)(ExpFit,misac(10,50),NULL,funOption(2,1,6))(err)", hisArray, NULL, NULL);
+   }
   \endcode
  */
-///axis title, title, entries, description, all info from histogram
-
 TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramArray, TObjArray *metaData, TObjArray * keepArray){
-
-  // TString operationType[8]={"f-mean","f-rms","f-ltm","f-ltmsigma","f-gmean","f-grms","f-median","f-gmean"};
   TString   exprsn  = expression;
   TString   hisName = "";
-  TString   atts[4] = {"", "", "", ""};
-  TPRegexp          attPat("[(].*?[)]");
+  std::vector<TString> atts;
+  TPRegexp  attPat("[(].*?[)]");
   TString   tStr    = "";
   THn *his    = NULL;
+  //fit options
+  //                       {fitterName, fitStrategy, drawOptions, funOptions}
+  TString fitOptions[4]  = {"", "", "", ""}; //mb change to vector?
 
   if (exprsn.CountChar('(') != exprsn.CountChar(')')) {
     ::Error("AliPainter::DrawHistogram","check brackets in %s", expression);
@@ -359,17 +386,37 @@ TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramAr
     ::Info("AliPainter::DrawHistogram", "%s not found", (const char*)hisName);
     return NULL;
   }
-
-  int startIndex  = 0;
-  int finishIndex = 0;
-
-  for (Int_t i = 0; i < 4; i++) {
-    finishIndex = exprsn.Index(")",startIndex);
-    tStr = exprsn(attPat,startIndex);
-    atts[i] = tStr(1, tStr.Length() - 2);
-    startIndex = finishIndex + 1;
+  Int_t match = 0, startIndex = 0, finishIndex = 0;
+  Bool_t isChange = kFALSE;
+  for(Int_t i = 0; i < exprsn.Length(); i++) {
+    if (exprsn(i) == '(' && match == 0) {
+      match++;
+      startIndex = i;
+      isChange = kTRUE;
+    }
+    else if (exprsn(i) == '(' && match > 0) match++;
+    else if (exprsn(i) == ')' && match == 1) {
+      match--;
+      finishIndex = i;
+    }
+    else if (exprsn(i) == ')' && match > 1) match--;
+    if (match == 0 && isChange)  atts.push_back(TString(exprsn(startIndex + 1, finishIndex - startIndex -1)));
+  }
+  Int_t arg = 0;
+  startIndex = 0;
+  for(Int_t i = 0; i <= atts[2].Length(); i++) {
+    if (atts[2](i) == ',' || i == atts[2].Length()) {
+      fitOptions[arg] = TString(atts[2](startIndex, i - startIndex));
+      arg++;
+      startIndex = i + 1;
+    }
+    else if(atts[2](i) == '(') {
+      i = atts[2].Index(')', i);
+      continue;
+    }
   }
 
+  //TODO: warning or return 0 if atts.size != 4?
   Int_t nDims = his->GetNdimensions();
 
   if (nDims < atts[1].CountChar(',') + 1) {
@@ -382,6 +429,7 @@ TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramAr
     TH1 *his1 = NULL;
     his1 = his->Projection(atts[1].Atoi());
     if (SetHistogramRange((TObject *) his1,atts[0]) != NULL) his1 = (TH1 *) SetHistogramRange((TObject *) his1,atts[0]);
+    if (atts[2] != "") AliTMinuitToolkit::Fit(his1, fitOptions[0], fitOptions[1], fitOptions[2], fitOptions[3]);
     his1->Draw();
     return (TObject *) his1;
   }
