@@ -352,6 +352,10 @@ TMultiGraph * AliTreeTrending::MakeMultiGraphStatus(TTree *fTree, TString mgrNam
       continue;
     }
   }
+  
+  // Update number of variables (for some variables no graph may have been added in the loop above)
+  nVars=graphArray->GetEntries()-1; 
+  Bool_t added=kFALSE;
   // 2.) Set Y ranges and Y labels for each graph
   Double_t *yBins = new Double_t[nVars+1];
   for(Int_t i=0; i<=nVars;i++) yBins[i] = Double_t(i);
@@ -370,8 +374,15 @@ TMultiGraph * AliTreeTrending::MakeMultiGraphStatus(TTree *fTree, TString mgrNam
       cgr->GetYaxis()->SetRangeUser(0,nVars);
       for (Int_t jgr=0; jgr<nVars; jgr++)  cgr->GetYaxis()->SetBinLabel(jgr+1, graphArray->At(jgr)->GetTitle());
       mgrCombined->Add(cgr);
+      added=kTRUE;
     }
   }
+  
+  if(! added) {
+      ::Error("AliTreeTrending::MakeMultiGraphStatus","No graphs could be added to multigraph - returning 0");
+      return 0;
+  }
+  
   mgrCombined->SetMinimum(0); mgrCombined->SetMaximum(nVars);
   // TStatToolkit::DrawMultiGraph(mgrCombined,"ap");
   if (setAxis) {      //TODO  - to get axis graph has to be drawn - is there other option ?
