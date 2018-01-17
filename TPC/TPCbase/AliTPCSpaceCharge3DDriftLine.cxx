@@ -54,7 +54,6 @@ AliTPCSpaceCharge3DDriftLine::AliTPCSpaceCharge3DDriftLine()
     fCorrectionType(0) {
   InitAllocateMemory();
 }
-
 /// Construction for AliTPCSpaceCharge3DDriftLine class
 /// Default values
 /// ~~~
@@ -71,7 +70,6 @@ AliTPCSpaceCharge3DDriftLine::AliTPCSpaceCharge3DDriftLine(const char *name, con
     fCorrectionType(0) {
   InitAllocateMemory();
 }
-
 /// Construction for AliTPCSpaceCharge3DDriftLine class
 /// Member values from params
 ///
@@ -90,7 +88,6 @@ AliTPCSpaceCharge3DDriftLine::AliTPCSpaceCharge3DDriftLine(const char *name, con
 
   InitAllocateMemory();
 }
-
 /// Construction for AliTPCSpaceCharge3DDriftLine class
 /// Member values from params
 ///
@@ -116,12 +113,10 @@ AliTPCSpaceCharge3DDriftLine::AliTPCSpaceCharge3DDriftLine(
 
   InitAllocateMemory();
 }
-
 /// Memory allocation for working/output memory
 ///
 void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
   fPoissonSolver = new AliTPCPoissonSolver();;
-
 
   fListR = new Double_t[fNRRows];
   fListPhi = new Double_t[fNPhiSlices];
@@ -138,7 +133,6 @@ void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
   const Float_t gridSizeR = (fgkOFCRadius - fgkIFCRadius) / (fNRRows - 1);
   const Float_t gridSizeZ = fgkTPCZ0 / (fNZColumns - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / fNPhiSlices;
-
 
   for (Int_t k = 0; k < fNPhiSlices; k++) fListPhi[k] = gridSizePhi * k;
   for (Int_t i = 0; i < fNRRows; i++) fListR[i] = fgkIFCRadius + i * gridSizeR;
@@ -259,7 +253,7 @@ void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
   fInterpolatorChargeC->SetZList(fListZC);
   fInterpolatorChargeC->SetPhiList(fListPhi);
   fInterpolatorChargeC->SetOrder(fInterpolationOrder);
-  
+
   fInterpolatorPotentialA->SetNR(fNRRows);
   fInterpolatorPotentialA->SetNZ(fNZColumns);
   fInterpolatorPotentialA->SetNPhi(fNPhiSlices);
@@ -267,7 +261,6 @@ void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
   fInterpolatorPotentialA->SetZList(fListZA);
   fInterpolatorPotentialA->SetPhiList(fListPhi);
   fInterpolatorPotentialA->SetOrder(fInterpolationOrder);
-
 
   fInterpolatorPotentialC->SetNR(fNRRows);
   fInterpolatorPotentialC->SetNZ(fNZColumns);
@@ -316,7 +309,6 @@ void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
   fLookupIntCorrIrregularA->SetKernelType(fRBFKernelType);
   fLookupIntCorrIrregularC->SetKernelType(fRBFKernelType);
 }
-
 /// Destruction for AliTPCSpaceCharge3DDriftLine
 /// Deallocate memory for lookup table and charge distribution
 ///
@@ -390,7 +382,6 @@ AliTPCSpaceCharge3DDriftLine::~AliTPCSpaceCharge3DDriftLine() {
   delete[] fListPotentialBoundaryA;
   delete[] fListPotentialBoundaryC;
 }
-
 /// Init copy from AliTPCSpaceCharge3D
 void AliTPCSpaceCharge3DDriftLine::Init() {
   AliMagF *magF = (AliMagF *) TGeoGlobalMagField::Instance()->GetField();
@@ -404,7 +395,6 @@ void AliTPCSpaceCharge3DDriftLine::Init() {
   // Correction Terms for effective omegaTau; obtained by a laser calibration run
   SetOmegaTauT1T2(wt, fT1, fT2);
 }
-
 /// Creating look-up tables of Correction/Distortion by integration following
 /// drift line, input from space charge 3d histogram (fSpaceCharge3D) and boundary values are filled with zeroes
 ///
@@ -503,7 +493,6 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
   TF1 *f1BoundaryIFC = NULL;
   TF1 *f1BoundaryOFC = NULL;
   TF1 *f1BoundaryROC = NULL;
-
   TStopwatch w;
 
   for (Int_t k = 0; k < phiSlice; k++) phiList[k] = gridSizePhi * k;
@@ -549,12 +538,9 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
   TMatrixD **matricesLookUpCharge = NULL;
   AliTPC3DCylindricalInterpolator *chargeInterpolator = NULL;
   AliTPC3DCylindricalInterpolator *potentialInterpolator = NULL;
-
   Double_t *potentialBoundary = NULL;
-
   TMatrixD *matrixV;
   TMatrixD *matrixCharge;
-
   Int_t pIndex = 0;
 
   // do if look up table haven't be initialized
@@ -620,7 +606,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       // fill also charge
       //pIndex = 0;
 
-      AliInfo(Form("Step = 0: Fill Boundary and Charge Densities"));
+      //AliInfo(Form("Step = 0: Fill Boundary and Charge Densities"));
       for (Int_t k = 0; k < phiSlice; k++) {
         phi0 = k * gridSizePhi;
         matrixV = matricesV[k];
@@ -631,7 +617,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
             z0 = j * gridSizeZ;
             (*matrixCharge)(i, j) = chargeInterpolator->GetValue(rList[i], phiList[k], zList[j]);
             (*matrixV)(i, j) = 0.0; // fill zeros
-	    if (fFormulaPotentialV == NULL) {
+            if (fFormulaPotentialV == NULL) {
               // boundary IFC
               if (i == 0) {
                 if (f1BoundaryIFC != NULL) {
@@ -667,7 +653,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       (fPoissonSolver->fMgParameters).isFull3D = kFALSE;
       (fPoissonSolver->fMgParameters).nMGCycle = maxIteration;
       (fPoissonSolver->fMgParameters).maxLoop = 6;
-      
+
 
       w.Start();
       fPoissonSolver->PoissonSolver3D(matricesV, matricesCharge, nRRow, nZColumn, phiSlice, maxIteration,
@@ -676,7 +662,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 
       potentialInterpolator->SetValue(matricesV);
       potentialInterpolator->InitCubicSpline();
-      
+
 
       AliInfo(Form("Step 1: Poisson solver: %f\n", w.CpuTime()));
       w.Start();
@@ -728,8 +714,8 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       ////
 
 
-      w.Stop();
-      AliInfo(Form("Step 5: Filling up the look up: %f\n", w.CpuTime()));
+       w.Stop();
+       AliInfo(Form("Step 5: Filling up the look up: %f\n", w.CpuTime()));
 
       if (side == 0) {
         FillLookUpTable(lookupGlobalDist,
@@ -741,10 +727,10 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
                         nRRow, nZColumn, phiSlice, rList, phiList, zList);
 
         fLookupIntDistA->CopyFromMatricesToInterpolator();
-	if (fCorrectionType == 0)
-	        fLookupIntCorrA->CopyFromMatricesToInterpolator();
-	else
-	        fLookupIntCorrIrregularA->CopyFromMatricesToInterpolator();
+        if (fCorrectionType == 0)
+          fLookupIntCorrA->CopyFromMatricesToInterpolator();
+        else
+          fLookupIntCorrIrregularA->CopyFromMatricesToInterpolator();
 
         AliInfo(" A side done");
       }
@@ -758,10 +744,10 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
                         nRRow, nZColumn, phiSlice, rList, phiList, zList);
 
         fLookupIntDistC->CopyFromMatricesToInterpolator();
-	if (fCorrectionType == 0)
-	        fLookupIntCorrC->CopyFromMatricesToInterpolator();
-	else
-	        fLookupIntCorrIrregularC->CopyFromMatricesToInterpolator();
+        if (fCorrectionType == 0)
+          fLookupIntCorrC->CopyFromMatricesToInterpolator();
+        else
+          fLookupIntCorrIrregularC->CopyFromMatricesToInterpolator();
         AliInfo(" C side done");
       }
 
@@ -800,7 +786,6 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
   delete lookupGlobalDist;
   delete lookupGlobalCorr;
 }
-
 /// Creating look-up tables of Correction/Distortion by integration following
 /// drift line with known distributions for potential and space charge.
 ///
@@ -826,7 +811,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 /// \post Lookup tables for distortion:
 /// ~~~
 /// fLookUpIntDistDrEz,fLookUpIntDistDPhiREz,fLookUpIntDistDz
-/// ~~~ fo
+/// ~~~
 /// and correction:
 /// ~~~
 /// fLookUpIntCorrDrEz,fLookUpIntCorrDPhiREz,fLookUpIntCorrDz
@@ -850,7 +835,6 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 
   // local variables
   Float_t radius0, phi0, z0;
-
   TMatrixD *matricesGDistDrDz[phiSlice], *matricesGDistDPhiRDz[phiSlice], *matricesGDistDz[phiSlice];
   TMatrixD *matricesGCorrDrDz[phiSlice], *matricesGCorrDPhiRDz[phiSlice], *matricesGCorrDz[phiSlice];
 
@@ -878,17 +862,13 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
   TMatrixD **matricesCorrDrDz = NULL;
   TMatrixD **matricesCorrDPhiRDz = NULL;
   TMatrixD **matricesCorrDz = NULL;
-
   AliTPCLookUpTable3DInterpolatorD *lookupLocalDist;
-
   AliTPCLookUpTable3DInterpolatorD *lookupLocalCorr;
-
   AliTPCLookUpTable3DInterpolatorD *lookupGlobalDist =
     new AliTPCLookUpTable3DInterpolatorD(
       nRRow, matricesGDistDrDz, rList, phiSlice, matricesGDistDPhiRDz, phiList, nZColumn, matricesGDistDz,
       zedList,
       fInterpolationOrder);
-
   AliTPCLookUpTable3DInterpolatorD *lookupGlobalCorr =
     new AliTPCLookUpTable3DInterpolatorD(
       nRRow, matricesGCorrDrDz, rList, phiSlice, matricesGCorrDPhiRDz, phiList, nZColumn, matricesGCorrDz,
@@ -906,15 +886,13 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 
   // should be set, in another place
   const Int_t symmetry = 0;
-
-
   TMatrixD *matricesV[phiSlice];
   for (Int_t k = 0; k < phiSlice; k++) {
     matricesV[k] = new TMatrixD(nRRow, nZColumn);
   }
   TMatrixD *matrixV;
 
-  AliInfo("Step 1: Preparing calculate only global distortion (from known local distortion)");
+  AliInfo("Step 0: Preparing calculate only global distortion (from known local distortion)");
   // do if look up table haven't be initialized
   if (!fInitLookUp) {
     for (Int_t side = 0; side < 2; side++) {
@@ -958,7 +936,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
         fLookupDistC->SetLookUpPhi(matricesDistDPhiRDz);
         fLookupDistC->SetLookUpZ(matricesDistDz);
       }
-      AliInfo(Form("Step = 0: Fill Boundary and Charge Densities"));
+
       for (Int_t k = 0; k < phiSlice; k++) {
         phi0 = k * gridSizePhi;
         matrixV = matricesV[k];
@@ -966,14 +944,13 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
           radius0 = fgkIFCRadius + i * gridSizeR;
           for (Int_t j = 0; j < nZColumn; j++) {
             z0 = j * gridSizeZ;
-        //    if ((i == 0) || (i == (nRRow - 1)) || (j == 0) || (j == (nZColumn - 1))) {
-           (*matrixV)(i, j) = fFormulaPotentialV->Eval(radius0, phi0, z0);
-         //   } else (*matrixV)(i, j) = 0.0;
-              
+            //    if ((i == 0) || (i == (nRRow - 1)) || (j == 0) || (j == (nZColumn - 1))) {
+            (*matrixV)(i, j) = fFormulaPotentialV->Eval(radius0, phi0, z0);
+            //   } else (*matrixV)(i, j) = 0.0;
+
           }
         }
       }
-      
 
       lookupLocalDist = new AliTPCLookUpTable3DInterpolatorD(
         nRRow, matricesDistDrDz, rList, phiSlice, matricesDistDPhiRDz, phiList, nZColumn, matricesDistDz,
@@ -989,21 +966,17 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
       lookupLocalCorr->CopyFromMatricesToInterpolator();
 
       if (side == 0) {
-	fInterpolatorPotentialA->SetValue(matricesV);
-	fInterpolatorPotentialA->InitCubicSpline();
-	
+        fInterpolatorPotentialA->SetValue(matricesV);
+        fInterpolatorPotentialA->InitCubicSpline();
+
         fLookupDistA->CopyFromMatricesToInterpolator();
-      }
-      else {
-	fInterpolatorPotentialC->SetValue(matricesV);
-	fInterpolatorPotentialC->InitCubicSpline();
+      } else {
+        fInterpolatorPotentialC->SetValue(matricesV);
+        fInterpolatorPotentialC->InitCubicSpline();
         fLookupDistC->CopyFromMatricesToInterpolator();
       }
 
-      ////
-
-
-      AliInfo("Step 4a: Integrate distortion and correction the drift line -- testCorrectness");
+      AliInfo("Step 1: Integrate distortion and correction the drift line");
 
       IntegrateDistCorrDriftLineDz(
         intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction, ezField, matricesGDistDrDz,
@@ -1020,7 +993,7 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 
 
 
-      AliInfo("Step 5: Fill look up table for distortion and correction");
+      AliInfo("Step 2: Fill look up table for distortion and correction");
 
       if (side == 0) {
         FillLookUpTable(lookupGlobalDist,
@@ -1030,12 +1003,13 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
                         fMatrixIntCorrDrEzA, fMatrixIntCorrDPhiREzA, fMatrixIntDistDzA,
                         nRRow, nZColumn, phiSlice, rList, phiList, zedList);
         fLookupIntDistA->CopyFromMatricesToInterpolator();
-	if (fCorrectionType == 0)
-        	fLookupIntCorrA->CopyFromMatricesToInterpolator();
-	else
-	        fLookupIntCorrIrregularA->CopyFromMatricesToInterpolator();
+        if (fCorrectionType == 0)
+          fLookupIntCorrA->CopyFromMatricesToInterpolator();
+        else
+          fLookupIntCorrIrregularA->CopyFromMatricesToInterpolator();
         AliInfo(" A side done");
       }
+
       if (side == 1) {
         FillLookUpTable(lookupGlobalDist,
                         fMatrixIntDistDrEzC, fMatrixIntDistDPhiREzC, fMatrixIntDistDzC,
@@ -1044,23 +1018,21 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
                         fMatrixIntCorrDrEzC, fMatrixIntCorrDPhiREzC, fMatrixIntCorrDzC,
                         nRRow, nZColumn, phiSlice, rList, phiList, zedList);
         fLookupIntDistC->CopyFromMatricesToInterpolator();
-	if (fCorrectionType == 0)
-	        fLookupIntCorrC->CopyFromMatricesToInterpolator();
-	else
-        	fLookupIntCorrIrregularC->CopyFromMatricesToInterpolator();
+        if (fCorrectionType == 0)
+          fLookupIntCorrC->CopyFromMatricesToInterpolator();
+        else
+          fLookupIntCorrIrregularC->CopyFromMatricesToInterpolator();
 
         AliInfo(" C side done");
       }
 
-      AliInfo("Step 6: Fill look up table for correction");
+      //AliInfo("Step 6: Fill look up table for correction");
 
       //FillLookUpTable(lookupGlobalCorr,
       //	fLookUpIntCorrDrEz,fLookUpIntCorrDPhiREz,fLookUpIntCorrDz,
       //	nRRow,  nZColumn, phiSlice, rList, phiList, zedList, side);
 
 
-      if (side == 0) AliInfo(" A side done");
-      if (side == 1) AliInfo(" C side done");
       delete lookupLocalDist;
       delete lookupLocalCorr;
     }
@@ -1086,7 +1058,6 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
   delete lookupGlobalCorr;
 
 }
-
 /// Creating look-up tables of Correction/Distortion by linear integration
 /// on z line
 ///
@@ -1114,7 +1085,6 @@ AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColu
   const Float_t gridSizeZ = fgkTPCZ0 / (nZColumn - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / phiSlice;
   const Double_t ezField = (fgkCathodeV - fgkGG) / fgkTPCZ0; // = ALICE Electric Field (V/cm) Magnitude ~ -400 V/cm;
-  printf("gridSizeZ in init: %f\n", gridSizeZ);
 
   // local variables
   Float_t radius0, phi0, z0;
@@ -1190,7 +1160,7 @@ AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColu
         symmetry
       );
       lookupEField->CopyFromMatricesToInterpolator();
-      AliInfo("Step 3: Fill the ");
+      AliInfo("Step 3: Fill the look up table");
 
       if (side == 0) {
         FillLookUpTable(lookupEField,
@@ -1220,7 +1190,6 @@ AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoisson(Int_t nRRow, Int_t nZColu
     delete matricesEz[k];
   }
 }
-
 /// Force creating look-up table of Correction/Distortion by integration following
 /// drift line.
 ///
@@ -1236,7 +1205,6 @@ void AliTPCSpaceCharge3DDriftLine::ForceInitSpaceCharge3DPoissonIntegralDz
   fInitLookUp = kFALSE;
   InitSpaceCharge3DPoissonIntegralDz(nRRow, nZColumn, phiSlice, maxIteration, stoppingConvergence);
 }
-
 /// Electric field Calculation:
 ///
 ///
@@ -1372,7 +1340,6 @@ void AliTPCSpaceCharge3DDriftLine::ElectricField(TMatrixD **matricesV, TMatrixD 
     }
   }
 }
-
 ///
 /// Local distortion and correction, calculate local distortion/correction
 /// based on simplified langevin equation, see internal note ALICE-INT-2010-016.
@@ -1622,15 +1589,12 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
   TMatrixD *mCorrDrDz;
   TMatrixD *mCorrDPhiRDz;
   TMatrixD *mCorrDz;
-
   TMatrixD *mCorrIrregularDrDz;
   TMatrixD *mCorrIrregularDPhiRDz;
   TMatrixD *mCorrIrregularDz;
-
   TMatrixD *mRIrregular;
   TMatrixD *mPhiIrregular;
   TMatrixD *mZIrregular;
-
   Int_t j = nZColumn - 1;
   z0 = zList[j];
 
@@ -1790,7 +1754,6 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
     }
   }
 }
-
 /// follow the drift for exact function
 /// 
 /// \param intDrDzF 
@@ -1831,15 +1794,12 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
   TMatrixD *mDistDrDz;
   TMatrixD *mDistDPhiRDz;
   TMatrixD *mDistDz;
-
   TMatrixD *mCorrDrDz;
   TMatrixD *mCorrDPhiRDz;
   TMatrixD *mCorrDz;
-
   TMatrixD *mCorrIrregularDrDz;
   TMatrixD *mCorrIrregularDPhiRDz;
   TMatrixD *mCorrIrregularDz;
-
   TMatrixD *mRIrregular;
   TMatrixD *mPhiIrregular;
   TMatrixD *mZIrregular;
@@ -2036,7 +1996,6 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
     }
   }
 }
-
 ///
 /// \param lookupGlobal 
 /// \param lookupRDz 
@@ -2076,7 +2035,6 @@ void AliTPCSpaceCharge3DDriftLine::FillLookUpTable(AliTPCLookUpTable3DInterpolat
     }
   }
 }
-
 ///
 /// \param x
 /// \param roc
@@ -2090,7 +2048,6 @@ void AliTPCSpaceCharge3DDriftLine::GetDistortionCyl(const Float_t x[], Short_t r
   GetDistortionCylAC(x, roc, dx);
 
 }
-
 ///
 /// \param x
 /// \param roc
@@ -2135,7 +2092,6 @@ void AliTPCSpaceCharge3DDriftLine::GetDistortionCylAC(const Float_t x[], Short_t
   dx[2] = fCorrectionFactor *
           dZ;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 }
-
 /// Get Correction from irregular table
 ///
 /// \param x
@@ -2197,7 +2153,6 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCylACIrregular(const Float_t x[]
           dZ;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 
 }
-
 /// Get correction regular grid by following electron
 /// 
 /// \param x 
@@ -2244,7 +2199,6 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCylAC(const Float_t x[], Short_t
   dx[2] = fCorrectionFactor *
           dZ;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 }
-
 void AliTPCSpaceCharge3DDriftLine::GetDistortion(const Float_t x[], Short_t roc, Float_t dx[]) {
   if (!fInitLookUp) {
     AliInfo("Lookup table was not initialized! Performing the initialization now ...");
@@ -2280,7 +2234,6 @@ void AliTPCSpaceCharge3DDriftLine::GetDistortion(const Float_t x[], Short_t roc,
   dx[2] = dCyl[2];
 
 }
-
 ///
 /// \param x
 /// \param roc
@@ -2295,7 +2248,6 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCyl(const Float_t x[], Short_t r
   else
     GetCorrectionCylACIrregular(x, roc, dx);
 }
-
 ///
 /// \param x
 /// \param roc
@@ -2339,7 +2291,6 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrection(const Float_t x[], Short_t roc,
   dx[2] = dCyl[2];
 
 }
-
 ///
 /// \param z
 /// \param nx
@@ -2352,7 +2303,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDRInXY(Float_t z, Int_t n
   /// The histogram nx times ny entries.
 
   AliTPCParam *tpcParam = new AliTPCParamSR;
-
   TH2F *h = CreateTH2F("dr_xy", TString::Format("%s: DRInXY Z=%2.0f", GetTitle(), z).Data(), "x [cm]", "y [cm]",
                        "drDist [cm]",
                        nx, -250., 250., ny, -250., 250.);
@@ -2386,7 +2336,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDRInXY(Float_t z, Int_t n
   delete tpcParam;
   return h;
 }
-
 /// Simple plot functionality.
 /// Returns a 2d histogram which represents the corrections in radial direction (drDist)
 /// in respect to position z within the XY plane.
@@ -2404,7 +2353,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRInXY
   ) {
 
   AliTPCParam *tpcParam = new AliTPCParamSR;
-
   TH2F *h = CreateTH2F("dr_xy", TString::Format("%s: DRInXY Z=%2.0f", GetTitle(), z).Data(), "x [cm]", "y [cm]",
                        "drDist [cm]",
                        nx, -250., 250., ny, -250., 250.);
@@ -2438,7 +2386,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRInXY
   delete tpcParam;
   return h;
 }
-
 /// Simple plot functionality.
 /// Returns a 2d histogram which represents the corrections in r Phi direction (drPhi)
 /// in respect to position z within the XY plane.
@@ -2451,7 +2398,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRInXY
 TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDRPhiInXY(Float_t z, Int_t nx, Int_t ny) {
 
   AliTPCParam *tpcParam = new AliTPCParamSR;
-
   TH2F *h = CreateTH2F("drPhi_xy", TString::Format("%s: DRPhiInXY Z=%2.0f", GetTitle(), z).Data(), "x [cm]", "y [cm]",
                        "drPhi [cm]",
                        nx, -250., 250., ny, -250., 250.);
@@ -2467,7 +2413,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDRPhiInXY(Float_t z, Int_
       if (tpcParam->GetPadRowRadii(0, 0) <= r0 && r0 <= tpcParam->GetPadRowRadii(36, 95)) {
         Float_t phi0 = TMath::ATan2(x[1], x[0]);
         Float_t phi1 = TMath::ATan2(x[1] + dx[1], x[0] + dx[0]);
-
         Float_t dPhi = phi1 - phi0;
         if (dPhi < TMath::Pi()) dPhi += TMath::TwoPi();
         if (dPhi > TMath::Pi()) dPhi -= TMath::TwoPi();
@@ -2481,7 +2426,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDRPhiInXY(Float_t z, Int_
   delete tpcParam;
   return h;
 }
-
 /// Simple plot functionality.
 /// Returns a 2d histogram which represents the corrections in r phi direction (drPhi)
 /// in respect to position z within the XY plane.
@@ -2493,7 +2437,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDRPhiInXY(Float_t z, Int_
 TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRPhiInXY(Float_t z, Int_t nx, Int_t ny) {
 
   AliTPCParam *tpcParam = new AliTPCParamSR;
-
   TH2F *h = CreateTH2F("drPhi_xy", TString::Format("%s: DRPhiInXY Z=%2.0f", GetTitle(), z).Data(), "x [cm]", "y [cm]",
                        "drPhi [cm]",
                        nx, -250., 250., ny, -250., 250.);
@@ -2509,7 +2452,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRPhiInXY(Float_t z, Int_
       if (tpcParam->GetPadRowRadii(0, 0) <= r0 && r0 <= tpcParam->GetPadRowRadii(36, 95)) {
         Float_t phi0 = TMath::ATan2(x[1], x[0]);
         Float_t phi1 = TMath::ATan2(x[1] + dx[1], x[0] + dx[0]);
-
         Float_t dPhi = phi1 - phi0;
         if (dPhi < TMath::Pi()) dPhi += TMath::TwoPi();
         if (dPhi > TMath::Pi()) dPhi -= TMath::TwoPi();
@@ -2523,7 +2465,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRPhiInXY(Float_t z, Int_
   delete tpcParam;
   return h;
 }
-
 /// Simple plot functionality.
 /// Returns a 2d histogram which represents the corrections in longitudinal direction (dzDist)
 /// in respect to position z within the XY plane.
@@ -2535,7 +2476,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDRPhiInXY(Float_t z, Int_
 TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDZInXY(Float_t z, Int_t nx, Int_t ny) {
 
   AliTPCParam *tpcParam = new AliTPCParamSR;
-
   TH2F *h = CreateTH2F("dz_xy", TString::Format("%s: DZInXY Z=%2.0f", GetTitle(), z).Data(), "x [cm]", "y [cm]",
                        "dzDist [cm]",
                        nx, -250., 250., ny, -250., 250.);
@@ -2557,7 +2497,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramDistDZInXY(Float_t z, Int_t n
   delete tpcParam;
   return h;
 }
-
 ///
 /// \param z
 /// \param nx
@@ -2570,7 +2509,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDZInXY(Float_t z, Int_t n
   /// The histogram nx times ny entries.
 
   AliTPCParam *tpcParam = new AliTPCParamSR;
-
   TH2F *h = CreateTH2F("dz_xy", TString::Format("%s: DZInXY Z=%2.0f", GetTitle(), z).Data(), "x [cm]", "y [cm]",
                        "dzDist [cm]",
                        nx, -250., 250., ny, -250., 250.);
@@ -2592,7 +2530,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramCorrDZInXY(Float_t z, Int_t n
   delete tpcParam;
   return h;
 }
-
 /// Use 3D space charge map as an optional input
 /// The layout of the input histogram is assumed to be: (phi,r,z)
 /// Density histogram is  expected to bin in  C/m^3
@@ -2605,7 +2542,6 @@ void AliTPCSpaceCharge3DDriftLine::SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Do
   fHistogram3DSpaceCharge = hisSpaceCharge3D;
   fInitLookUp = kFALSE;
 }
-
 /// SetInputCharge
 ///
 /// \param hisSpaceCharge3D TH3* histogram for space charge
@@ -2655,7 +2591,6 @@ void AliTPCSpaceCharge3DDriftLine::SetInputSpaceCharge(TH3 *hisSpaceCharge3D, Do
 
   fInitLookUp = kFALSE;
 }
-
 /// create the distortion tree on a mesh with granularity given by step
 /// return the tree with distortions at given position
 /// Map is created on the mesh with given step size
@@ -2775,7 +2710,6 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(Double_t step) {
 
   return tree;
 }
-
 /// create the distortion tree on a mesh with granularity given nRRow, nZColumn and nPhiSlice
 /// 
 /// \param nRRowTest 
@@ -2786,36 +2720,28 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
                                                           const Int_t nPhiSliceTest) {
 
   TTreeSRedirector *pcStream = new TTreeSRedirector(Form("distortion%s.root", GetName()));
-
   Int_t nRRow;
   Int_t nZColumn;
   Int_t nPhiSlice;
   Int_t orderInterpolation;
   Int_t rbfKernel;
   Int_t irregularGridSize;
-
   const Int_t nPoint = nRRowTest * nZColTest * nPhiSliceTest;
-
   Float_t ofcRadius = AliTPCPoissonSolver::fgkOFCRadius;
   Float_t ifcRadius = AliTPCPoissonSolver::fgkIFCRadius;
   Float_t tpcZ0 = AliTPCPoissonSolver::fgkTPCZ0;
-
   Float_t dRadius = (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius) / (nRRowTest - 1);
   Float_t dZ = AliTPCPoissonSolver::fgkTPCZ0 / (nZColTest - 1);
   Float_t dPhi = TMath::TwoPi() / nPhiSliceTest;
-
   Double_t phi0;
   Double_t z0;
   Double_t r0;
-
   Float_t drDist;
   Float_t drPhiDist;
   Float_t dzDist;
-
   Float_t drCorr;
   Float_t drPhiCorr;
   Float_t dzCorr;
-
   Double_t charge;
   Double_t potential;
   Double_t chargeFormula;
@@ -2829,7 +2755,6 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
   rbfKernel = GetRBFKernelType();
 
   Int_t rocNum;
-
   Float_t point0[] = {0.0, 0.0, 0.0};
   Float_t point1[] = {0.0, 0.0, 0.0};
   Float_t dist[] = {0.0, 0.0, 0.0};
@@ -2850,7 +2775,7 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
         charge = GetSpaceChargeDensity(r0, phi0, z0);
         potential = GetPotential(r0, phi0, z0);
         if (!(fFormulaChargeRho == NULL))
-	        chargeFormula = fFormulaChargeRho->Eval(r0,phi0,z0);
+          chargeFormula = fFormulaChargeRho->Eval(r0, phi0, z0);
         if (!(fFormulaPotentialV == NULL))
           potentialFormula = fFormulaPotentialV->Eval(r0, phi0, z0);
         point0[0] = r0;
@@ -2905,7 +2830,6 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
 
   return tree;
 }
-
 /// InterpolationPhi is only used for reading from TH3F (since it is not cylindrical)
 ///
 /// \param r
@@ -2916,11 +2840,9 @@ Double_t AliTPCSpaceCharge3DDriftLine::InterpolatePhi(TH3 *h3, const Double_t ph
   Int_t ubx = h3->GetXaxis()->FindBin(phi);
   if (phi < h3->GetXaxis()->GetBinCenter(ubx)) ubx -= 1;
   Int_t obx = ubx + 1;
-
   Int_t uby = h3->GetYaxis()->FindBin(r);
   if (r < h3->GetYaxis()->GetBinCenter(uby)) uby -= 1;
   Int_t oby = uby + 1;
-
   Int_t ubz = h3->GetZaxis()->FindBin(z);
   if (z < h3->GetZaxis()->GetBinCenter(ubz)) ubz -= 1;
   Int_t obz = ubz + 1;
@@ -2937,16 +2859,13 @@ Double_t AliTPCSpaceCharge3DDriftLine::InterpolatePhi(TH3 *h3, const Double_t ph
   Double_t xw = h3->GetXaxis()->GetBinCenter(obx) - h3->GetXaxis()->GetBinCenter(ubx);
   Double_t yw = h3->GetYaxis()->GetBinCenter(oby) - h3->GetYaxis()->GetBinCenter(uby);
   Double_t zw = h3->GetZaxis()->GetBinCenter(obz) - h3->GetZaxis()->GetBinCenter(ubz);
-
   Double_t xd = (phi - h3->GetXaxis()->GetBinCenter(ubx)) / xw;
   Double_t yd = (r - h3->GetYaxis()->GetBinCenter(uby)) / yw;
   Double_t zd = (z - h3->GetZaxis()->GetBinCenter(ubz)) / zw;
-
   Double_t v[] = {h3->GetBinContent(ubx, uby, ubz), h3->GetBinContent(ubx, uby, obz),
                   h3->GetBinContent(ubx, oby, ubz), h3->GetBinContent(ubx, oby, obz),
                   h3->GetBinContent(obx, uby, ubz), h3->GetBinContent(obx, uby, obz),
                   h3->GetBinContent(obx, oby, ubz), h3->GetBinContent(obx, oby, obz)};
-
   Double_t i1 = v[0] * (1 - zd) + v[1] * zd;
   Double_t i2 = v[2] * (1 - zd) + v[3] * zd;
   Double_t j1 = v[4] * (1 - zd) + v[5] * zd;
@@ -2957,21 +2876,20 @@ Double_t AliTPCSpaceCharge3DDriftLine::InterpolatePhi(TH3 *h3, const Double_t ph
   return result;
 
 }
-
 ///
 /// \param z
 /// \param nx
 /// \param ny
 /// \return
 TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramSCInXY(Float_t z, Int_t nx, Int_t ny) {
-  TH2F *h = CreateTH2F("spaceCharge", GetTitle(), "x [cm]", "y [cm]", "#rho_{sc} [C/m^{3}/e_{0}]",
+  TH2F *h = CreateTH2F("spaceCharge", TString::Format("%s : Charge Density at Z=%.2f cm", GetTitle(), z).Data(),
+                       "x [cm]", "y [cm]", "#rho_{sc} [C/m^{3}/e_{0}]",
                        nx, -250., 250., ny, -250., 250.);
 
   for (Int_t iy = 1; iy <= ny; ++iy) {
     Double_t yp = h->GetYaxis()->GetBinCenter(iy);
     for (Int_t ix = 1; ix <= nx; ++ix) {
       Double_t xp = h->GetXaxis()->GetBinCenter(ix);
-
       Float_t r = TMath::Sqrt(xp * xp + yp * yp);
       Float_t phi = TMath::ATan2(yp, xp);
 
@@ -2987,7 +2905,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramSCInXY(Float_t z, Int_t nx, I
 
   return h;
 }
-
 /// return a simple histogram containing the space charge distribution (input for the calculation)
 ///
 /// \param phi
@@ -2996,7 +2913,8 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramSCInXY(Float_t z, Int_t nx, I
 /// \return
 TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramSCInZR(Float_t phi, Int_t nz, Int_t nr) {
 
-  TH2F *h = CreateTH2F("spaceCharge ", GetTitle(), "z [cm]", "r [cm]", "#rho_{sc} [C/m^{3}/e_{0}]",
+  TH2F *h = CreateTH2F("spaceCharge ", TString::Format("%s : Charge Density at #phi=%.2f ", GetTitle(), phi).Data(),
+                       "z [cm]", "r [cm]", "#rho_{sc} [C/m^{3}/e_{0}]",
                        nz, -250., 250., nr, 85., 250.);
   for (Int_t ir = 1; ir <= nr; ++ir) {
     Float_t r = h->GetYaxis()->GetBinCenter(ir);
@@ -3012,7 +2930,6 @@ TH2F *AliTPCSpaceCharge3DDriftLine::CreateHistogramSCInZR(Float_t phi, Int_t nz,
   }
   return h;
 }
-
 /// returns the (input) space charge density at a given point according
 /// Note: input in [cm], output in [C/m^3/e0] !!
 Float_t AliTPCSpaceCharge3DDriftLine::GetSpaceChargeDensity(Float_t r, Float_t phi, Float_t z) {
@@ -3030,7 +2947,6 @@ Float_t AliTPCSpaceCharge3DDriftLine::GetSpaceChargeDensity(Float_t r, Float_t p
 
   return sc;
 }
-
 /// returns the (input) space charge density at a given point according
 /// Note: input in [cm], output in [C/m^3/e0] !!
 Float_t AliTPCSpaceCharge3DDriftLine::GetPotential(Float_t r, Float_t phi, Float_t z) {
@@ -3040,7 +2956,7 @@ Float_t AliTPCSpaceCharge3DDriftLine::GetPotential(Float_t r, Float_t phi, Float
   const Int_t order = 1; //
 
   const Float_t x[] = {r, phi, z};
-  Float_t v  = 0;
+  Float_t v = 0;
   if (z > -1e-16)
     v = GetPotentialCylAC(x, 0);
   else
@@ -3067,13 +2983,10 @@ void AliTPCSpaceCharge3DDriftLine::InverseGlobalToLocalDistortionGlobalInvTable(
   const Int_t nStep, const Bool_t useCylAC, Int_t stepR, Int_t stepZ, Int_t stepPhi, Int_t type) {
   Double_t z, phi, r, zAfter, zPrevious, ddR, ddRPhi, ddZ, zl, drDist, dRPhi, dzDist, ddPhi, dPhi, deltaZ, r0, z0, phi0;
   Float_t x[3], dx[3], pdx[3];
-
   Int_t roc;
-
   const Float_t gridSizeR = (fgkOFCRadius - fgkIFCRadius) / (nRRow - 1);
   const Float_t gridSizeZ = fgkTPCZ0 / (nZColumn - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / phiSlice;
-
   TMatrixD *distDrDz;
   TMatrixD *distDPhiRDz;
   TMatrixD *distDz;
@@ -3082,15 +2995,12 @@ void AliTPCSpaceCharge3DDriftLine::InverseGlobalToLocalDistortionGlobalInvTable(
   TMatrixD *corrDrDz;
   TMatrixD *corrDPhiRDz;
   TMatrixD *corrDz;
-
   TMatrixD *listR;
   TMatrixD *listPhi;
   TMatrixD *listZ;
-
   TMatrixD *matricesCorrDrDz[phiSlice];
   TMatrixD *matricesCorrDPhiRDz[phiSlice];
   TMatrixD *matricesCorrDz[phiSlice];
-
   TMatrixD *matricesRList[phiSlice];
   TMatrixD *matricesPhiList[phiSlice];
   TMatrixD *matricesZList[phiSlice];
@@ -3291,7 +3201,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseGlobalToLocalDistortionGlobalInvTable(
   }
   delete lookupInverseCorr;
 }
-
 ///
 /// \param matricesEr
 /// \param matricesEPhi
@@ -3326,7 +3235,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseLocalDistortionToElectricField(
   TMatrixD *tDistDz;
   TMatrixD *tDistDPhiRDz;
   TMatrixD *tDistDrDz;
-
   Float_t c02c12 = fC0 * fC0 + fC1 * fC1;
 
   // solve local integration
@@ -3388,7 +3296,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseLocalDistortionToElectricField(
     }
   }
 }
-
 /// Inverse Electric Field to Charge
 /// using partial differential
 ///
@@ -3409,10 +3316,8 @@ void AliTPCSpaceCharge3DDriftLine::InverseElectricFieldToCharge(
 
   Float_t radius;
   Double_t drDist, dzDist, dPhi;
-
   Int_t mPlus, mMinus, mPlus2, mMinus2, signPlus, signMinus;
   Int_t symmetry = 0;
-
   const Float_t gridSizeR = (fgkOFCRadius - fgkIFCRadius) / (nRRow - 1);
   const Float_t gridSizeZ = fgkTPCZ0 / (nZColumn - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / phiSlice;
@@ -3706,7 +3611,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseElectricFieldToCharge(
       -1 * (matrixEr(nRRow - 1, nZColumn - 1) / radius + drDist + dPhi / radius + dzDist);
   }
 }
-
 ///
 /// \param matricesCharge
 /// \param matricesEr
@@ -3738,7 +3642,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseDistortionMaps(
   Double_t *rList = new Double_t[nRRow];
   Double_t *zList = new Double_t[nZColumn];
   Double_t *phiList = new Double_t[phiSlice];
-
   const Float_t gridSizeR = (fgkOFCRadius - fgkIFCRadius) / (nRRow - 1);
   const Float_t gridSizeZ = fgkTPCZ0 / (nZColumn - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / phiSlice;
@@ -3777,7 +3680,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseDistortionMaps(
   delete[] rList;
   delete[] phiList;
 }
-
 /// CalculateEField (New Version: with reorganization of modules)
 /// Calculate E field based on look-up table created by Poisson Solver
 /// * Differentiate V(r) and solve for E(r) using special equations for the first and last row
@@ -3809,7 +3711,6 @@ void AliTPCSpaceCharge3DDriftLine::CalculateEField(
   const Float_t gridSizeR = (fgkOFCRadius - fgkIFCRadius) / (nRRow - 1);
   const Float_t gridSizeZ = fgkTPCZ0 / (nZColumn - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / phiSlice;
-
   TMatrixD *matricesEr[phiSlice], *matricesEz[phiSlice], *matricesEPhi[phiSlice];
 
   AliSysInfo::AddStamp("CalcField", 100, 0, 0);
@@ -3863,7 +3764,6 @@ void AliTPCSpaceCharge3DDriftLine::CalculateEField(
     delete matricesEPhi[k];
   }
 }
-
 ///
 /// Integrate at z direction Ez for electron drift calculation
 ///
@@ -3912,7 +3812,6 @@ void AliTPCSpaceCharge3DDriftLine::IntegrateEz(
     }
   }
 }
-
 /// GetCorrection from no-drift
 ///
 /// \param x Float_t point origin
@@ -3970,7 +3869,6 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCylNoDrift(const Float_t x[], co
   dx[2] = -dzDist;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 
 }
-
 ///
 /// \param x
 /// \param roc
@@ -3982,7 +3880,6 @@ void AliTPCSpaceCharge3DDriftLine::GetDistortionCylNoDrift(const Float_t x[], Sh
   GetCorrectionCylNoDrift(x, roc, dx);
   for (Int_t j = 0; j < 3; ++j) dx[j] = -dx[j];
 }
-
 /// inverse for no drift
 /// inverse from global distortion to local distortion
 ///
@@ -4002,9 +3899,7 @@ void AliTPCSpaceCharge3DDriftLine::InverseGlobalToLocalDistortionNoDrift(
 
   Double_t z, phi, r, zAfter, zPrevious, ddR, ddRPhi, ddZ, drDist, dRPhi, dzDist;
   Float_t x[3], dx[3], pdx[3], dxp1[3], dxp2[3];
-
   Int_t roc;
-
   TMatrixD *distDrDz;
   TMatrixD *distDPhiRDz;
   TMatrixD *distDz;
@@ -4069,7 +3964,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseGlobalToLocalDistortionNoDrift(
     }
   }
 }
-
 ///
 /// \param matricesCharge
 /// \param matricesEr
@@ -4093,7 +3987,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseDistortionMapsNoDrift(
   Double_t *rList = new Double_t[nRRow];
   Double_t *zList = new Double_t[nZColumn];
   Double_t *phiList = new Double_t[phiSlice];
-
   const Float_t gridSizeR = (fgkOFCRadius - fgkIFCRadius) / (nRRow - 1);
   const Float_t gridSizeZ = fgkTPCZ0 / (nZColumn - 1);
   const Float_t gridSizePhi = TMath::TwoPi() / phiSlice;
@@ -4119,7 +4012,6 @@ void AliTPCSpaceCharge3DDriftLine::InverseDistortionMapsNoDrift(
   delete[] rList;
   delete[] phiList;
 }
-
 ///
 /// \param matricesChargeA
 /// \param matricesChargeC
@@ -4166,7 +4058,6 @@ void AliTPCSpaceCharge3DDriftLine::GetChargeDensity(
     }
   }
 }
-
 ///
 /// \param x
 /// \param roc
@@ -4200,7 +4091,6 @@ Double_t AliTPCSpaceCharge3DDriftLine::GetChargeCylAC(const Float_t x[], Short_t
   else
     return fInterpolatorChargeC->GetValue(r, phi, -z);
 }
-
 ///
 /// \param x
 /// \param roc
@@ -4234,7 +4124,6 @@ Double_t AliTPCSpaceCharge3DDriftLine::GetPotentialCylAC(const Float_t x[], Shor
   else
     return fInterpolatorPotentialC->GetValue(r, phi, -z);
 }
-
 /// chargeInverse
 ///
 /// \param x
@@ -4269,7 +4158,6 @@ Double_t AliTPCSpaceCharge3DDriftLine::GetInverseChargeCylAC(const Float_t x[], 
   else
     return fInterpolatorInverseChargeC->GetValue(r, phi, z);
 }
-
 ///
 /// \param x
 /// \param roc
@@ -4310,7 +4198,6 @@ void AliTPCSpaceCharge3DDriftLine::GetLocalDistortionCylAC(const Float_t x[], Sh
           dZ;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 
 }
-
 ///
 /// \param x
 /// \param roc
@@ -4356,7 +4243,6 @@ void AliTPCSpaceCharge3DDriftLine::GetInverseLocalDistortionCylAC(const Float_t 
           dZ;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 
 }
-
 /// Function for setting Potential Boundary Values and Charge distribution input TFormula
 ///
 /// \param vTestFunction
@@ -4376,9 +4262,7 @@ void AliTPCSpaceCharge3DDriftLine::SetPotentialBoundaryAndCharge(TFormula *vTest
   // grid size for one side
   TMatrixD *chargeA;
   TMatrixD *chargeC;
-
   Double_t radius0, z0, phi0, z0neg;
-
   Int_t indexB = 0;
   for (Int_t k = 0; k < fNPhiSlices; k++) {
     chargeA = fMatrixChargeA[k];
@@ -4388,7 +4272,7 @@ void AliTPCSpaceCharge3DDriftLine::SetPotentialBoundaryAndCharge(TFormula *vTest
 
     /// Fill the non-boundary values
     for (Int_t i = 0; i < fNRRows; i++) {
-      radius0 = fgkIFCRadius + (i*gridSizeR);
+      radius0 = fgkIFCRadius + (i * gridSizeR);
       for (Int_t j = 0; j < fNZColumns; j++) {
         z0 = j * gridSizeZ;
         z0neg = -z0;
