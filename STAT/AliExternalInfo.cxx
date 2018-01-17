@@ -516,9 +516,10 @@ TTree*  AliExternalInfo::GetTree(TString type, TString period, TString pass, TSt
   if (tree==NULL) tree=  GetTree(type, period,"");
   if (tree==NULL) tree=  GetTree(type, "","");
   if (tree==NULL){
-    ::Error("AliExternalInfo::GetTree","Friend tree %s not valid or empty",type.Data()); 
+    ::Error("AliExternalInfo::GetTree","Tree %s not valid or empty",type.Data()); 
     return 0;
   }
+  ::Info("AliExternalInfo::GetTree","Tree %s has %d entries",type.Data(),(int)tree->GetEntries()); 
   TString indexName= fConfigMap[type + ".indexname"];
   TString oldIndexName= fConfigMap[type + ".oldindexname"];
   if (oldIndexName.Length()>0 && tree->FindBranch(oldIndexName.Data())){
@@ -553,7 +554,8 @@ TTree*  AliExternalInfo::GetTree(TString type, TString period, TString pass, TSt
     if (ftree==NULL || ftree->GetEntries()<=0){
       ::Error("AliExternalInfo::GetTree","Friend tree %s not valid or empty",fname.Data()); 
       continue;
-    }    
+    }
+    else ::Info("AliExternalInfo::GetTree","Friend tree %s has %d entries",fname.Data(),(int)ftree->GetEntries());
     if (nDots==2){
       tree->SetAlias(conditionName.Data(),"(1+0)");    
       ftree->SetAlias(conditionName.Data(),condition.Data());
@@ -1279,13 +1281,18 @@ TTree*  AliExternalInfo::GetTreeMCPassGuess(){
         prfound=kFALSE;         // flag to know if any RD production with matching production name was found
         list.clear();                  //reset set of RDinfos
 
-        for (Int_t j=0; j<n; j++) {        //search for matching RD production and get pass info
+        if(osMCanchprodname->String()==""){
+                ::Warning("GetMCPassGuess", "No anchor pass name provided for this MC prod! Guesses set to NONE");
+                osMCanchprodname=new TObjString("NONE");
+                osrdpass= new TObjString("NONE");
+                cout<<"Used for guess: RDpass guess: NONE"<<endl;
+        }        
+        else{
+            for (Int_t j=0; j<n; j++) {        //search for matching RD production and get pass info
 
             RDTree->GetEntry(j);
 
-            if(osMCanchprodname->String()==""){
-                cout<<"Complete match: no. No anchorprod found -> skip"<<endl;
-                break;}
+
 
             if(osMCanchprodname->String()==osrdprod->String()){           //if RDprodname is right then save the prod infos to be later eventually able to look up what was closest in terms of aliphys/aliroot
                 prfound=kTRUE;                                            //found a prodction with correct production name
@@ -1324,7 +1331,7 @@ TTree*  AliExternalInfo::GetTreeMCPassGuess(){
               cout<<l<<" RDprodname: "<<(*iter).anchprodname<<" AliPhys: "<<(*iter).aliphys<<" AliRoot: "<<(*iter).aliroot<<" RDpass: "<<(*iter).anchpass<<endl;
             }
             
-            --it;                                                       //let iterator point to entry right before MC entry that is neither a "cpass" nor a "cosmics" pass
+            --it;                                                       //let iterator point to entry right before MC entry that is neither a "cpass" nor a "cosmics" pass nor a 
             for (multiset<anchprod>::iterator iter=it; ; --iter){       //go backwards through list and take first pass guess that is not a cpass
                 cout<<"Looking for MC aliphys: "<<tempprod.aliphys<<" MC aliroot: "<<tempprod.aliroot<<endl;
                 if(!((*iter).anchpass).Contains("cpass") && !((*iter).anchpass).Contains("cosmic") && (!isgp || TPRegexp("^pass").MatchB((*iter).anchpass,"i"))){
@@ -1339,11 +1346,14 @@ TTree*  AliExternalInfo::GetTreeMCPassGuess(){
 
             }
         }
-        branchpass->Fill();
-        branchphys->Fill();
-        branchroot->Fill();		
-        }
+    }
+            
+    branchpass->Fill();
+    branchphys->Fill();
+    branchroot->Fill();		
 
+    }
+    
     MCTree->Write("dumptree_MC_guess");
     delete MCFile;    
     return(MCTree);
@@ -1391,6 +1401,9 @@ TString  AliExternalInfo::GetMCPassGuess(TString sMCprodname){
  
  for(int i=0;i<guesstree->GetEntries();i++){        //loop over tree with guesses
      guesstree->GetEntry(i);
+     if(osAnchprodname->String()=="NONE"){
+               ::Error("GetMCPassGuess", "Empty anchor pass name!");   
+     }
      osMCprodname = TObjString(pMCprodname);
      if(osMCprodname.String()==sMCprodname){       //if match found return corresponding guess
          cout<<"Anchor Pass guess for "<<osMCprodname.String()<<": "<<osMCpassguess->String()<<endl;
