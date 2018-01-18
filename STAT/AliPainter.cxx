@@ -26,7 +26,11 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
+#include "TCanvas.h"
 #include <vector>
+#include <map>
+
+typedef std::map<int, std::vector<int> > axisRangesMap;
 
 ///
 /// \brief Method allow to divide pad according to specify properties.
@@ -339,6 +343,75 @@ std::vector<TString> AliPainter::FitOptParser(TString fitStr) {
   }
   return fitOptions;
 }
+/// \brief Private method for parsing ranges options in AliPainter::DrawHistogram
+/// \param ranges - String with ranges values
+/// \return - map, where key is projection and values from ranges
+std::vector<TString> AliPainter::RangesParser(TString ranges) {
+  TString range = "";
+  Ssiz_t fromStart0 = 0;
+  Int_t axisNum = 0, numCnt = 1;
+  axisRangesMap result;
+  while (ranges.Tokenize(range, fromStart0, ",")) {
+    if (range.IsFloat()) {
+      if (numCnt % 2 == 0 ) axisNum--;
+      numCnt++;
+      HistLoop(range, axisNum, result);
+    }
+    else HistLoop(range, axisNum, result);
+    axisNum++;
+  }
+  std::vector<TString> arr;
+  for (Int_t i = 0; i < result.size(); i++) {
+    arr.push_back("");
+  }
+  std::vector<TString> res;
+  AliPainter::rec(result.size(), result, arr, res);
+  return res;
+}
+
+void AliPainter::rec(Int_t n, axisRangesMap result, std::vector<TString> arr, std::vector<TString> &res) {
+  TString tempStr = "";
+  if (n > 0) {
+    for (Int_t i = 0; i < result[result.size() - n].size(); i += 2) {
+      arr[result.size() - n] = TString::Format("%d,%d", result[result.size() - n][i],
+                                               result[result.size() - n][i + 1]).Data();
+      rec(n - 1, result, arr, res);
+    }
+  }
+  else {
+    for (Int_t j = 0; j < arr.size();j++) {
+      tempStr += arr[j];
+      tempStr += ",";
+    }
+    res.push_back(tempStr);
+  }
+}
+/// \brief Private method for filling result map (returned by  AliPainter::RangesParser())
+/// \param range - concrete range value or python-like array
+/// \param axisNum - num for parsing
+/// \param result - output map
+void AliPainter::HistLoop (TString range , Int_t axisNum, axisRangesMap &result) {
+  TString num = "";
+  Ssiz_t fromStart1 = 0;
+  Int_t i = 0;
+  Int_t rangeArr[4] = {0,0,1,0}; // iLow, iHigh, step, delta
+  std::vector<int> vRanges;
+  if (!range.IsFloat() && range.CountChar(':') > 0) {
+    while (range.Tokenize(num, fromStart1, ":")) {
+      rangeArr[i] = num.Atoi();
+      i++;
+    }
+    for (Int_t j = rangeArr[0]; j <= rangeArr[1] - rangeArr[3]; j += rangeArr[2]) {
+      vRanges.push_back(j);
+      vRanges.push_back(j + rangeArr[3]);
+    }
+    result[axisNum] = vRanges;
+  }
+  else if (range.IsFloat()) {
+    result[axisNum].push_back(range.Atoi());
+  }
+}
+
 
 ///TODO - parser for such fit string and implement via interface @Boris
 ///axis title, title, entries, description, all info from histogram
@@ -401,17 +474,20 @@ std::vector<TString> AliPainter::FitOptParser(TString fitStr) {
   TF1 *aFormExp = new TF1("formExp", "[0]*TMath::Exp(-[1]*x)");
   fitter->SetFitFunction(aFormExp, 0);
   AliTMinuitToolkit::SetPredefinedFitter("ExpFit", fitter);
-   AliPainter::DrawHistogram("hisK0DMassQPtTgl()(0)(ExpFit,misac(10,50),NULL,funOption(2,1,6))(err)", hisArray, NULL, NULL);
+   AliPainter::DrawHistogram("hisK0DMassQPtTgl(1:4)(0)(ExpFit,misac(10,50),NULL,funOption(2,1,6))(err)", hisArray, NULL, NULL);
    }
   \endcode
  */
 TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramArray, TObjArray *metaData, TObjArray * keepArray){
   TString   exprsn  = expression;
   TString   hisName = "";
+  TString   axesLoopString = "";
   std::vector<TString> atts;
   //TString fitOptions[4]  = {"", "", "", ""};
   std::vector<TString> fitOptions;
+  axisRangesMap rangesMap;
   THn *his    = nullptr;
+  Int_t valNum = 0;
   //check for match of brackets
   if (exprsn.CountChar('(') != exprsn.CountChar(')')) {
     ::Error("AliPainter::DrawHistogram","check brackets in %s", expression);
@@ -420,7 +496,6 @@ TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramAr
   // check for existing of histogram
   hisName = exprsn(0,exprsn.Index("(",0));
   his     = (THn *) histogramArray->FindObject(hisName);
-
   if (his == nullptr) {
     ::Info("AliPainter::DrawHistogram", "%s not found", (const char*)hisName);
     return nullptr;
@@ -429,7 +504,6 @@ TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramAr
   atts = AliPainter::ArgsParser(exprsn);
   //parsing fitting options
   fitOptions = AliPainter::FitOptParser(atts[2]);
-
   //TODO: may be to make some warning or return 0 if atts.size != 4?
   Int_t nDims = his->GetNdimensions();
   //checks  for number of dimensions below than quantity of projections
@@ -437,40 +511,54 @@ TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramAr
     ::Error("AliPainter::DrawHistogram", "%s has only %d dimensions", (const char*)hisName, nDims);
     return nullptr; //does ::Error already break the program?
   }
+  //create map with array of ranges values
+  std::vector<TString> RangesString;
+  RangesString = AliPainter::RangesParser(atts[0]);
+  TCanvas *c[RangesString.size()];
+  TPad *p[RangesString.size()];
 
-  // TH1
-  if (atts[1].CountChar(',') + 1 == 1) {
-    TH1 *his1 = nullptr;
-    his1 = his->Projection(atts[1].Atoi());
-    if (SetHistogramRange((TObject *) his1,atts[0]) != nullptr) his1 = (TH1 *) SetHistogramRange((TObject *) his1,atts[0]);
-    if (atts[2] != "") AliTMinuitToolkit::Fit(his1, fitOptions[0], fitOptions[1], fitOptions[2], fitOptions[3]);
-    his1->Draw();
-    return (TObject *) his1;
-  }
-  // TH2
-  else if (atts[1].CountChar(',') + 1 == 2) {
-    TH2 *his2 = nullptr;
-    his2 = his->Projection(TString(atts[1].Tokenize(",")->At(0)->GetName()).Atoi(),
-                           TString(atts[1].Tokenize(",")->At(1)->GetName()).Atoi());
-    if (SetHistogramRange((TObject *) his2,atts[0]) != nullptr) his2 = (TH2 *) SetHistogramRange((TObject *) his2,atts[0]);
-    his2->Draw();
-    return (TObject *) his2;
-  }
-    // TH3
-  else if (atts[1].CountChar(',') + 1 == 3) {
-    TH3 *his3 = nullptr;
-    his3 = his->Projection(TString(atts[1].Tokenize(",")->At(0)->GetName()).Atoi(),
-                           TString(atts[1].Tokenize(",")->At(1)->GetName()).Atoi(),
-                           TString(atts[1].Tokenize(",")->At(2)->GetName()).Atoi());
-    if (SetHistogramRange((TObject *) his3,atts[0]) != nullptr) his3 = (TH3 *) SetHistogramRange((TObject *) his3,atts[0]);
-    his3->Draw();
-    return (TObject *) his3;
-  }
-  else if (atts[1].CountChar(',') + 1 > 3) {
-    return (TObject *) his->Projection(atts[1].CountChar(',') + 1);
-  }
-  else {
-    return his;
+  for (Int_t j = 0; j<RangesString.size();j++) {
+    //std::cout << RangesString[j] << std::endl;
+    c[j] = new TCanvas(TString::Format("canv[%d]", j).Data(),"",200,10,700,900);
+    p[j] = new TPad(TString::Format("p[%d]", j).Data(),"",0.03,0.62,0.50,0.92,21);
+    p[j]->Draw();
+    p[j]->cd();
+    // TH1
+    if (atts[1].CountChar(',') + 1 == 1) {
+      TH1 *his1 = nullptr;
+      his1 = his->Projection(atts[1].Atoi());
+      if (SetHistogramRange((TObject *) his1, RangesString[j] ) != nullptr)
+        his1 = (TH1 *) SetHistogramRange((TObject *) his1, RangesString[j] );
+      if (atts[2] != "") AliTMinuitToolkit::Fit(his1, fitOptions[0], fitOptions[1], fitOptions[2], fitOptions[3]);
+      his1->DrawCopy();
+     // return (TObject *) his1;
+
+    }
+      // TH2
+    else if (atts[1].CountChar(',') + 1 == 2) {
+      TH2 *his2 = nullptr;
+      his2 = his->Projection(TString(atts[1].Tokenize(",")->At(0)->GetName()).Atoi(),
+                             TString(atts[1].Tokenize(",")->At(1)->GetName()).Atoi());
+      if (SetHistogramRange((TObject *) his2, RangesString[j] ) != nullptr)
+        his2 = (TH2 *) SetHistogramRange((TObject *) his2, RangesString[j] );
+      his2->Draw();
+      return (TObject *) his2;
+    }
+      // TH3
+    else if (atts[1].CountChar(',') + 1 == 3) {
+      TH3 *his3 = nullptr;
+      his3 = his->Projection(TString(atts[1].Tokenize(",")->At(0)->GetName()).Atoi(),
+                             TString(atts[1].Tokenize(",")->At(1)->GetName()).Atoi(),
+                             TString(atts[1].Tokenize(",")->At(2)->GetName()).Atoi());
+      if (SetHistogramRange((TObject *) his3, RangesString[j]) != nullptr)
+        his3 = (TH3 *) SetHistogramRange((TObject *) his3, RangesString[j] );
+      his3->Draw();
+      return (TObject *) his3;
+    } else if (atts[1].CountChar(',') + 1 > 3) {
+      return (TObject *) his->Projection(atts[1].CountChar(',') + 1);
+    } else {
+      return his;
+    }
   }
 
 }
