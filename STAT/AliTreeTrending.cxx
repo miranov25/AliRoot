@@ -223,7 +223,7 @@ Bool_t  AliTreeTrending::InitSummaryTrending(TString statusDescription[3], Float
   // 3.) compute detector status graphs
   fStatusGraphM = MakeMultiGraphStatus(fTree,"statusBar", sStatusBarVars+";tagID",sStatusBarNames,cutString.Data(),sCriteria,kTRUE);
   if(fStatusGraphM==0) {
-    AliError("MakeMultiGraphStatus() returned NULL pointer");
+    ::Error("AliTreeTrending::InitSummaryTrending","MakeMultiGraphStatus() returned NULL pointer when plotting the following variables: %s", sStatusBarVars.Data());
     return 0;
   }
   else{
