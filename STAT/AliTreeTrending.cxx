@@ -222,7 +222,10 @@ Bool_t  AliTreeTrending::InitSummaryTrending(TString statusDescription[3], Float
 
   // 3.) compute detector status graphs
   fStatusGraphM = MakeMultiGraphStatus(fTree,"statusBar", sStatusBarVars+";tagID",sStatusBarNames,cutString.Data(),sCriteria,kTRUE);
-  if(fStatusGraphM==0) return 0;
+  if(fStatusGraphM==0) {
+    AliError("MakeMultiGraphStatus() returned NULL pointer");
+    return 0;
+  }
   else{
     fStatusGraphM->GetYaxis()->SetTitle("");
     fStatusGraphM->GetHistogram()->SetTitle("");
@@ -356,8 +359,6 @@ TMultiGraph * AliTreeTrending::MakeMultiGraphStatus(TTree *fTree, TString mgrNam
     }
   }
   
-  // !!WRONG!! Update number of variables (for some variables no graph may have been added in the loop above)
-//  nVars=graphArray->GetEntries()-1; 
   Bool_t added=kFALSE;
   // 2.) Set Y ranges and Y labels for each graph
   Double_t *yBins = new Double_t[nVars+1];

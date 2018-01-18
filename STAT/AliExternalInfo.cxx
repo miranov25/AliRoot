@@ -1177,8 +1177,7 @@ bool operator< (const anchprod & otheranchprod) const       //define comparison 
 		return (aliphys+aliroot < otheranchprod.aliphys+otheranchprod.aliroot);         //compare first aliphysics, if same (i.e. empty) then aliroot, duplicates in ali versions would be stored only once also if passes diferent
 	}
 };
-
-  
+ 
 TTree*  AliExternalInfo::GetTreeMCPassGuess(){
 //    returns and stores (dumptree_MC.root) the tree containing the pass guesses for each MC production
     
