@@ -306,6 +306,16 @@ void AliTPCSpaceCharge3DDriftLine::InitAllocateMemory() {
       fNRRows, NULL, fListR, fNPhiSlices, NULL, fListPhi, fNZColumns, NULL, fListZA,
       fInterpolationOrder);
 
+  fLookupElectricFieldA =
+    new AliTPCLookUpTable3DInterpolatorD(
+      fNRRows, NULL, fListR, fNPhiSlices, NULL, fListPhi, fNZColumns, NULL, fListZA,
+      fInterpolationOrder);
+
+  fLookupElectricFieldC =
+    new AliTPCLookUpTable3DInterpolatorD(
+      fNRRows, NULL, fListR, fNPhiSlices, NULL, fListPhi, fNZColumns, NULL, fListZA,
+      fInterpolationOrder);
+
   fLookupIntCorrIrregularA->SetKernelType(fRBFKernelType);
   fLookupIntCorrIrregularC->SetKernelType(fRBFKernelType);
 }
@@ -371,7 +381,8 @@ AliTPCSpaceCharge3DDriftLine::~AliTPCSpaceCharge3DDriftLine() {
   delete fLookupDistC;
   delete fLookupInverseDistA;
   delete fLookupInverseDistC;
-
+  delete fLookupElectricFieldA;
+  delete fLookupElectricFieldC;
   delete fInterpolatorChargeA;
   delete fInterpolatorPotentialA;
   delete fInterpolatorChargeC;
@@ -577,6 +588,12 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
           fLookupDistA->SetLookUpR(matricesDistDrDz);
           fLookupDistA->SetLookUpPhi(matricesDistDPhiRDz);
           fLookupDistA->SetLookUpZ(matricesDistDz);
+
+
+          fLookupElectricFieldA->SetLookUpR(matricesEr);
+          fLookupElectricFieldA->SetLookUpPhi(matricesEPhi);
+          fLookupElectricFieldA->SetLookUpZ(matricesEz);
+
           potentialBoundary = fListPotentialBoundaryA;
           f1BoundaryIFC = fFormulaBoundaryIFCA;
           f1BoundaryOFC = fFormulaBoundaryOFCA;
@@ -594,6 +611,12 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
           fLookupDistC->SetLookUpR(matricesDistDrDz);
           fLookupDistC->SetLookUpPhi(matricesDistDPhiRDz);
           fLookupDistC->SetLookUpZ(matricesDistDz);
+
+
+          fLookupElectricFieldC->SetLookUpR(matricesEr);
+          fLookupElectricFieldC->SetLookUpPhi(matricesEPhi);
+          fLookupElectricFieldC->SetLookUpZ(matricesEz);
+
           potentialBoundary = fListPotentialBoundaryC;
           f1BoundaryIFC = fFormulaBoundaryIFCC;
           f1BoundaryOFC = fFormulaBoundaryOFCC;
@@ -684,11 +707,12 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
         lookupLocalDist->CopyFromMatricesToInterpolator();
         lookupLocalCorr->CopyFromMatricesToInterpolator();
         fLookupDistA->CopyFromMatricesToInterpolator();
-
+        fLookupElectricFieldA->CopyFromMatricesToInterpolator();
       } else {
         lookupLocalDist->CopyFromMatricesToInterpolator();
         lookupLocalCorr->CopyFromMatricesToInterpolator();
         fLookupDistC->CopyFromMatricesToInterpolator();
+        fLookupElectricFieldC->CopyFromMatricesToInterpolator();
       }
 
       AliInfo(Form("Step 3: Local distortion and correction: %f\n", w.CpuTime()));
@@ -820,6 +844,8 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
 ///
 void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
   Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence,
+  TMatrixD **matricesErA, TMatrixD **matricesEPhiA, TMatrixD **matricesEzA,
+  TMatrixD **matricesErC, TMatrixD **matricesEPhiC, TMatrixD **matricesEzC,
   TMatrixD **matricesDistDrDzA,
   TMatrixD **matricesDistDPhiRDzA, TMatrixD **matricesDistDzA, TMatrixD **matricesCorrDrDzA,
   TMatrixD **matricesCorrDPhiRDzA, TMatrixD **matricesCorrDzA, TMatrixD **matricesDistDrDzC,
@@ -912,6 +938,10 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
         matricesRIrregular = fMatrixRListIrregularA;
         matricesZIrregular = fMatrixZListIrregularA;
 
+        fLookupElectricFieldA->SetLookUpR(matricesErA);
+        fLookupElectricFieldA->SetLookUpPhi(matricesEPhiA);
+        fLookupElectricFieldA->SetLookUpZ(matricesEzA);
+
         fLookupDistA->SetLookUpR(matricesDistDrDz);
         fLookupDistA->SetLookUpPhi(matricesDistDPhiRDz);
         fLookupDistA->SetLookUpZ(matricesDistDz);
@@ -931,6 +961,10 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
         matricesPhiIrregular = fMatrixPhiListIrregularC;
         matricesRIrregular = fMatrixRListIrregularC;
         matricesZIrregular = fMatrixZListIrregularC;
+
+        fLookupElectricFieldC->SetLookUpR(matricesErC);
+        fLookupElectricFieldC->SetLookUpPhi(matricesEPhiC);
+        fLookupElectricFieldC->SetLookUpZ(matricesEzC);
 
         fLookupDistC->SetLookUpR(matricesDistDrDz);
         fLookupDistC->SetLookUpPhi(matricesDistDPhiRDz);
@@ -970,10 +1004,12 @@ void AliTPCSpaceCharge3DDriftLine::InitSpaceCharge3DPoissonIntegralDz(
         fInterpolatorPotentialA->InitCubicSpline();
 
         fLookupDistA->CopyFromMatricesToInterpolator();
+        fLookupElectricFieldA->CopyFromMatricesToInterpolator();
       } else {
         fInterpolatorPotentialC->SetValue(matricesV);
         fInterpolatorPotentialC->InitCubicSpline();
         fLookupDistC->CopyFromMatricesToInterpolator();
+        fLookupElectricFieldC->CopyFromMatricesToInterpolator();
       }
 
       AliInfo("Step 1: Integrate distortion and correction the drift line");
@@ -2639,7 +2675,7 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(Double_t step) {
         xyz[1] = phi;
         xyz[2] = z;
 
-        GetLocalDistortionCylAC(xyz, roc, localDist);
+        GetLocalDistortionCyl(xyz, roc, localDist);
 
         GetCorrection(xyzDist, roc, corr);
 
@@ -2746,6 +2782,13 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
   Double_t potential;
   Double_t chargeFormula;
   Double_t potentialFormula;
+  Double_t ePhi;
+  Double_t eR;
+  Double_t eZ;
+  Double_t ePhiFormula;
+  Double_t eRFormula;
+  Double_t eZFormula;
+
 
   nRRow = GetNRRows();
   nZColumn = GetNZColumns();
@@ -2759,7 +2802,8 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
   Float_t point1[] = {0.0, 0.0, 0.0};
   Float_t dist[] = {0.0, 0.0, 0.0};
   Float_t corr[] = {0.0, 0.0, 0.0};
-  Float_t localDist[3];    // distortion
+  Float_t localDist[] = {0.0, 0.0, 0.0};
+  Double_t electricField[] = {0.0, 0.0, 0.0};
 
   Float_t r1;
   Float_t phi1;
@@ -2775,9 +2819,18 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
         charge = GetSpaceChargeDensity(r0, phi0, z0);
         potential = GetPotential(r0, phi0, z0);
         if (!(fFormulaChargeRho == NULL))
-          chargeFormula = fFormulaChargeRho->Eval(r0, phi0, z0);
+          chargeFormula =  -1 * fFormulaChargeRho->Eval(r0, phi0, z0);
         if (!(fFormulaPotentialV == NULL))
           potentialFormula = fFormulaPotentialV->Eval(r0, phi0, z0);
+
+        if (!(fFormulaEPhi == NULL))
+          ePhiFormula = fFormulaEPhi->Eval(r0, phi0, z0);
+        if (!(fFormulaEr == NULL))
+          eRFormula = fFormulaEr->Eval(r0, phi0, z0);
+        if (!(fFormulaEz == NULL))
+          eZFormula = fFormulaEz->Eval(r0, phi0, z0);
+
+
         point0[0] = r0;
         point0[1] = phi0;
         point0[2] = z0;
@@ -2785,7 +2838,13 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
         rocNum = (z0 > 0.0) ? 0 : 18;
 
         GetDistortionCyl(point0, rocNum, dist);
-        GetLocalDistortionCylAC(point0, rocNum, localDist);
+        GetLocalDistortionCyl(point0, rocNum, localDist);
+        GetElectricFieldCyl(point0,rocNum,electricField);
+
+
+        eR = electricField[0];
+        ePhi = electricField[1];
+        eZ = electricField[2];
         drDist = dist[0];
         drPhiDist = dist[1];
         dzDist = dist[2];
@@ -2815,10 +2874,16 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
                     "dzCorr=" << dzCorr <<
                     "drCorr=" << drCorr <<
                     "drPhiCorr=" << drPhiCorr <<
-                    "charge=" << charge <<
-                    "potential=" << potential <<
-                    "chargeFormula=" << chargeFormula <<
-                    "potentialFormula=" << potentialFormula <<
+                    "ER=" << eR <<
+                    "EZ=" << eZ <<
+                    "ERAnalytic=" << eRFormula <<
+                    "EPhiAnalytic=" << ePhiFormula <<
+                    "EZAnalytic="<< eZFormula <<
+                    "rho=" << charge <<
+                    "v=" << potential <<
+                    "rhoAnalytic=" << chargeFormula <<
+                    "vAnalytic=" << potentialFormula <<
+                    "EPhi=" << ePhi <<
                     "\n";
       }
     }
@@ -4158,11 +4223,13 @@ Double_t AliTPCSpaceCharge3DDriftLine::GetInverseChargeCylAC(const Float_t x[], 
   else
     return fInterpolatorInverseChargeC->GetValue(r, phi, z);
 }
+
+
 ///
 /// \param x
 /// \param roc
 /// \param dx
-void AliTPCSpaceCharge3DDriftLine::GetLocalDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]) {
+void AliTPCSpaceCharge3DDriftLine::GetLocalDistortionCyl(const Float_t x[], Short_t roc, Float_t dx[]) {
   Float_t dR, dRPhi, dZ;
   Double_t r, phi, z;
   Int_t sign;
@@ -4198,11 +4265,55 @@ void AliTPCSpaceCharge3DDriftLine::GetLocalDistortionCylAC(const Float_t x[], Sh
           dZ;  // z distortion - (scaled with drift velocity dependency on the Ez field and the overall scaling factor)
 
 }
+
+/// Get Electric field from look up table
+/// \param x
+/// \param roc
+/// \param dx
+void AliTPCSpaceCharge3DDriftLine::GetElectricFieldCyl(const Float_t x[], Short_t roc, Double_t dx[]) {
+  Double_t eR, ePhi, eZ;
+  Double_t r, phi, z;
+  Int_t sign;
+
+  r = x[0];
+  phi = x[1];
+  if (phi < 0) phi += TMath::TwoPi();                   // Table uses phi from 0 to 2*Pi
+  if (phi > TMath::TwoPi()) phi = phi - TMath::TwoPi();                   // Table uses phi from 0 to 2*Pi
+
+  z = x[2];                                         // Create temporary copy of x[2]
+
+  if ((roc % 36) < 18) {
+    sign = 1;       // (TPC A side)
+  } else {
+    sign = -1;       // (TPC C side)
+  }
+
+  if (sign == 1 && z < fgkZOffSet) z = fgkZOffSet;    // Protect against discontinuity at CE
+  if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
+
+
+  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+    AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
+
+  if (z > -1e-6)
+    fLookupElectricFieldA->GetValue(r, phi, z, eR, ePhi, eZ);
+  else
+    fLookupElectricFieldC->GetValue(r, phi, z, eR, ePhi, eZ);
+
+  dx[0] = eR;
+  dx[1] = ePhi;
+  dx[2] = eZ;
+
+}
+
+
+
+
 ///
 /// \param x
 /// \param roc
 /// \param dx
-void AliTPCSpaceCharge3DDriftLine::GetInverseLocalDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]) {
+void AliTPCSpaceCharge3DDriftLine::GetInverseLocalDistortionCyl(const Float_t x[], Short_t roc, Float_t dx[]) {
   if (!fInitLookUp) {
     AliInfo("Lookup table was not initialized! Performing the initialization now ...");
     InitSpaceCharge3DPoissonIntegralDz(129, 129, 144, 100, 1e-8);
@@ -4248,7 +4359,7 @@ void AliTPCSpaceCharge3DDriftLine::GetInverseLocalDistortionCylAC(const Float_t 
 /// \param vTestFunction
 /// \param rhoTestFunction
 ///
-void AliTPCSpaceCharge3DDriftLine::SetPotentialBoundaryAndCharge(TFormula *vTestFunction, TFormula *rhoTestFunction) {
+void AliTPCSpaceCharge3DDriftLine::SetPotentialBoundaryAndChargeFormula(TFormula *vTestFunction, TFormula *rhoTestFunction) {
   /**** allocate memory for charge ***/
   // we allocate pointer to TMatrixD array to picture 3D (slices), this representation should be revised
   // since it is easier for GPU implementation to run for 1D memory

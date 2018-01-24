@@ -42,6 +42,8 @@ public:
                                           Double_t stopConvergence);
   void InitSpaceCharge3DPoissonIntegralDz(
     Int_t nRRow, Int_t nZColumn, Int_t phiSlice, Int_t maxIteration, Double_t stopConvergence,
+    TMatrixD **matricesErA, TMatrixD **matricesEphiA, TMatrixD **matricesEzA,
+    TMatrixD **matricesErC, TMatrixD **matricesEphiC, TMatrixD **matricesEzC,
     TMatrixD **matricesDistDrDzA, TMatrixD **matricesDistDPhiRDzA, TMatrixD **matricesDistDzA,
     TMatrixD **matricesCorrDrDzA, TMatrixD **matricesCorrDPhiRDzA, TMatrixD **matricesCorrDzA,
     TMatrixD **matricesDistDrDzC, TMatrixD **matricesDistDPhiRDzC, TMatrixD **matricesDistDzC,
@@ -185,9 +187,9 @@ public:
   void GetChargeDensity(TMatrixD **matricesChargeA, TMatrixD **matricesChargeC, TH3 *spaceChargeHistogram3D,
                         const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice);
 
-  void GetInverseLocalDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
+  void GetInverseLocalDistortionCyl(const Float_t x[], Short_t roc, Float_t dx[]);
 
-  void GetLocalDistortionCylAC(const Float_t x[], Short_t roc, Float_t dx[]);
+  void GetLocalDistortionCyl(const Float_t x[], Short_t roc, Float_t dx[]);
 
   void SetIrregularGridSize(Int_t size) { fIrregularGridSize = size; }
 
@@ -195,7 +197,7 @@ public:
 
   Int_t GetRBFKernelType() { return fRBFKernelType; }
 
-  void SetPotentialBoundaryAndCharge(TFormula *vTestFunction, TFormula *rhoTestFunction);
+  void SetPotentialBoundaryAndChargeFormula(TFormula *vTestFunction, TFormula *rhoTestFunction);
 
   void SetBoundaryIFCA(TF1 *f1) {
     fFormulaBoundaryIFCA = new TF1(*f1);
@@ -225,9 +227,15 @@ public:
     fFormulaBoundaryCE = new TF1(*f1);
   }
 
+  void SetElectricFieldFormula(TFormula *formulaEr, TFormula *formulaEPhi, TFormula *formulaEz) {
+    fFormulaEr = formulaEr;
+    fFormulaEPhi = formulaEPhi;
+    fFormulaEz = formulaEz;
+  }
+
   Float_t GetSpaceChargeDensity(Float_t r, Float_t phi, Float_t z);
   Float_t GetPotential(Float_t r, Float_t phi, Float_t z);
-
+  void GetElectricFieldCyl(const Float_t x[], Short_t roc, Double_t dx[]);
   void Init();
 
 private:
@@ -325,6 +333,10 @@ private:
   AliTPCLookUpTable3DInterpolatorD *fLookupInverseDistA; //-> look-up table for local distortion (from inverse) side A
   AliTPCLookUpTable3DInterpolatorD *fLookupInverseDistC; //-> look-up table for local distortion (from inverse) side C
 
+
+  AliTPCLookUpTable3DInterpolatorD *fLookupElectricFieldA; //->look-up table for electric field side A
+  AliTPCLookUpTable3DInterpolatorD *fLookupElectricFieldC; //-> look-up table for electric field side C
+
   TH3 *fHistogram3DSpaceCharge;  //-> Histogram with the input space charge histogram - used as an optional input
   TH3 *fHistogram3DSpaceChargeA;  //-> Histogram with the input space charge histogram - used as an optional input side A
   TH3 *fHistogram3DSpaceChargeC;  //-> Histogram with the input space charge histogram - used as an optional input side C
@@ -338,6 +350,13 @@ private:
 
   TFormula *fFormulaPotentialV = NULL; ///<- potential V(r,rho,z) function
   TFormula *fFormulaChargeRho = NULL;  ///<- charge density Rho(r,rho,z) function
+
+  // analytic formula for E
+  TFormula *fFormulaEPhi = NULL; ///<- ePhi EPhi(r,rho,z) electric field (phi) function
+  TFormula *fFormulaEr = NULL; ///<- er Er(r,rho,z) electric field (r) function
+  TFormula *fFormulaEz = NULL; ///<- ez Ez(r,rho,z) electric field (z) function
+
+
 
   AliTPCPoissonSolver *fPoissonSolver; //-> Pointer to a poisson solver
 

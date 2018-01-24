@@ -33,7 +33,7 @@ EOF
   N_GOOD=$(grep -cE 'AliTPCSpaceCharge3DDriftLineTest.*Test.*OK.*' testAliTPCSpaceCharge3DDriftLineTest.log)
   N_BAD=$(grep -cE 'AliTPCSpaceCharge3DDriftLineTest.*Test.*FAILED.*' testAliTPCSpaceCharge3DDriftLineTest.log)
   TEST_STATUS=0
-  if [[ $N_GOOD < 18 ]]; then
+  if [[ $N_GOOD < 32 ]]; then
     # alilog_error "spacechargeTest.testAliTPCSpaceCharge3DDriftLine: Invariant test failed"
     ((TEST_STATUS++))
   fi

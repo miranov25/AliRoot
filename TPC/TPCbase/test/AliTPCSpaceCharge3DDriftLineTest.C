@@ -12,32 +12,23 @@
 
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
-#include "TLegend.h"
-#include "TF1.h"
-#include "TCanvas.h"
 #include "TROOT.h"
 #include "TString.h"
-#include "TH3.h"
-#include "TH2.h"
-#include "TObjString.h"
-#include "TObjArray.h"
 #include "TMath.h"
-#include "TMap.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "AliTPCSpaceCharge3DDriftLine.h"
-#include "AliTPCPoissonSolver.h"
-#include "TClonesArray.h"
 #include "TTreeStream.h"
-#include "TGrid.h"
-#include "TStatToolkit.h"
 
 #endif
 
 
-void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice, const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType, Double_t *resultList);
-void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice, const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType);
-
+void UnitTestCorrectnessDistortion(Int_t rRow, Int_t zColumn, Int_t phiSlice, Int_t rRowTest, Int_t zColumnTest, const Int_t phiSliceTest, Int_t correctionType,TTreeSRedirector *pcStream);
+void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice, const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType, TTreeSRedirector *pcStream);
+void GetResidueFromDistortionTree(Int_t unitTestId, const char * filename,const char *numericName, const char *analyticName, Double_t *errorList, Int_t &indexErrorList,TTreeSRedirector *pcStream);
+void GetResidueFromDistortionAnalyticTree(Int_t unitTestId, const char * numericFileName, const char * analyticFileName, const char *varName, Double_t *errorList, Int_t &indexErrorList,TTreeSRedirector *pcStream);
+void WriteErrorToPCStream(Int_t unitTestId, Int_t rRow, Int_t zColumn, Int_t phiSlice, Int_t rRowTest, Int_t zColumnTest, Int_t phiSliceTest, Int_t correctionType, Int_t varNameId, Double_t *errorList, Int_t  indexErrorList,TTreeSRedirector *pcStream);
+void PrintErrorStatus();
 
 Double_t dFunctionVZ(Double_t *x, Double_t *par); // function test for boundary
 const Double_t gkVCE  = -50000;
@@ -76,39 +67,27 @@ void AliTPCSpaceCharge3DDriftLineTest() {
   Int_t phiSliceList[] = {18,36,72,144,257};
   Int_t rRow, zColumn, phiSlice;
   const Int_t numberExperiment = 1;
-  const Int_t rRowTest = 17;
-  const Int_t zColumnTest = 17;
-  const Int_t phiSliceTest = 18;
+  Int_t rRowTest = 17;
+  Int_t zColumnTest = 17;
+  Int_t phiSliceTest = 18;
   Int_t nPoint =rRowTest * zColumnTest * phiSliceTest;
 
-  // Create a ROOT Tree
-  TFile f("TpcDumpDistortionDrift.root","RECREATE");
-  TTree * testDump = new TTree("testDump","Collections of AliTPCSpaceCharge3DDriftLineTest");
-  testDump->Branch("nPoint",&nPoint,"nPoint/I");
-  testDump->Branch("rRow", &rRow,"rRow/I");
-  testDump->Branch("zColumn", &zColumn,"zColumn/I");
-  testDump->Branch("phiSlice", &phiSlice,"phiSlice/I");
+  TTreeSRedirector *pcStream = new TTreeSRedirector("spaceChargeDriftLinePerformance.root","RECREATE");
 
-  Double_t resultList[18];
 
   for (Int_t iExperiment = 0;iExperiment < numberExperiment;iExperiment++) {
-
     rRow = rRowList[iExperiment];
     zColumn = zColumnList[iExperiment];
     phiSlice = phiSliceList[iExperiment];
-
-    UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0, resultList); // regular
-    UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1, resultList); // irregular
-    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest,
-                                        0); // regular interpolation
-    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest,
-                                        1); // Irregular interpolation
-
-    testDump->Fill();
+    UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0,  pcStream); // regular
+    UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1,  pcStream); // irregular
+    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0, pcStream); // regular interpolation
+    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1, pcStream); // Irregular interpolation
   }
 
-  f.Write();
+  delete pcStream;
 
+  PrintErrorStatus();
 }
 
 
@@ -117,7 +96,7 @@ void AliTPCSpaceCharge3DDriftLineTest() {
 /// - a set of known functions and stored it in scExact
 /// - generate numerical calculation in scNumeric
 /// - calculate relative error (accepted if less than 10^-2)
-void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice,  const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType, Double_t *resultList) {
+void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,   Int_t rRowTest, Int_t zColumnTest, Int_t phiSliceTest, Int_t correctionType, TTreeSRedirector *pcStream) {
 
   const Int_t maxIter = 100;
   const Float_t convergenceError = 1e-8;
@@ -196,11 +175,13 @@ void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const 
   else
     ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion","Case irregular grid interpolation for Correction");
 
-  sc->SetPotentialBoundaryAndCharge(vTestFunction, rhoTestFunction);
+  sc->SetPotentialBoundaryAndChargeFormula(vTestFunction, rhoTestFunction);
+  sc->SetElectricFieldFormula(erTestFunction,ePhiTestFunction,ezTestFunction);
   sc->SetCorrectionType(correctionType);
   sc->SetOmegaTauT1T2(0.35, 1., 1.);
 
-  scExact->SetPotentialBoundaryAndCharge(vTestFunction, rhoTestFunction);
+  scExact->SetPotentialBoundaryAndChargeFormula(vTestFunction, rhoTestFunction);
+  scExact->SetElectricFieldFormula(erTestFunction,ePhiTestFunction,ezTestFunction);
   scExact->SetCorrectionType(correctionType);
   scExact->SetOmegaTauT1T2(0.35, 1., 1.);
 
@@ -278,8 +259,10 @@ void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const 
                       dvdE);
 
   scExact->InitSpaceCharge3DPoissonIntegralDz(rRow, zColumn, phiSlice, maxIter, convergenceError,
+                                              matricesErExactA, matricesEPhiExactA, matricesEzExactA,
+                                              matricesErExactC, matricesEPhiExactC, matricesEzExactC,
                                               matricesDistDrDzExactA, matricesDistDPhiRDzExactA, matricesDistDzExactA,
-                                              matricesCorrDrDzExactA, matricesCorrDPhiRDzExactA, matricesCorrDzExactA,
+                                                                                                                                                                                                                                                                                        matricesCorrDrDzExactA, matricesCorrDPhiRDzExactA, matricesCorrDzExactA,
                                               matricesDistDrDzExactC, matricesDistDPhiRDzExactC, matricesDistDzExactC,
                                               matricesCorrDrDzExactC, matricesCorrDPhiRDzExactC, matricesCorrDzExactC,
                                               intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction);
@@ -287,205 +270,91 @@ void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const 
   sc->CreateDistortionTree(rRowTest,zColumnTest,phiSliceTest);
   scExact->CreateDistortionTree(rRowTest,zColumnTest,phiSliceTest);
 
-  // calculate error for
-  TFile fileNumeric(TString::Format("distortion%s.root",sc->GetName()));
-  TTree *treeNumeric = (TTree *)fileNumeric.Get("distortion");
-  treeNumeric->AddFriend("distortionExact = distortion",TString::Format("distortion%s.root",scExact->GetName()));
-
-  Int_t nPoint = treeNumeric->GetEntries();
 
 
-  treeNumeric->Draw("abs(distortionExact.drDist)", "", "goff");
-  Double_t *numericList = treeNumeric->GetV1();
-  Double_t maxVar = TMath::MaxElement(nPoint, numericList);
-  treeNumeric->Draw(TString::Format("abs(distortionExact.drDist-drDist)/%f",maxVar), "", "goff");
-  numericList = treeNumeric->GetV1();
 
-  Double_t residueMean = TMath::Mean(nPoint, numericList);
-  Double_t residueRMS = TMath::RMS(nPoint, numericList);
-  Double_t residueMax = TMath::MaxElement(nPoint, numericList);
-
-  printf("====== Correctness Testing (numeric vs exact solution) =====\n");
-  printf("V(r,phi,z) = %s\n", (vTestFunction->GetExpFormula()).Data());
-  printf("rho(r,phi,z) = %s\n", (rhoTestFunction->GetExpFormula()).Data());
-  printf("drDist\n");
-  printf("Mean Residue drDist \t\t= %.5E\n",residueMean);
-  printf("RMS  Residue drDist \t\t= %.5E\n",residueRMS);
-  printf("Max  Residue drDist \t\t= %.5E\n",residueMax);
-  Int_t counterResultList = 0;
-  resultList[counterResultList++] = residueMean;
-  resultList[counterResultList++] = residueRMS;
-  resultList[counterResultList++] = residueMax;
-
-  treeNumeric->Draw("abs(distortionExact.drPhiDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  treeNumeric->Draw(TString::Format("abs(distortionExact.drPhiDist-drPhiDist)/%f",maxVar), "", "goff");
-  numericList = treeNumeric->GetV1();
-  residueMean = TMath::Mean(nPoint, numericList);
-  residueRMS = TMath::RMS(nPoint, numericList);
-  residueMax = TMath::MaxElement(nPoint, numericList);
-
-  resultList[counterResultList++] = residueMean;
-  resultList[counterResultList++] = residueRMS;
-  resultList[counterResultList++] = residueMax;
+  printf("================= Correctness Testing (numeric vs analytic solution) ========================\n");
+  printf("v(r,phi,z)\t\t= %-100s\n",  (vTestFunction->GetExpFormula()).Data());
+  printf("rho(r,phi,z)\t= %-100s\n", (rhoTestFunction->GetExpFormula()).Data());
+  printf("---------------------------------------------------------------------------------------------\n");
+  printf("%-50.50s%-15s%-15s%-15s\n","var","mean","rms","max");
+  printf("---------------------------------------------------------------------------------------------\n");
 
 
-  printf("drPhiDist\n");
-  printf("Mean Residue drPhiDist \t= %.5E\n",residueMean);
-  printf("RMS  Residue drPhiDist \t= %.5E\n",residueRMS);
-  printf("Max  Residue drPhiDist \t= %.5E\n",residueMax);
+  Int_t indexErrorList = 0;
+  Int_t varNameId = 0;
+  Double_t errorList[200];
+  Int_t oldIndexErrorList = indexErrorList;
 
-  treeNumeric->Draw("abs(distortionExact.dzDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  treeNumeric->Draw(TString::Format("abs(distortionExact.dzDist-dzDist)/%f",maxVar), "", "goff");
-  numericList = treeNumeric->GetV1();
-  residueMean = TMath::Mean(nPoint, numericList);
-  residueRMS = TMath::RMS(nPoint, numericList);
-  residueMax = TMath::MaxElement(nPoint, numericList);
-
-  printf("dzDist\n");
-  printf("Mean Residue dzDist \t\t= %.5E\n",residueMean);
-  printf("RMS  Residue dzDist \t\t= %.5E\n",residueRMS);
-  printf("Max  Residue dzDist \t\t= %.5E\n",residueMax);
-
-  resultList[counterResultList++] = residueMean;
-  resultList[counterResultList++] = residueRMS;
-  resultList[counterResultList++] = residueMax;
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"rho","rhoAnalytic",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
 
 
-  if (resultList[0] < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Correctness) drDist",
-           "Test OK: Mean Residue=%.2E < %.2E", resultList[0], maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Correctness) drDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E",resultList[0], maxEpsilon);
-  if (resultList[3] < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Correctness) drPhiDist",
-            "Test OK: Mean Residue=%.2E < %.2E", resultList[3], maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Correctness) drPhiDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", resultList[3], maxEpsilon);
-  if (resultList[6] < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Correctness) dzDist",
-           "Test OK: Mean Residue=%.2E < %.2E", resultList[6], maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Correctness) dzDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", resultList[6], maxEpsilon);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"v","vAnalytic",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"ER","ERAnalytic",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"EPhi","EPhiAnalytic",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"EZ","EZAnalytic",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drLocalDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drPhiLocalDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"dzLocalDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drPhiDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"dzDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
 
 
-  printf("======  Consistency Testing relative error (distortion- correction) =====\n");
+  printf("\n\n");
+  printf("================= Consistency testing  (distortion - correction) ============================\n");
   if (correctionType == 0)
     printf("Correction type: case regular grid interpolation\n");
   else
     printf("Correction type: case irregular grid interpolation\n");
+  printf("---------------------------------------------------------------------------------------------\n");
+  printf("%-50.50s%-15s%-15s%-15s\n","var","mean","rms","max");
+  printf("---------------------------------------------------------------------------------------------\n");
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"-drCorr","drDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"-drPhiCorr","drPhiDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
 
-  nPoint = treeNumeric->GetEntries();
-
-  treeNumeric->Draw("abs(drDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  Double_t meanVar = TMath::Mean(nPoint, numericList);
-  Double_t rmsVar = TMath::RMS(nPoint, numericList);
-  printf("drDist (distortion r)\n");
-  printf("mean drDist \t\t\t= %.5E cm\nrms drDist\t\t\t= %.5E cm\nmax drDist\t\t\t= %.5E cm\n",meanVar,rmsVar,maxVar);
-
-
-  treeNumeric->Draw("abs(drDist+drCorr)", "", "goff");
-  numericList = treeNumeric->GetV1();
-
-  residueMean = TMath::Mean(nPoint, numericList);
-  residueRMS = TMath::RMS(nPoint, numericList);
-  residueMax = TMath::MaxElement(nPoint, numericList);
-
-  resultList[counterResultList++] = residueMean;
-  resultList[counterResultList++] = residueRMS;
-  resultList[counterResultList++] = residueMax;
+  GetResidueFromDistortionTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),"-dzCorr","dzDist",errorList,indexErrorList, pcStream);
+  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
 
 
-  printf("Mean Residue drDist \t\t= %.5E cm\n", residueMean);
-  printf("RMS  Residue drDist \t\t= %.5E cm\n", residueRMS);
-  printf("Max  Residue drDist \t\t= %.5E cm\n", residueMax);
-
-  treeNumeric->Draw("abs(drPhiDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  meanVar = TMath::Mean(nPoint, numericList);
-  rmsVar = TMath::RMS(nPoint, numericList);
-  printf("drPhiDist (r * distortion Phi)\n");
-  printf("mean drPhiDist \t\t= %.5E cm\nrms drPhiDist \t\t= %.5E cm\nmax drPhiDist \t\t= %.5E cm\n",meanVar,rmsVar,maxVar);
-
-  treeNumeric->Draw("abs(drPhiDist+drPhiCorr)", "", "goff");
-  numericList = treeNumeric->GetV1();
-
-  residueMean = TMath::Mean(nPoint, numericList);
-  residueRMS = TMath::RMS(nPoint, numericList);
-  residueMax = TMath::MaxElement(nPoint, numericList);
-
-
-  resultList[counterResultList++] = residueMean;
-  resultList[counterResultList++] = residueRMS;
-  resultList[counterResultList++] = residueMax;
-
-  printf("Mean Residue drPhiDist \t= %.5E cm\n", residueMean);
-  printf("RMS  Residue drPhiDist \t= %.5E cm\n", residueRMS);
-  printf("Max  Residue drPhiDist \t= %.5E cm\n", residueMax);
-
-  treeNumeric->Draw("abs(dzDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  meanVar = TMath::Mean(nPoint, numericList);
-  rmsVar = TMath::RMS(nPoint, numericList);
-
-  printf("dzDist (distortion z)\n");
-  printf("mean dzDist \t\t\t= %.5E cm\nrms dzDist\t\t\t= %.5E cm\nmax dzDist\t\t\t= %.5E cm\n",meanVar,rmsVar,maxVar);
-
-
-  treeNumeric->Draw("abs(dzDist+dzCorr)", "", "goff");
-  numericList = treeNumeric->GetV1();
-
-  residueMean = TMath::Mean(nPoint, numericList);
-  residueRMS = TMath::RMS(nPoint, numericList);
-  residueMax = TMath::MaxElement(nPoint, numericList);
-
-
-  resultList[counterResultList++] = residueMean;
-  resultList[counterResultList++] = residueRMS;
-  resultList[counterResultList++] = residueMax;
-
-  printf("Mean Residue dzDist \t\t= %.5E cm\n", residueMean);
-  printf("RMS  Residue dzDist \t\t= %.5E cm\n", residueRMS);
-  printf("Max  Residue dzDist \t\t= %.5E cm\n", residueMax);
-
-
-  if (resultList[9] < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Consistency) drDist",
-           "Test OK: Mean Residue=%.2E < %.2E", resultList[9] , maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion(Consistency) drDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", resultList[9] , maxEpsilon);
-
-  if (resultList[12] < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Consistency) drPhiDist",
-           "Test OK: Mean Residue=%.2E < %.2E", resultList[12] , maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion(Consistency) drPhiDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", resultList[12] , maxEpsilon);
-
-  if (resultList[15] < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion (Consistency) dzDist",
-           "Test OK: Mean Residue=%.2E < %.2E", resultList[15] , maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion(Consistency) dzDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", resultList[15] , maxEpsilon);
-
-
-
-
-  delete scExact;
-  delete sc;
-
+  //(*pcStream) << "\n";
 
   for (Int_t m = 0;m <phiSlice;m++) {
     delete matricesVExactA[m];
@@ -511,6 +380,10 @@ void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const 
     delete matricesCorrDPhiRDzExactC[m];
     delete matricesCorrDzExactC[m];
   }
+
+  delete scExact;
+  delete sc;
+
   ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion", "End");
 
 }
@@ -523,7 +396,7 @@ void UnitTestCorrectnessDistortion(const Int_t rRow, const Int_t zColumn, const 
 /// - generate numerical calculation of distortions and corrections in sc
 /// - calc
 /// \param correctionType Int_t 0-> use regular interpolation, 1->use irregularinterpolation
-void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice, const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType) {
+void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice, const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType, TTreeSRedirector *pcStream) {
   const Int_t maxIter = 100;
   const Float_t convergenceError = 1e-8;
 
@@ -545,14 +418,10 @@ void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, 
   potentialBoundaryFunctionInZ->SetParName(1,"amplitude");
   potentialBoundaryFunctionInZ->SetParameter(0,zShort);
   potentialBoundaryFunctionInZ->SetParameter(1,amplitude);
-  potentialBoundaryFunctionInZ->Draw();
-
-
   // charge in histogram
   TH3 * chargeA = new TH3F ("charge A","charge A",250, 0.0, TMath::TwoPi(), 250, 85.0, 250.0, 250,0.0,250.0);
   TH3 * chargeC = new TH3F ("charge C","charge C",250, 0.0, TMath::TwoPi(), 250, 85.0, 250.0, 250,0.0,250.0);
 
-  ::Info( "distortionIFCDeltaPotential","Begin");
   AliTPCSpaceCharge3DDriftLine * sc = new AliTPCSpaceCharge3DDriftLine(TString::Format("distortionIFCDeltaPotentialRRow%dZCol%dPhiSlice%d",rRow,zColumn,phiSlice).Data(),TString::Format("distortionIFCDeltaPotentialRRow%dZCol%dPhiSlice%d",rRow,zColumn,phiSlice).Data(), rRow,zColumn,phiSlice);
 
   // set the input boundary potential and charge densities
@@ -567,102 +436,41 @@ void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, 
 
   ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort", "Creating test points");
   sc->CreateDistortionTree(rRowTest,zColumnTest,phiSliceTest);
-//  sc->CreateDistortionTree(5.0);
 
-  printf("====== Test :  Consistency Testing relative error (distortion- correction) =====\n");
+
+  printf("================= Consistency testing  (distortion - correction) ============================\n");
+  printf("v(r,phi,z)\t\t= %-100s\n", "(z < z0) ?-k0 * (TMath::Abs(z) / TMath::Abs(z0)): -k0 + k1 * (TMath::Abs(z) - z0);");
+  printf("zShort = %.3f cm, V (max)=%.f V\n",zShort,amplitude);
+
   if (correctionType == 0)
     printf("Correction type: case regular grid interpolation\n");
   else
     printf("Correction type: case irregular grid interpolation\n");
+  printf("---------------------------------------------------------------------------------------------\n");
+  printf("%-50.50s%-15s%-15s%-15s\n","var","mean","rms","max");
+  printf("---------------------------------------------------------------------------------------------\n");
+
+  Int_t indexErrorList = 90;
+  Double_t errorList[200];
+  Int_t varNameId = 11;
+  Int_t oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionTree(1,TString::Format("distortion%s.root",sc->GetName()).Data(),"-drCorr","drDist",errorList,indexErrorList,pcStream);
+  WriteErrorToPCStream(1,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+
+  GetResidueFromDistortionTree(1,TString::Format("distortion%s.root",sc->GetName()).Data(),"-drPhiCorr","drPhiDist",errorList,indexErrorList,pcStream);
+  WriteErrorToPCStream(1,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  oldIndexErrorList = indexErrorList;
+  GetResidueFromDistortionTree(1,TString::Format("distortion%s.root",sc->GetName()).Data(),"-dzCorr","dzDist",errorList,indexErrorList,pcStream);
+  WriteErrorToPCStream(1,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+  //printf("varNameId = %d\n",varNameId);
+  //oldIndexErrorList = indexErrorList;
 
 
-  printf("zShort = %.3f cm, V (max)=%.f V\n",zShort,amplitude);
-
-  TFile fileNumeric(TString::Format("distortion%s.root",sc->GetName()));
-  TTree *treeNumeric = (TTree *)fileNumeric.Get("distortion");
-  Int_t nPoint = treeNumeric->GetEntries();
-
-  treeNumeric->Draw("abs(drDist)", "", "goff");
-  Double_t * numericList = treeNumeric->GetV1();
-  Double_t maxVar = TMath::MaxElement(nPoint, numericList);
-  Double_t meanVar = TMath::Mean(nPoint, numericList);
-  Double_t rmsVar = TMath::RMS(nPoint, numericList);
-  printf("drDist (distortion r)\n");
-  printf("mean drDist \t\t\t= %.5E cm\nrms drDist\t\t\t= %.5E cm\nmax drDist\t\t\t= %.5E cm\n",meanVar,rmsVar,maxVar);
 
 
-  treeNumeric->Draw("abs(drDist+drCorr)", "", "goff");
-  numericList = treeNumeric->GetV1();
 
-  Double_t residueMean4 = TMath::Mean(nPoint, numericList);
-  Double_t residueRMS4 = TMath::RMS(nPoint, numericList);
-  Double_t residueMax4 = TMath::MaxElement(nPoint, numericList);
-
-  printf("Mean Residue drDist \t\t= %.5E cm\n", residueMean4);
-  printf("RMS  Residue drDist \t\t= %.5E cm\n", residueRMS4);
-  printf("Max  Residue drDist \t\t= %.5E cm\n", residueMax4);
-
-  treeNumeric->Draw("abs(drPhiDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  meanVar = TMath::Mean(nPoint, numericList);
-  rmsVar = TMath::RMS(nPoint, numericList);
-  printf("drPhiDist (r * distortion Phi)\n");
-  printf("mean drPhiDist \t\t= %.5E cm\nrms drPhiDist \t\t= %.5E cm\nmax drPhiDist \t\t= %.5E cm\n",meanVar,rmsVar,maxVar);
-
-  treeNumeric->Draw("abs(drPhiDist+drPhiCorr)", "", "goff");
-  numericList = treeNumeric->GetV1();
-
-  Double_t residueMean5 = TMath::Mean(nPoint, numericList);
-  Double_t residueRMS5 = TMath::RMS(nPoint, numericList);
-  Double_t residueMax5 = TMath::MaxElement(nPoint, numericList);
-
-  printf("Mean Residue drPhiDist \t= %.5E cm\n", residueMean5);
-  printf("RMS  Residue drPhiDist \t= %.5E cm\n", residueRMS5);
-  printf("Max  Residue drPhiDist \t= %.5E cm\n", residueMax5);
-
-  treeNumeric->Draw("abs(dzDist)", "", "goff");
-  numericList = treeNumeric->GetV1();
-  maxVar = TMath::MaxElement(nPoint, numericList);
-  meanVar = TMath::Mean(nPoint, numericList);
-  rmsVar = TMath::RMS(nPoint, numericList);
-
-  printf("dzDist (distortion z)\n");
-  printf("mean dzDist \t\t\t= %.5E cm\nrms dzDist\t\t\t= %.5E cm\nmax dzDist\t\t\t= %.5E cm\n",meanVar,rmsVar,maxVar);
-
-
-  treeNumeric->Draw("abs(dzDist+dzCorr)", "", "goff");
-  numericList = treeNumeric->GetV1();
-
-  Double_t residueMean6 = TMath::Mean(nPoint, numericList);
-  Double_t residueRMS6 = TMath::RMS(nPoint, numericList);
-  Double_t residueMax6 = TMath::MaxElement(nPoint, numericList);
-
-  printf("Mean Residue dzDist \t\t= %.5E cm\n", residueMean6);
-  printf("RMS  Residue dzDist \t\t= %.5E cm\n", residueRMS6);
-  printf("Max  Residue dzDist \t\t= %.5E cm\n", residueMax6);
-
-
-  if (residueMean4 < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort (Consistency) drDist",
-           "Test OK: Mean Residue=%.2E < %.2E", residueMean4, maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort(Consistency) drDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", residueMean4, maxEpsilon);
-
-  if (residueMean5 < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort (Consistency) drPhiDist",
-           "Test OK: Mean Residue=%.2E < %.2E", residueMean5, maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort (Consistency) drPhiDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", residueMean5, maxEpsilon);
-
-  if (residueMean6 < maxEpsilon)
-    ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort (Consistency) dzDist",
-           "Test OK: Mean Residue=%.2E < %.2E", residueMean6, maxEpsilon);
-  else
-    ::Error("AliTPCSpaceCharge3DDriftLineTest::UnitTestConsistencyDistortionZShort (Consistency) dzDist",
-            "Test FAILED: Mean Residue=%.2E > %.2E", residueMean6, maxEpsilon);
 
   delete chargeA;
   delete chargeC;
@@ -863,9 +671,6 @@ LocalDistCorrDzExact(TFormula *intDrDzF, TFormula *intDPhiDzF, TFormula *intDzDz
         (*distDPhiRDz)(i, j) = c0 * localIntEPhiOverEz - c1 * localIntErOverEz;
         (*distDz)(i, j) = localIntDeltaEz * dvdE * dvdE; // two times?
 
-        //(*distDrDz)(i,j) 		= localIntErOverEz;
-        //(*distDPhiRDz)(i,j) = localIntEPhiOverEz;
-        //(*distDz)(i,j)      = localIntDeltaEz; // two times?
 
         (*corrDrDz)(i, j + 1) = -1 * (*distDrDz)(i, j);
         (*corrDPhiRDz)(i, j + 1) = -1 * (*distDPhiRDz)(i, j);
@@ -904,4 +709,203 @@ Double_t dFunctionVZ(Double_t *x, Double_t *par)
   }
 
   return f;
+}
+
+
+// open distortion tree and print result
+//
+void GetResidueFromDistortionTree(Int_t unitTestId, const char * fileName,const char *numericName, const char *analyticName, Double_t *errorList, Int_t &indexErrorList,TTreeSRedirector *pcStream) {
+  TFile fileNumeric(fileName);
+  TTree *treeNumeric = (TTree *)fileNumeric.Get("distortion");
+
+
+  Int_t nPoint = treeNumeric->GetEntries();
+  // Potential
+  treeNumeric->SetEstimate(nPoint);
+  treeNumeric->Draw(TString::Format("abs(%s)",analyticName),"", "goff");
+  Double_t *numericList = treeNumeric->GetV1();
+  Double_t maxVar = TMath::MaxElement(nPoint, numericList);
+  Double_t meanVar = TMath::Mean(nPoint, numericList);
+  Double_t rmsVar = TMath::RMS(nPoint, numericList);
+
+  errorList[indexErrorList++] = meanVar;
+  errorList[indexErrorList++] = rmsVar;
+  errorList[indexErrorList++] = maxVar;
+
+  printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(%s)",analyticName).Data(),meanVar,rmsVar,maxVar);
+
+  Double_t maxVarAnalytic = maxVar;
+  if (numericName[0] == 'E')
+    maxVarAnalytic = 400;
+
+
+  treeNumeric->SetEstimate(nPoint);
+  treeNumeric->Draw(TString::Format("abs(%s - %s)/%f",analyticName,numericName,maxVarAnalytic),"", "goff");
+  numericList = treeNumeric->GetV1();
+  maxVar = TMath::MaxElement(nPoint, numericList);
+  meanVar = TMath::Mean(nPoint, numericList);
+  rmsVar = TMath::RMS(nPoint, numericList);
+  if (numericName[0] == 'E')
+    printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(%s - %s)/%f",analyticName,numericName,maxVarAnalytic).Data(),meanVar,rmsVar,maxVar);
+  else
+    printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(%s - %s)/max(abs(%s))",analyticName,numericName,analyticName).Data(),meanVar,rmsVar,maxVar);
+
+  errorList[indexErrorList++] = meanVar;
+  errorList[indexErrorList++] = rmsVar;
+  errorList[indexErrorList++] = maxVar;
+
+
+  treeNumeric->SetEstimate(nPoint);
+  treeNumeric->Draw(TString::Format("abs(%s - %s)",analyticName,numericName),"", "goff");
+  numericList = treeNumeric->GetV1();
+  maxVar = TMath::MaxElement(nPoint, numericList);
+  meanVar = TMath::Mean(nPoint, numericList);
+  rmsVar = TMath::RMS(nPoint, numericList);
+
+  errorList[indexErrorList++] = meanVar;
+  errorList[indexErrorList++] = rmsVar;
+  errorList[indexErrorList++] = maxVar;
+
+  printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(%s - %s)",analyticName,numericName).Data(),meanVar,rmsVar,maxVar);
+  treeNumeric->SetEstimate(nPoint);
+
+
+
+  printf("---------------------------------------------------------------------------------------------\n");
+  fileNumeric.Close();
+}
+
+
+
+// open distortion tree from numeric and analytic
+//
+void GetResidueFromDistortionAnalyticTree(Int_t unitTestId, const char * numericFileName, const char * analyticFileName, const char *varName, Double_t *errorList, Int_t &indexErrorList,TTreeSRedirector *pcStream) {
+  TFile fileNumeric(numericFileName);
+  TTree *treeNumeric = (TTree *)fileNumeric.Get("distortion");
+  Int_t nPoint = treeNumeric->GetEntries();
+
+
+  treeNumeric->AddFriend("analytic = distortion",analyticFileName);
+
+  treeNumeric->Draw(TString::Format("abs(analytic.%s)",varName).Data(), "", "goff");
+  Double_t *numericList = treeNumeric->GetV1();
+  Double_t maxVar = TMath::MaxElement(nPoint, numericList);
+  Double_t meanVar = TMath::Mean(nPoint, numericList);
+  Double_t rmsVar = TMath::RMS(nPoint, numericList);
+  printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(analytic.%s)",varName).Data(),meanVar,rmsVar,maxVar);
+
+  errorList[indexErrorList++] = meanVar;
+  errorList[indexErrorList++] = rmsVar;
+  errorList[indexErrorList++] = maxVar;
+
+  Double_t maxVarAnalytic = maxVar;
+
+  treeNumeric->SetEstimate(nPoint);
+  treeNumeric->Draw(TString::Format("abs(analytic.%s - %s)/%f",varName,varName,maxVarAnalytic),"", "goff");
+  numericList = treeNumeric->GetV1();
+  maxVar = TMath::MaxElement(nPoint, numericList);
+  meanVar = TMath::Mean(nPoint, numericList);
+  rmsVar = TMath::RMS(nPoint, numericList);
+
+  errorList[indexErrorList++] = meanVar;
+  errorList[indexErrorList++] = rmsVar;
+  errorList[indexErrorList++] = maxVar;
+
+
+  printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(analytic.%s - %s)/",varName,varName).Data(),meanVar,rmsVar,maxVar);
+  printf("%-50.50s\n",TString::Format("max(abs(analytic.%s))",varName).Data());
+
+
+
+  treeNumeric->SetEstimate(nPoint);
+  treeNumeric->Draw(TString::Format("abs(analytic.%s - %s)",varName,varName),"", "goff");
+  numericList = treeNumeric->GetV1();
+  maxVar = TMath::MaxElement(nPoint, numericList);
+  meanVar = TMath::Mean(nPoint, numericList);
+  rmsVar = TMath::RMS(nPoint, numericList);
+  errorList[indexErrorList++] = meanVar;
+  errorList[indexErrorList++] = rmsVar;
+  errorList[indexErrorList++] = maxVar;
+
+  printf("%-50.50s%-15.3E%-15.3E%-15.3E\n",TString::Format("abs(analytic.%s - %s)",varName,varName).Data(),meanVar,rmsVar,maxVar);
+
+  printf("---------------------------------------------------------------------------------------------\n");
+  fileNumeric.Close();
+}
+
+
+
+/// write error to a tree
+///
+void WriteErrorToPCStream(Int_t unitTestId, Int_t rRow, Int_t zColumn, Int_t phiSlice, Int_t rRowTest, Int_t zColumnTest, Int_t phiSliceTest, Int_t correctionType, Int_t varNameId, Double_t *errorList, Int_t  indexErrorList,TTreeSRedirector *pcStream) {
+
+  (*pcStream) << "residue" <<
+              "unitTestId=" << unitTestId <<
+              "rRow=" << rRow   << "zColumn=" << zColumn  << "phiSlice=" << phiSlice <<
+              "rRowTest=" << rRowTest << "zColumnTest=" << zColumnTest << "phiSliceTest=" << phiSliceTest <<
+              "correctionType=" << correctionType << "varNameId=" << varNameId <<
+              "varMean=" << errorList[indexErrorList]  <<
+              "varRms=" << errorList[indexErrorList + 1] <<
+              "varMax=" << errorList[indexErrorList + 2] <<
+              "errorRelativeMean=" << errorList[indexErrorList + 3]  <<
+              "errorRelativeRms=" << errorList[indexErrorList + 4] <<
+              "errorRelativeMax=" << errorList[indexErrorList + 5] <<
+              "errorAbsMean=" << errorList[indexErrorList + 6]  <<
+              "errorAbsRms=" << errorList[indexErrorList + 7] <<
+              "errorAbsMax=" << errorList[indexErrorList + 8] <<
+              "\n";
+
+}
+
+
+/// print error status
+///
+void PrintErrorStatus() {
+  const Double_t maxEpsilon = 1e-2;
+
+  TFile file("spaceChargeDriftLinePerformance.root");
+  TTree *t = (TTree *)file.Get("residue");
+
+
+  const Int_t numberOfUnitTest = 2;
+  const Int_t numberOfCorrectionType = 2;
+
+  const char * unitTestName[] = {"UnitTestCorrectnessDistortion","UnitTestCorrectnessDistortionZShort"};
+  const char * correctionTypeName[] = {"Regular interpolation","Irregular interpolation"};
+  const char * varName[] = {"rho","v","ER","EPhi","EZ","drLocalDist","drPhiLocalDist","dzLocalDist","drDist","drPhiDist","dzDist","drDist+drCorr","drPhiDist+drPhiCorr","dzDist+dzCorr"};
+
+  Int_t unitTestId, correctionType, varNameId;
+  Double_t varMean,errorRelativeMean,errorAbsMean;
+  Double_t varMax,errorRelativeMax,errorAbsMax;
+  Double_t varRms,errorRelativeRms,errorAbsRms;
+  t->SetBranchAddress("unitTestId",&unitTestId);
+  t->SetBranchAddress("varNameId",&varNameId);
+  t->SetBranchAddress("correctionType",&correctionType);
+
+  t->SetBranchAddress("varMean",&varMean);
+  t->SetBranchAddress("varRms",&varRms);
+  t->SetBranchAddress("varMax",&varMax);
+  t->SetBranchAddress("errorRelativeMean",&errorRelativeMean);
+  t->SetBranchAddress("errorRelativeRms",&errorRelativeRms);
+  t->SetBranchAddress("errorRelativeMax",&errorRelativeMax);
+  t->SetBranchAddress("errorAbsMean",&errorAbsMean);
+  t->SetBranchAddress("errorAbsRms",&errorAbsRms);
+  t->SetBranchAddress("errorAbsMax",&errorAbsMax);
+
+
+  ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::* (%d)",0).Data(),"%s",correctionTypeName[0]);
+  ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::* (%d)",1).Data(),"%s",correctionTypeName[1]);
+
+  for (Int_t entry = 0;  entry < t->GetEntries(); entry++) {
+    t->GetEntry(entry);
+    if (varNameId  == 0) continue;
+    if ( errorRelativeMean < maxEpsilon)
+      ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),
+             "Test OK: Mean Relative Error=%.2E < %.2E", errorRelativeMean, maxEpsilon);
+    else
+      ::Error(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),
+              "Test FAILED: Error Relative=%.2E > %.2E",errorRelativeMean, maxEpsilon);
+
+  }
+
 }
