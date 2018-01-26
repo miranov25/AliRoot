@@ -23,17 +23,12 @@ class TMultiGraph;
 class AliPainter : public TObject{
 
 public:
-  static void     DivideTPad(TPad *pad, const char *division, const char *classID);
-  static void     SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
-  static TObject* DrawHistogram(char *expresion, const TObjArray* histogramArray, TPad *pad=NULL, TObjArray *metaData=NULL, TObjArray * keepArray=NULL, Int_t verbose=0);
-  static TObject* GetHistogram(TObject *hisN, TString range, std::vector<TString> fitOptions);
-  static TPad *SetPadMargin(TPad *cPad, const char *position, const char *wMargin, const char *units, Double_t mValue, Int_t iCol, Int_t nCols);
-  static void SetKeepArray(TObjArray *kArray) {keepArray = kArray;}
-  static TObjArray *GetKeepArray() {return keepArray;}
-
-
+  static void       DivideTPad(TPad *pad, const char *division, const char *classID);
+  static void       SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
+  static void       DrawHistogram(char *expresion, const TObjArray *histogramArray, TPad *pad=NULL, TObjArray *metaData=NULL, TObjArray *keepArray=NULL, Int_t verbose=0);
+  static TObject   *GetHistogram(TObject *hisN, TString range, std::vector<TString> fitOptions);
+  static TPad      *SetPadMargin(TPad *cPad, const char *position, const char *wMargin, const char *units, Double_t mValue, Int_t iCol, Int_t nCols);
 private:
-  static TObjArray *keepArray;
   typedef std::map<int, std::vector<int> > axisRangesMap;
   ClassDef(AliPainter,1);
   static void ArgsParser(TString exprsn, TString &hisName, TString &projections, std::vector<TString>  &fitOptions, std::vector<TString> &rangesStrings, Int_t verbose = 0);
