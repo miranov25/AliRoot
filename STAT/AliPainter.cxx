@@ -649,7 +649,7 @@ void AliPainter::DrawHistogram(char *expression, const TObjArray* histogramArray
   Ssiz_t fromStart;
   Double_t xMin = fitOptions[4].Atof(), xMax = fitOptions[5].Atof();
 
-  std::vector<int> rangeVec;
+  std::vector<TString> rangeVec;
   TString range = "";
   TString rangeString = "";
   TString fitStr = "";
@@ -678,12 +678,20 @@ void AliPainter::DrawHistogram(char *expression, const TObjArray* histogramArray
       rangeString = rangesString[j].Data();
       fromStart = 0;
       rangeVec.clear();
-      while (rangesString[j].Tokenize(range, fromStart, ",")) rangeVec.push_back(range.Atoi());
+      while (rangesString[j].Tokenize(range, fromStart, ",")) rangeVec.push_back(range);
       for (Int_t i = 0; i < rangeVec.size(); i += 2) {
-        hisN->GetAxis(i / 2)->SetRange(rangeVec[i], rangeVec[i + 1]);
-        if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRange(%d,%d);", i / 2, rangeVec[i], rangeVec[i + 1]);
+        if (rangeVec[i].CountChar('.') > 0 || rangeVec[i+1].CountChar('.') > 0) {
+          hisN->GetAxis(i / 2)->SetRangeUser(rangeVec[i].Atof(), rangeVec[i + 1].Atof());
+          if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRangeUser(%s,%s);", i / 2, rangeVec[i], rangeVec[i + 1]);
+        }
+        else  {
+          hisN->GetAxis(i / 2)->SetRange(rangeVec[i].Atoi(), rangeVec[i + 1].Atoi());
+          if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRange(%s,%s);", i / 2, rangeVec[i], rangeVec[i + 1]);
+        }
+
       }
     }
+    //fixme: such names don't work with AliDrawStyle::ApplyCssStyle()
     //uniqName = TString::Format("%s(%s)(%s)(%s)(%s)[%d]", hisName.Data(), rangeString.Data(), projections.Data(), fitStr.Data(), drawString.Data(), j).Data();
     uniqName = TString::Format("%s[%d]", hisName.Data(), j).Data();
 
