@@ -115,7 +115,7 @@ Int_t AliTreeFormulaF::Compile(const char *expression) {
 /// \param mode
 /// \return
 char *AliTreeFormulaF::PrintValue(Int_t mode) const {
-   PrintValue(mode, 0, "");
+  PrintValue(mode, 0, "");
 }
 
 /// Overwrite TTreeFormula PrintValue
@@ -1320,7 +1320,7 @@ TPad *  AliTreePlayer::DrawHistograms(TPad  * pad, TObjArray * hisArray, TString
   // Example usage:
   /*
     TPad *pad= 0;    TString drawExpression="";
-    drawExpression="[1,1,1]:" 
+    drawExpression="[1,1,1]:"
     drawExpression+="hisPtAll(0,10)(0)(errpl);hisPtITS(0,10)(0)(err);hisPtPhiThetaAll(0,10,-3.2,3.2,-1.2,1.2)(0)(err):";
     drawExpression+="hisAlpha(-3.2,3.2)(0)(errpl);hisPtPhiThetaAll(0,10,-3.2,3.2,-1.2,1.2)(1)(err):";
     drawExpression+="hisTgl(-1,1)(0)(errpl);hisPtPhiThetaAll(0,10,-3.2,3.2,-1.2,1.2)(2)(err):";
@@ -1358,7 +1358,7 @@ TPad *  AliTreePlayer::DrawHistograms(TPad  * pad, TObjArray * hisArray, TString
   for (Int_t iPad=0; iPad<nPads; iPad++){
     Int_t nGraphs=0, nHistos=0;
     if (drawList->At(iPad+1)==NULL) break;
-    //TVirtualPad  *cPad = 
+    //TVirtualPad  *cPad =
     TVirtualPad *cPad = pad->cd(iPad+1);
     TLegend * legend = new TLegend(cPad->GetLeftMargin()+0.02,0.7,1-cPad->GetRightMargin()-0.02 ,1-cPad->GetTopMargin()-0.02, TString::Format("Pad%d",iPad));
     legend->SetNColumns(2);
@@ -1564,7 +1564,6 @@ void AliTreePlayer::MakeCacheTree(TTree * tree, TString varList, TString outFile
   }
   delete pcstream;
 }
-
 
 
 

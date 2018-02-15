@@ -328,3 +328,47 @@ TCanvas *MakeTestPlot(Int_t nHis) {
     legend->Draw();
   return exampleCanvas;
 }
+
+/*
+void SetStyleForTest(Int_t val, TCanvas *canv) {
+    cCanvas->SetFillColor(val);
+    cCanvas->SetBorderSize(val);
+    cCanvas->SetBorderMode(val);
+    TList *oListPad = NULL;
+    TList *oListObj = NULL;
+
+    oList = pad->GetListOfPrimitives();
+    for(Int_t c = 0; c < oList->GetEntries(); c++) {
+        (TPad *) oList->At(c)->SetFillColor(val);
+        (TPad *) oList->At(c)->SetBottomMargin(val);
+        (TPad *) oList->At(c)->SetTopMargin(val);
+        (TPad *) oList->At(c)->SetLeftMargin(val);
+        (TPad *) oList->At(c)->SetRightMargin(val);
+        (TPad *) oList->At(c)->SetBorderSize(val);
+        (TPad *) oList->At(c)->SetBorderMode(val);
+        (TPad *) oList->At(c)->SetGridx(val);
+        (TPad *) oList->At(c)->SetGridy(val);
+        (TPad *) oList->At(c)->SetTickx(val);
+        (TPad *) oList->At(c)->SetTicky(val);
+        (TPad *) oList->At(c)->SetLogx(val);
+        (TPad *) oList->At(c)->SetLogy(val);
+        (TPad *) oList->At(c)->SetLogz(val);
+        for (Int_t k = 0; k < oList->GetEntries(); k++) {
+
+            cObj = oListObj->At(k);
+            if (cObj->InheritsFrom("TH1") || cObj->InheritsFrom("TGraph") || cObj->InheritsFrom("TF1")) {
+
+                cObj->SetMarkerColor(val);
+                cObj->SetMarkerSize(val);
+                cObj->SetMarkerStyle(val);
+                cObj->SetLineColor(val);
+                cObj->SetLineWidth(val);
+                cObj->SetLineStyle(val);
+                cObj->SetFillColor(val);
+                cObj->SetFillStyle(val);
+            }
+        }
+    }
+    canv->Modified();
+}
+*/
