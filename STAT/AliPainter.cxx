@@ -12,7 +12,7 @@
  * about the suitability of this software for any purpose. It is          *
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
-// TODO - ADD TESTS
+// TODO - ADD TESTS @Boris
 #include "AliPainter.h"
 #include "AliTMinuitToolkit.h"
 #include "TPad.h"
@@ -414,7 +414,7 @@ void AliPainter::DrawStrParser(const TString drawStr) {
   if (optsVals.find(key) == optsVals.end()) ::Error("AliPainter::DrawHistogram", "key %s not found in default keys: div, xlim, ylim, zlim, class, dOption", key.Data());
   optsVals[key] = value;
 }
-// TODO - now we have 2 steps for parsing of ranges option to array of string with simple range values. 1. Initial string into map. 2. Map into array fo strings. First of all we can use vector of vector instead map, and the second we should think how we can avoid this 2 intermediate steps with map.
+// TODO - now we have 2 steps for parsing of ranges option to array of string with simple range values. 1. Initial string into map. 2. Map into array fo strings. First of all we can use vector of vector instead map, and the second we should think how we can avoid this 2 intermediate steps with map. @Boris
 /// \brief Private method for parsing ranges options in AliPainter::DrawHistogram
 /// \param ranges - String with ranges values
 /// \return - map, where key is projection and values from ranges
@@ -508,7 +508,7 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
 ///                                range - {x0min,x0max,x1min,xm1max,...}
 ///                                         in case not specified - range is not set
 ///                                intitialParam - {p0,p1;p2,...;ep0,ep1,...;minp0,minp1,...;
-///                                                 maxp0,maxp1 ...} TODO: may be we should use TVectorD or TMatrix instead enumeration?
+///                                                 maxp0,maxp1 ...} TODO: may be we should use TVectorD or TMatrix instead enumeration? @Boris
 ///                                                 there are options- use only in case they are
 ///                                                 specified
 ///                                                 errors, min and max are optionals
@@ -564,7 +564,7 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
       2.1 Default behaviour
           By default draw use the same pad, but you can change it specify draw option.
         \code
-          AliPainter::DrawHistogram("hisK0DMassQPtTgl(0,100,0:80:20:20,0,10)(0)()()", hisArray);
+          AliPainter::DrawHistogram("hisK0DMassQPtTgl([0,100], x1=[0:80:20:20],x2=[0,10])(0)()()", hisArray);
         \endcode
       2.2 Using AliPainter::DivideTPad();
           In case if you don't want to use the same pad you should specify it. Also we recommend to you use AliPainter::DivideTPad() for create a few pads on your canvas:
@@ -594,12 +594,13 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
  // TH1 *his1 = hisn->Projection(1);
  // his1->Fit("gaus");
 //  his1->Draw();
- //AliTMinuitToolkit *fitter = new AliTMinuitToolkit();
- // TF1 *aFormExp = new TF1("formExp", "[0]*TMath::Exp(-[1]*x)");
-  //AliTMinuitToolkit::RegisterDefaultFitters()
+   //AliTMinuitToolkit::RegisterDefaultFitters()
+ AliTMinuitToolkit *fitter = new AliTMinuitToolkit();
+ TF1 *aFormExp = new TF1("formExp", "[0]*TMath::Exp(-[1]*x)");
 
- // fitter->SetFitFunction(aFormExp, 0);
- // AliTMinuitToolkit::SetPredefinedFitter("ExpFit", fitter);
+
+ fitter->SetFitFunction(aFormExp, 0);
+AliTMinuitToolkit::SetPredefinedFitter("ExpFit", fitter);
   TObjArray *keepArray = new TObjArray;
  // AliPainter::DivideTPad(canvasQA,"<horizontal>[1]", "Raw,Error");
  //AliPainter::DrawHistogram("hisK0DMassQPtTgl(0,100,0:60:20:20,0,10)(0)(pol8,,same,funOption(2,2,1),-0.01,0.01)()", hisArray, canvasQA, NULL, keepArray, 4);
@@ -663,7 +664,7 @@ void AliPainter::DrawHistogram(char *expression, const TObjArray* histogramArray
 
   if (!rangesString.empty()) histCnt = (Int_t) rangesString.size();
   if (verbose == 4) ::Info("AliPainter::DrawHistogram", "Count of the histograms is %d", histCnt);
-  //TODO: refactor it. We already have such strings. Let take it from ArgsParser():
+  //TODO: refactor it. We already have such strings. Let take it from ArgsParser(): @Boris
   for (Int_t i = 0; i < fitOptions.size() && fitOptions[0] != ""; i++) {
     fitStr += fitOptions[i];
     if (i != fitOptions.size() - 1) fitStr += ",";
@@ -682,16 +683,16 @@ void AliPainter::DrawHistogram(char *expression, const TObjArray* histogramArray
       for (Int_t i = 0; i < rangeVec.size(); i += 2) {
         if (rangeVec[i].CountChar('.') > 0 || rangeVec[i+1].CountChar('.') > 0) {
           hisN->GetAxis(i / 2)->SetRangeUser(rangeVec[i].Atof(), rangeVec[i + 1].Atof());
-          if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRangeUser(%s,%s);", i / 2, rangeVec[i], rangeVec[i + 1]);
+          if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRangeUser(%s,%s);", i / 2, rangeVec[i].Data(), rangeVec[i + 1].Data());
         }
         else  {
           hisN->GetAxis(i / 2)->SetRange(rangeVec[i].Atoi(), rangeVec[i + 1].Atoi());
-          if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRange(%s,%s);", i / 2, rangeVec[i], rangeVec[i + 1]);
+          if (verbose == 4) ::Info("AliPainter::DrawHistogram", "his->GetAxis(%d)->SetRange(%s,%s);", i / 2, rangeVec[i].Data(), rangeVec[i + 1].Data());
         }
 
       }
     }
-    //fixme: such names don't work with AliDrawStyle::ApplyCssStyle()
+    //fixme: such names don't work with AliDrawStyle::ApplyCssStyle() @Boris
     //uniqName = TString::Format("%s(%s)(%s)(%s)(%s)[%d]", hisName.Data(), rangeString.Data(), projections.Data(), fitStr.Data(), drawString.Data(), j).Data();
     uniqName = TString::Format("%s[%d]", hisName.Data(), j).Data();
 
@@ -760,12 +761,12 @@ void AliPainter::DrawHistogram(char *expression, const TObjArray* histogramArray
             ::Info("AliPainter::DrawHistogram", "hisArray[%d]->Draw(%s)", j, optsVals["dOption"].Data());
         }
       }
-      if (fitStr != TString("")) {
-        //TODO: add check for standard names and change function to gaus and add standart root fitters
+      if (fitOptions[0] != TString("")) {
+        //TODO: add check for standard names and change function to gaus and add standart root fitters @Boris
         if (AliTMinuitToolkit::GetPredefinedFitter(fitOptions[0].Data()) != NULL) {
           if (verbose == 4)
             ::Info("AliPainter::DrawHistogram", "AliTMinuitToolkit::Fit(%s)", fitStr.Data());
-          if (hisArray[j] != nullptr) AliTMinuitToolkit::Fit(hisArray[j], fitOptions[0], fitOptions[1], fitOptions[2], fitOptions[3],
+          AliTMinuitToolkit::Fit(hisArray[j], fitOptions[0], fitOptions[1], fitOptions[2], fitOptions[3],
                                 xMin, xMax);
         }
         else {

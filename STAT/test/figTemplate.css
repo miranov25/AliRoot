@@ -3,6 +3,7 @@ Implementations of template for QA via css convention.
 Style created for this example:
 todo: add link on some test function
 fixme: ApplyStyle doesn't work with huge name of object like this "hisK0DMassQPtTgl(0,100,0:80:20:20,0,10)(0)(gaus)(div=0,,class=Mass,dOption=E)[0].calss(Mass)" mb problem in class=Mass
+todo: if we want to draw histograms on the one pad we can use only arrays of ranges, in the rest cases redrawing
 {
     TFile::SetCacheFileDir(".");
     TFile *finput = TFile::Open("http://aliqatrkeos.web.cern.ch/aliqatrkeos/performance/alice/data/2015/LHC15o/pass1/LHC15o.pass1.B1.Bin0/performanceHisto.root",
@@ -15,18 +16,19 @@ fixme: ApplyStyle doesn't work with huge name of object like this "hisK0DMassQPt
         hisArray->AddLast(o);
     }
     TCanvas *canvasQA = new TCanvas("canvasQA", "canvasQA", 1200, 800);
-    AliPainter::DivideTPad(canvasQA, "<horizontal>[1,1,1,1]", "Raw,Error");
+    AliPainter::DivideTPad(canvasQA, "<horizontal>[1b,1t,1,1]", "Raw");
     canvasQA->cd(1);
     AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(dOption=E,class=PtAll)", hisArray);
     AliPainter::DrawHistogram("hisPtITS(0,10)(0)()(dOption=E,class=PtIts)", hisArray);
     AliPainter::DrawHistogram("hisK0DMassQPtTgl(-1,1)(2)()(dOption=E,class=Tgl)", hisArray);
-    AliPainter::DrawHistogram("hisK0DMassQPtTgl(0,100,0:80:20:20,0,10)(0)(gaus)(div=0,,class=Mass,dOption=E)", hisArray);
-    AliDrawStyle::RegisterCssStyle("figTemplate", AliDrawStyle::ReadCSSFile("/home/bdrum/projects/cern/alicesw/AliRoot/STAT/test/figTemplate.css"));
+    AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,0:80:20:20,0,10)(0)(gaus,W)(div=0,,class=Mass,dOption=E)", hisArray);
+
+    AliDrawStyle::RegisterCssStyle("figTemplate", AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/figTemplate.css"));
     AliDrawStyle::ApplyCssStyle(canvasQA, "figTemplate");
-    canvasQA->cd(1)->BuildLegend();
-    canvasQA->cd(2)->BuildLegend();
-    canvasQA->cd(3)->BuildLegend();
-    canvasQA->cd(4)->BuildLegend();
+
+    // AliDrawStyle::SetDefaults();
+    // AliDrawStyle::ApplyStyle("figTemplate");
+
 }
 
 */
@@ -34,6 +36,7 @@ fixme: ApplyStyle doesn't work with huge name of object like this "hisK0DMassQPt
 TH1D  {
     marker_size: 1;
     line_width: 0.5;
+    line_style: 7;
 }
 
 .PtAll  {
@@ -45,7 +48,7 @@ TH1D  {
 .PtIts  {
     marker_style: 21;
     marker_color: 2;
-    line_color: 1;
+    line_color: 2;
 }
 
 .Tgl    {
@@ -61,5 +64,12 @@ TH1D  {
 }
 
 #pad {
-    logY:   0,0,0,1;
+   gridX:       0;
+   gridY:       0;
+   fill_color:  10,10,10,10;
+   tickX:       1,1,1,1;
+   tickY:       1,1,1,1;
+   logY:        0,0,0,1;
+   border_mode: 0,0,0,0;
+
 }
