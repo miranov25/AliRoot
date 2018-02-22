@@ -4301,7 +4301,7 @@ void AliTPCSpaceCharge3DDriftLine::GetElectricFieldCyl(const Float_t x[], Short_
   if (z > -1e-16)
     fLookupElectricFieldA->GetValue(r, phi, z, eR, ePhi, eZ);
   else
-    fLookupElectricFieldC->GetValue(r, phi, z, eR, ePhi, eZ);
+    fLookupElectricFieldC->GetValue(r, phi, -z, eR, ePhi, eZ);
 
   dx[0] = eR;
   dx[1] = ePhi;
