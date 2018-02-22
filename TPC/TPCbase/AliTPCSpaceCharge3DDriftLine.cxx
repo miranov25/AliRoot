@@ -1607,14 +1607,17 @@ AliTPCSpaceCharge3DDriftLine::LocalDistCorrDz(TMatrixD **matricesEr, TMatrixD **
 /// ~~~
 ///
 void AliTPCSpaceCharge3DDriftLine::IntegrateDistCorrDriftLineDz(
-  AliTPCLookUpTable3DInterpolatorD *lookupLocalDist, TMatrixD **matricesGDistDrDz,
-  TMatrixD **matricesGDistDPhiRDz, TMatrixD **matricesGDistDz, AliTPCLookUpTable3DInterpolatorD *lookupLocalCorr,
+  AliTPCLookUpTable3DInterpolatorD *lookupLocalDist,
+  TMatrixD **matricesGDistDrDz,
+  TMatrixD **matricesGDistDPhiRDz, TMatrixD **matricesGDistDz,
+  AliTPCLookUpTable3DInterpolatorD *lookupLocalCorr,
   TMatrixD **matricesGCorrDrDz, TMatrixD **matricesGCorrDPhiRDz, TMatrixD **matricesGCorrDz,
   TMatrixD **matricesGCorrIrregularDrDz, TMatrixD **matricesGCorrIrregularDPhiRDz,
   TMatrixD **matricesGCorrIrregularDz,
   TMatrixD **matricesRIrregular, TMatrixD **matricesPhiIrregular, TMatrixD **matricesZIrregular,
   const Int_t nRRow, const Int_t nZColumn, const Int_t phiSlice,
   const Double_t *rList, const Double_t *phiList, const Double_t *zList) {
+
   Float_t drDist, dRPhi, dzDist, ddR, ddRPhi, ddZ;
   Float_t radius0, phi0, z0, radius, phi, z, radiusCorrection;
   radiusCorrection = 0.0;
@@ -2114,10 +2117,10 @@ void AliTPCSpaceCharge3DDriftLine::GetDistortionCylAC(const Float_t x[], Short_t
   if (sign == 1 && z < fgkZOffSet) z = fgkZOffSet;    // Protect against discontinuity at CE
   if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
 
-  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+  if ((sign == 1 && z < -1e-16) || (sign == -1 && z > -1e-16)) // just a consistency check
     AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
 
-  if (z > 0)
+  if (z > -1e-16)
     fLookupIntDistA->GetValue(r, phi, z, dR, dRPhi, dZ);
   else {
     fLookupIntDistC->GetValue(r, phi, -1 * z, dR, dRPhi, dZ);
@@ -2163,7 +2166,7 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCylACIrregular(const Float_t x[]
   if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
 
 
-  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+  if ((sign == 1 && z < -1e-16) || (sign == -1 && z > -1e-16)) // just a consistency check
     AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
 
 
@@ -2174,9 +2177,10 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCylACIrregular(const Float_t x[]
   Int_t kAnchor = TMath::FloorNint(phi / gridSizePhi);
   Int_t zAnchor = TMath::FloorNint(z / gridSizeZ);
 
-  if (z > 0)
+  if (z > -1e-16) {
     fLookupIntCorrIrregularA->GetValue(r, phi, z, dR, dRPhi, dZ, iAnchor, kAnchor, zAnchor, fNRRows / 8 + 1,
                                        fNPhiSlices / 8 + 1, fNZColumns / 8 + 1, 0);
+  }
   else {
     fLookupIntCorrIrregularC->GetValue(r, phi, -z, dR, dRPhi, dZ, iAnchor, kAnchor, -zAnchor, fNRRows / 8 + 1,
                                        fNPhiSlices / 8 + 1, fNZColumns / 8 + 1, 0);
@@ -2221,10 +2225,10 @@ void AliTPCSpaceCharge3DDriftLine::GetCorrectionCylAC(const Float_t x[], Short_t
   if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
 
 
-  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+  if ((sign == 1 && z < -1e-16) || (sign == -1 && z > -1e-16)) // just a consistency check
     AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
 
-  if (z > 0)
+  if (z > -1e-16)
     fLookupIntCorrA->GetValue(r, phi, z, dR, dRPhi, dZ);
   else {
     fLookupIntCorrC->GetValue(r, phi, -z, dR, dRPhi, dZ);
@@ -2808,87 +2812,86 @@ TTree *AliTPCSpaceCharge3DDriftLine::CreateDistortionTree(const Int_t nRRowTest,
   Float_t r1;
   Float_t phi1;
   Float_t z1;
+  for (Int_t side = 0; side < 2;side++) {
+    for (Int_t m = 0; m < nPhiSliceTest; m++) {
+      for (Int_t i = 0; i < nRRowTest; i++) {
+        for (Int_t j = 0; j < nZColTest; j++) {
 
-  for (Int_t m = 0; m < nPhiSliceTest; m++) {
-    for (Int_t i = 0; i < nRRowTest; i++) {
-      for (Int_t j = 0; j < nZColTest; j++) {
+          phi0 = m * dPhi;
+          r0 = ifcRadius + (dRadius * i);
+          z0 = dZ * j;
+          if (side == 1) z0 = -1*z0;
+          charge = GetSpaceChargeDensity(r0, phi0, z0);
+          potential = GetPotential(r0, phi0, z0);
+          if (!(fFormulaChargeRho == NULL))
+            chargeFormula = -1 * fFormulaChargeRho->Eval(r0, phi0, z0);
+          if (!(fFormulaPotentialV == NULL))
+            potentialFormula = fFormulaPotentialV->Eval(r0, phi0, z0);
 
-        phi0 = m * dPhi;
-        r0 = ifcRadius + (dRadius * i);
-        z0 = dZ * j;
-        charge = GetSpaceChargeDensity(r0, phi0, z0);
-        potential = GetPotential(r0, phi0, z0);
-        if (!(fFormulaChargeRho == NULL))
-          chargeFormula =  -1 * fFormulaChargeRho->Eval(r0, phi0, z0);
-        if (!(fFormulaPotentialV == NULL))
-          potentialFormula = fFormulaPotentialV->Eval(r0, phi0, z0);
+          if (!(fFormulaEPhi == NULL))
+            ePhiFormula = fFormulaEPhi->Eval(r0, phi0, z0);
+          if (!(fFormulaEr == NULL))
+            eRFormula = fFormulaEr->Eval(r0, phi0, z0);
+          if (!(fFormulaEz == NULL))
+            eZFormula = fFormulaEz->Eval(r0, phi0, z0);
 
-        if (!(fFormulaEPhi == NULL))
-          ePhiFormula = fFormulaEPhi->Eval(r0, phi0, z0);
-        if (!(fFormulaEr == NULL))
-          eRFormula = fFormulaEr->Eval(r0, phi0, z0);
-        if (!(fFormulaEz == NULL))
-          eZFormula = fFormulaEz->Eval(r0, phi0, z0);
+          point0[0] = r0;
+          point0[1] = phi0;
+          point0[2] = z0;
 
+          rocNum = (z0 > -1e-16) ? 0 : 18;
 
-        point0[0] = r0;
-        point0[1] = phi0;
-        point0[2] = z0;
+          GetDistortionCyl(point0, rocNum, dist);
+          GetLocalDistortionCyl(point0, rocNum, localDist);
+          GetElectricFieldCyl(point0, rocNum, electricField);
 
-        rocNum = (z0 > 0.0) ? 0 : 18;
+          eR = electricField[0];
+          ePhi = electricField[1];
+          eZ = electricField[2];
+          drDist = dist[0];
+          drPhiDist = dist[1];
+          dzDist = dist[2];
 
-        GetDistortionCyl(point0, rocNum, dist);
-        GetLocalDistortionCyl(point0, rocNum, localDist);
-        GetElectricFieldCyl(point0,rocNum,electricField);
+          r1 = r0 + dist[0];
+          phi1 = phi0 + dist[1] / r0;
+          z1 = z0 + dist[2];
+          point1[0] = r1;
+          point1[1] = phi1;
+          point1[2] = z1;
+          GetCorrectionCyl(point1, rocNum, corr);
 
+          drCorr = corr[0];
+          drPhiCorr = corr[1];
+          dzCorr = corr[2];
 
-        eR = electricField[0];
-        ePhi = electricField[1];
-        eZ = electricField[2];
-        drDist = dist[0];
-        drPhiDist = dist[1];
-        dzDist = dist[2];
-
-        r1 = r0 + dist[0];
-        phi1 = phi0 + dist[1] / r0;
-        z1 = z0 + dist[2];
-        point1[0] = r1;
-        point1[1] = phi1;
-        point1[2] = z1;
-        GetCorrectionCyl(point1, rocNum, corr);
-
-        drCorr = corr[0];
-        drPhiCorr = corr[1];
-        dzCorr = corr[2];
-
-        (*pcStream) << "distortion" <<
-                    "z=" << z0 <<
-                    "r=" << r0 <<
-                    "phi=" << phi0 <<
-                    "dzDist=" << dzDist <<
-                    "drDist=" << drDist <<
-                    "drPhiDist=" << drPhiDist <<
-                    "drLocalDist=" << localDist[0] <<
-                    "drPhiLocalDist=" << localDist[1] <<
-                    "dzLocalDist=" << localDist[2] <<
-                    "dzCorr=" << dzCorr <<
-                    "drCorr=" << drCorr <<
-                    "drPhiCorr=" << drPhiCorr <<
-                    "ER=" << eR <<
-                    "EZ=" << eZ <<
-                    "ERAnalytic=" << eRFormula <<
-                    "EPhiAnalytic=" << ePhiFormula <<
-                    "EZAnalytic="<< eZFormula <<
-                    "rho=" << charge <<
-                    "v=" << potential <<
-                    "rhoAnalytic=" << chargeFormula <<
-                    "vAnalytic=" << potentialFormula <<
-                    "EPhi=" << ePhi <<
-                    "\n";
+          (*pcStream) << "distortion" <<
+                      "z=" << z0 <<
+                      "r=" << r0 <<
+                      "phi=" << phi0 <<
+                      "dzDist=" << dzDist <<
+                      "drDist=" << drDist <<
+                      "drPhiDist=" << drPhiDist <<
+                      "drLocalDist=" << localDist[0] <<
+                      "drPhiLocalDist=" << localDist[1] <<
+                      "dzLocalDist=" << localDist[2] <<
+                      "dzCorr=" << dzCorr <<
+                      "drCorr=" << drCorr <<
+                      "drPhiCorr=" << drPhiCorr <<
+                      "ER=" << eR <<
+                      "EZ=" << eZ <<
+                      "ERAnalytic=" << eRFormula <<
+                      "EPhiAnalytic=" << ePhiFormula <<
+                      "EZAnalytic=" << eZFormula <<
+                      "rho=" << charge <<
+                      "v=" << potential <<
+                      "rhoAnalytic=" << chargeFormula <<
+                      "vAnalytic=" << potentialFormula <<
+                      "EPhi=" << ePhi <<
+                      "\n";
+        }
       }
     }
   }
-
   delete pcStream;
   TFile f(Form("distortion%s.root", GetName()));
   TTree *tree = (TTree *) f.Get("distortion");
@@ -4251,10 +4254,10 @@ void AliTPCSpaceCharge3DDriftLine::GetLocalDistortionCyl(const Float_t x[], Shor
   if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
 
 
-  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+  if ((sign == 1 && z < -1e-16) || (sign == -1 && z > -1e-16)) // just a consistency check
     AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
 
-  if (z > -1e-6)
+  if (z > -1e-16)
     fLookupDistA->GetValue(r, phi, z, dR, dRPhi, dZ);
   else
     fLookupDistC->GetValue(r, phi, -z, dR, dRPhi, dZ);
@@ -4292,10 +4295,10 @@ void AliTPCSpaceCharge3DDriftLine::GetElectricFieldCyl(const Float_t x[], Short_
   if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
 
 
-  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+  if ((sign == 1 && z < -1e-16) || (sign == -1 && z > -1e-16)) // just a consistency check
     AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
 
-  if (z > -1e-6)
+  if (z > -1e-16)
     fLookupElectricFieldA->GetValue(r, phi, z, eR, ePhi, eZ);
   else
     fLookupElectricFieldC->GetValue(r, phi, z, eR, ePhi, eZ);
@@ -4340,10 +4343,10 @@ void AliTPCSpaceCharge3DDriftLine::GetInverseLocalDistortionCyl(const Float_t x[
   if (sign == -1 && z > -fgkZOffSet) z = -fgkZOffSet;    // Protect against discontinuity at CE
 
 
-  if ((sign == 1 && z < 0) || (sign == -1 && z > 0)) // just a consistency check
+  if ((sign == 1 && z < -1e-16) || (sign == -1 && z > -1e-16)) // just a consistency check
     AliError("ROC number does not correspond to z coordinate! Calculation of distortions is most likely wrong!");
 
-  if (z > -1e-6)
+  if (z > -1e-16)
     fLookupInverseDistA->GetValue(r, phi, z, dR, dRPhi, dZ);
   else
     fLookupInverseDistC->GetValue(r, phi, -z, dR, dRPhi, dZ);

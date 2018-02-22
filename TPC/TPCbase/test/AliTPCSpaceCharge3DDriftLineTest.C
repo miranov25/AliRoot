@@ -80,9 +80,9 @@ void AliTPCSpaceCharge3DDriftLineTest() {
     zColumn = zColumnList[iExperiment];
     phiSlice = phiSliceList[iExperiment];
     UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0,  pcStream); // regular
-    UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1,  pcStream); // irregular
-    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0, pcStream); // regular interpolation
-    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1, pcStream); // Irregular interpolation
+ //   UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1,  pcStream); // irregular
+//    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0, pcStream); // regular interpolation
+//    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1, pcStream); // Irregular interpolation
   }
 
   delete pcStream;
@@ -130,8 +130,7 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
   Double_t a = AliTPCPoissonSolver::fgkOFCRadius * AliTPCPoissonSolver::fgkOFCRadius;
   a *= (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius);
   a *= (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius);
-  a =  (1000.0 / a);
-  a = 1e-7;
+  a = 1e-5;
   Double_t b = 0.5;
   Double_t c = 1.0 / (((AliTPCPoissonSolver::fgkTPCZ0) / 2.0) * ((AliTPCPoissonSolver::fgkTPCZ0) / 2.0));
   c = 1e-4;
