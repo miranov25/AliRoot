@@ -80,9 +80,7 @@ void AliTPCSpaceCharge3DDriftLineTest() {
     zColumn = zColumnList[iExperiment];
     phiSlice = phiSliceList[iExperiment];
     UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0,  pcStream); // regular
- //   UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1,  pcStream); // irregular
-//    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 0, pcStream); // regular interpolation
-//    UnitTestConsistencyDistortionZShort(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1, pcStream); // Irregular interpolation
+    UnitTestCorrectnessDistortion(rRow, zColumn, phiSlice, rRowTest, zColumnTest, phiSliceTest, 1,  pcStream); // irregular
   }
 
   delete pcStream;
@@ -105,8 +103,8 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
   const Double_t maxEpsilon = 1e-2;
 
   ::Info("AliTPCSpaceCharge3DDriftLineTest::UnitTestCorrectnessDistortion", "Begin");
-  AliTPCSpaceCharge3DDriftLine *sc = new AliTPCSpaceCharge3DDriftLine(TString::Format("unitTestNumeric%d",correctionType).Data(), "unitTestNumeric", rRow, zColumn, phiSlice);
-  AliTPCSpaceCharge3DDriftLine *scExact = new AliTPCSpaceCharge3DDriftLine(TString::Format("unitTestExact%d",correctionType).Data(), "unitTestExact", rRow, zColumn, phiSlice);
+  AliTPCSpaceCharge3DDriftLine *sc = new AliTPCSpaceCharge3DDriftLine(TString::Format("unitTestNumeric%d-%d-%d-%d",correctionType,rRow,zColumn,phiSlice).Data(), "unitTestNumeric", rRow, zColumn, phiSlice);
+  AliTPCSpaceCharge3DDriftLine *scExact = new AliTPCSpaceCharge3DDriftLine(TString::Format("unitTestExact%d-%d-%d-%d",correctionType,rRow,zColumn,phiSlice).Data(), "unitTestExact", rRow, zColumn, phiSlice);
 
   
   TFormula vTestFunction1("f1", "[0]*(x^4 - 338.0 *x^3 + 21250.75 * x^2)*cos([1]* y)^2*exp(-1* [2] * z^2)");
@@ -261,7 +259,7 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
                                               matricesErExactA, matricesEPhiExactA, matricesEzExactA,
                                               matricesErExactC, matricesEPhiExactC, matricesEzExactC,
                                               matricesDistDrDzExactA, matricesDistDPhiRDzExactA, matricesDistDzExactA,
-                                                                                                                                                                                                                                                                                        matricesCorrDrDzExactA, matricesCorrDPhiRDzExactA, matricesCorrDzExactA,
+                                              matricesCorrDrDzExactA, matricesCorrDPhiRDzExactA, matricesCorrDzExactA,
                                               matricesDistDrDzExactC, matricesDistDPhiRDzExactC, matricesDistDzExactC,
                                               matricesCorrDrDzExactC, matricesCorrDPhiRDzExactC, matricesCorrDzExactC,
                                               intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction);
@@ -656,15 +654,9 @@ LocalDistCorrDzExact(TFormula *intDrDzF, TFormula *intDPhiDzF, TFormula *intDzDz
       for (Int_t i = 0; i < rRow; i++) {
         r0 = rList[i];
 
-        if (side == 0) {
-          localIntErOverEz = (intDrDzF->Eval(r0, phi0, z1) - intDrDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
-          localIntEPhiOverEz = (intDPhiDzF->Eval(r0, phi0, z1) - intDPhiDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
-          localIntDeltaEz = intDzDzF->Eval(r0, phi0, z1) - intDzDzF->Eval(r0, phi0, z0);
-        } else {
-          localIntErOverEz = (intDrDzF->Eval(r0, phi0, z1) - intDrDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
-          localIntEPhiOverEz = (intDPhiDzF->Eval(r0, phi0, z1) - intDPhiDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
-          localIntDeltaEz = intDzDzF->Eval(r0, phi0, z1) - intDzDzF->Eval(r0, phi0, z0);
-        }
+        localIntErOverEz = (intDrDzF->Eval(r0, phi0, z1) - intDrDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
+        localIntEPhiOverEz = (intDPhiDzF->Eval(r0, phi0, z1) - intDPhiDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
+        localIntDeltaEz = intDzDzF->Eval(r0, phi0, z1) - intDzDzF->Eval(r0, phi0, z0);
 
         (*distDrDz)(i, j) = c0 * localIntErOverEz + c1 * localIntEPhiOverEz;
         (*distDPhiRDz)(i, j) = c0 * localIntEPhiOverEz - c1 * localIntErOverEz;
