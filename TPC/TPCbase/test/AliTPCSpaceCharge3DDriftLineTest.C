@@ -23,7 +23,7 @@
 #endif
 
 
-void UnitTestCorrectnessDistortion(Int_t rRow, Int_t zColumn, Int_t phiSlice, Int_t rRowTest, Int_t zColumnTest, const Int_t phiSliceTest, Int_t correctionType,TTreeSRedirector *pcStream);
+void UnitTestCorrectnessDistortion(const Int_t rRow,const Int_t zColumn,const  Int_t phiSlice, Int_t rRowTest, Int_t zColumnTest, const Int_t phiSliceTest, Int_t correctionType,TTreeSRedirector *pcStream);
 void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, const Int_t phiSlice, const Int_t rRowTest, const Int_t zColumnTest, const Int_t phiSliceTest, const Int_t correctionType, TTreeSRedirector *pcStream);
 void GetResidueFromDistortionTree(Int_t unitTestId, const char * filename,const char *numericName, const char *analyticName, Double_t *errorList, Int_t &indexErrorList,TTreeSRedirector *pcStream);
 void GetResidueFromDistortionAnalyticTree(Int_t unitTestId, const char * numericFileName, const char * analyticFileName, const char *varName, Double_t *errorList, Int_t &indexErrorList,TTreeSRedirector *pcStream);
@@ -64,12 +64,12 @@ void AliTPCSpaceCharge3DDriftLineTest() {
 
   Int_t rRowList[] = {17,33,65,129,257};
   Int_t zColumnList[] = {17,33,65,129,257};
-  Int_t phiSliceList[] = {18,36,72,144,257};
+  Int_t phiSliceList[] = {18,36,72,144,288};
   Int_t rRow, zColumn, phiSlice;
   const Int_t numberExperiment = 1;
-  Int_t rRowTest = 17;
-  Int_t zColumnTest = 17;
-  Int_t phiSliceTest = 18;
+  Int_t rRowTest = 50;
+  Int_t zColumnTest = 50;
+  Int_t phiSliceTest = 50;
   Int_t nPoint =rRowTest * zColumnTest * phiSliceTest;
 
   TTreeSRedirector *pcStream = new TTreeSRedirector("spaceChargeDriftLinePerformance.root","RECREATE");
@@ -94,7 +94,7 @@ void AliTPCSpaceCharge3DDriftLineTest() {
 /// - a set of known functions and stored it in scExact
 /// - generate numerical calculation in scNumeric
 /// - calculate relative error (accepted if less than 10^-2)
-void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,   Int_t rRowTest, Int_t zColumnTest, Int_t phiSliceTest, Int_t correctionType, TTreeSRedirector *pcStream) {
+void UnitTestCorrectnessDistortion(const Int_t rRow,const  Int_t zColumn, const Int_t phiSlice,   Int_t rRowTest, Int_t zColumnTest, Int_t phiSliceTest, Int_t correctionType, TTreeSRedirector *pcStream) {
 
   const Int_t maxIter = 100;
   const Float_t convergenceError = 1e-8;
@@ -128,6 +128,7 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
   Double_t a = AliTPCPoissonSolver::fgkOFCRadius * AliTPCPoissonSolver::fgkOFCRadius;
   a *= (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius);
   a *= (AliTPCPoissonSolver::fgkOFCRadius - AliTPCPoissonSolver::fgkIFCRadius);
+  a =  (1000.0 / a);
   a = 1e-5;
   Double_t b = 0.5;
   Double_t c = 1.0 / (((AliTPCPoissonSolver::fgkTPCZ0) / 2.0) * ((AliTPCPoissonSolver::fgkTPCZ0) / 2.0));
@@ -175,15 +176,19 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
   sc->SetPotentialBoundaryAndChargeFormula(vTestFunction, rhoTestFunction);
   sc->SetElectricFieldFormula(erTestFunction,ePhiTestFunction,ezTestFunction);
   sc->SetCorrectionType(correctionType);
-  sc->SetOmegaTauT1T2(0.35, 1., 1.);
+  sc->SetOmegaTauT1T2(-0.35, 1., 1.);
 
-  scExact->SetPotentialBoundaryAndChargeFormula(vTestFunction, rhoTestFunction);
-  scExact->SetElectricFieldFormula(erTestFunction,ePhiTestFunction,ezTestFunction);
-  scExact->SetCorrectionType(correctionType);
-  scExact->SetOmegaTauT1T2(0.35, 1., 1.);
-
-  Float_t c0 = scExact->GetC0();
-  Float_t c1 = scExact->GetC1();
+  if (correctionType == 0) {
+	  scExact->SetPotentialBoundaryAndChargeFormula(vTestFunction, rhoTestFunction);
+	  scExact->SetElectricFieldFormula(erTestFunction,ePhiTestFunction,ezTestFunction);
+	  scExact->SetCorrectionType(correctionType);
+	  scExact->SetOmegaTauT1T2(-0.35, 1., 1.);
+  
+  	 // 	Float_t c0 = scExact->GetC0();
+	 //      Float_t c1 = scExact->GetC1();
+  }
+  Float_t c0 = sc->GetC0();
+  Float_t c1 = sc->GetC1();
 
   // for numeric
   sc->InitSpaceCharge3DPoissonIntegralDz(rRow, zColumn, phiSlice, maxIter, convergenceError);
@@ -241,31 +246,38 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
     matricesEzExactC[m] = new TMatrixD(rRow, zColumn);
   }
 
-  InitPotentialAndCharge3D(vTestFunction, rhoTestFunction, erTestFunction, ePhiTestFunction, ezTestFunction,
+  if (correctionType == 0) {
+	  InitPotentialAndCharge3D(vTestFunction, rhoTestFunction, erTestFunction, ePhiTestFunction, ezTestFunction,
                       intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction, matricesVExactA,
                       matricesChargeA, matricesErExactA, matricesEPhiExactA, matricesEzExactA, matricesDistDrDzExactA,
                       matricesDistDPhiRDzExactA, matricesDistDzExactA, matricesCorrDrDzExactA,
                       matricesCorrDPhiRDzExactA, matricesCorrDzExactA, rRow, zColumn, phiSlice, 0, c0, c1, ezField,
                       dvdE);
 
-  InitPotentialAndCharge3D(vTestFunction, rhoTestFunction, erTestFunction, ePhiTestFunction, ezTestFunction,
+	  InitPotentialAndCharge3D(vTestFunction, rhoTestFunction, erTestFunction, ePhiTestFunction, ezTestFunction,
                       intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction, matricesVExactC,
                       matricesChargeC, matricesErExactC, matricesEPhiExactC, matricesEzExactC, matricesDistDrDzExactC,
                       matricesDistDPhiRDzExactC, matricesDistDzExactC, matricesCorrDrDzExactC,
                       matricesCorrDPhiRDzExactC, matricesCorrDzExactC, rRow, zColumn, phiSlice, 1, c0, c1, ezField,
                       dvdE);
 
-  scExact->InitSpaceCharge3DPoissonIntegralDz(rRow, zColumn, phiSlice, maxIter, convergenceError,
+	  scExact->InitSpaceCharge3DPoissonIntegralDz(rRow, zColumn, phiSlice, maxIter, convergenceError,
                                               matricesErExactA, matricesEPhiExactA, matricesEzExactA,
                                               matricesErExactC, matricesEPhiExactC, matricesEzExactC,
                                               matricesDistDrDzExactA, matricesDistDPhiRDzExactA, matricesDistDzExactA,
-                                              matricesCorrDrDzExactA, matricesCorrDPhiRDzExactA, matricesCorrDzExactA,
+                                                                                                                                                                                                                                                                                        matricesCorrDrDzExactA, matricesCorrDPhiRDzExactA, matricesCorrDzExactA,
                                               matricesDistDrDzExactC, matricesDistDPhiRDzExactC, matricesDistDzExactC,
                                               matricesCorrDrDzExactC, matricesCorrDPhiRDzExactC, matricesCorrDzExactC,
                                               intErDzTestFunction, intEPhiRDzTestFunction, intDzTestFunction);
 
+  }
+  printf("creating distortion tree for sc\n");
   sc->CreateDistortionTree(rRowTest,zColumnTest,phiSliceTest);
-  scExact->CreateDistortionTree(rRowTest,zColumnTest,phiSliceTest);
+
+  if (correctionType == 0) {
+	  printf("creating distortion tree for scExact\n");
+	  scExact->CreateDistortionTree(rRowTest,zColumnTest,phiSliceTest);
+  }
 
 
 
@@ -305,30 +317,33 @@ void UnitTestCorrectnessDistortion(Int_t rRow,  Int_t zColumn, Int_t phiSlice,  
   WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
   oldIndexErrorList = indexErrorList;
 
-  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drLocalDist",errorList,indexErrorList, pcStream);
-  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
-  oldIndexErrorList = indexErrorList;
+  if (correctionType == 0) {
+	  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drLocalDist",errorList,indexErrorList, pcStream);
+	  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+	  oldIndexErrorList = indexErrorList;
 
-  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drPhiLocalDist",errorList,indexErrorList, pcStream);
-  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
-  oldIndexErrorList = indexErrorList;
+	  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drPhiLocalDist",errorList,indexErrorList, pcStream);
+	  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+	  oldIndexErrorList = indexErrorList;
 
-  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"dzLocalDist",errorList,indexErrorList, pcStream);
-  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
-  oldIndexErrorList = indexErrorList;
+	  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"dzLocalDist",errorList,indexErrorList, pcStream);
+	  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+	  oldIndexErrorList = indexErrorList;
 
-  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drDist",errorList,indexErrorList, pcStream);
-  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
-  oldIndexErrorList = indexErrorList;
+	  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drDist",errorList,indexErrorList, pcStream);
+	  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+	  oldIndexErrorList = indexErrorList;
 
-  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drPhiDist",errorList,indexErrorList, pcStream);
-  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
-  oldIndexErrorList = indexErrorList;
+	  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"drPhiDist",errorList,indexErrorList, pcStream);
+	  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+	  oldIndexErrorList = indexErrorList;
 
-  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"dzDist",errorList,indexErrorList, pcStream);
-  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
-  oldIndexErrorList = indexErrorList;
-
+	  GetResidueFromDistortionAnalyticTree(0,TString::Format("distortion%s.root",sc->GetName()).Data(),TString::Format("distortion%s.root",scExact->GetName()),"dzDist",errorList,indexErrorList, pcStream);
+	  WriteErrorToPCStream(0,rRow,zColumn,phiSlice,rRowTest,zColumnTest,phiSliceTest,correctionType,varNameId++,errorList,oldIndexErrorList,pcStream);
+	  oldIndexErrorList = indexErrorList;
+  } else {
+          varNameId += 6;
+  }
 
   printf("\n\n");
   printf("================= Consistency testing  (distortion - correction) ============================\n");
@@ -425,7 +440,7 @@ void UnitTestConsistencyDistortionZShort(const Int_t rRow, const Int_t zColumn, 
   sc->SetInputSpaceCharge(chargeA,0);
   sc->SetInputSpaceCharge(chargeC,1);
   sc->SetBoundaryIFCA(potentialBoundaryFunctionInZ);
-  sc->SetOmegaTauT1T2(0.35,1.,1.);
+  sc->SetOmegaTauT1T2(-0.35,1.,1.);
 
   sc->SetCorrectionType(correctionType);
 
@@ -654,9 +669,15 @@ LocalDistCorrDzExact(TFormula *intDrDzF, TFormula *intDPhiDzF, TFormula *intDzDz
       for (Int_t i = 0; i < rRow; i++) {
         r0 = rList[i];
 
-        localIntErOverEz = (intDrDzF->Eval(r0, phi0, z1) - intDrDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
-        localIntEPhiOverEz = (intDPhiDzF->Eval(r0, phi0, z1) - intDPhiDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
-        localIntDeltaEz = intDzDzF->Eval(r0, phi0, z1) - intDzDzF->Eval(r0, phi0, z0);
+        if (side == 0) {
+          localIntErOverEz = (intDrDzF->Eval(r0, phi0, z1) - intDrDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
+          localIntEPhiOverEz = (intDPhiDzF->Eval(r0, phi0, z1) - intDPhiDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
+          localIntDeltaEz = intDzDzF->Eval(r0, phi0, z1) - intDzDzF->Eval(r0, phi0, z0);
+        } else {
+          localIntErOverEz = (intDrDzF->Eval(r0, phi0, z1) - intDrDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
+          localIntEPhiOverEz = (intDPhiDzF->Eval(r0, phi0, z1) - intDPhiDzF->Eval(r0, phi0, z0)) / (-1 * ezField);
+          localIntDeltaEz = intDzDzF->Eval(r0, phi0, z1) - intDzDzF->Eval(r0, phi0, z0);
+        }
 
         (*distDrDz)(i, j) = c0 * localIntErOverEz + c1 * localIntEPhiOverEz;
         (*distDPhiRDz)(i, j) = c0 * localIntEPhiOverEz - c1 * localIntErOverEz;
@@ -890,13 +911,22 @@ void PrintErrorStatus() {
   for (Int_t entry = 0;  entry < t->GetEntries(); entry++) {
     t->GetEntry(entry);
     if (varNameId  == 0) continue;
-    if ( errorRelativeMean < maxEpsilon)
-      ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),
-             "Test OK: Mean Relative Error=%.2E < %.2E", errorRelativeMean, maxEpsilon);
-    else
-      ::Error(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),
-              "Test FAILED: Error Relative=%.2E > %.2E",errorRelativeMean, maxEpsilon);
-
+    if (varNameId < 2 || varNameId > 10) {	
+	    if ( errorRelativeMean < maxEpsilon)
+	      ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),      "Test OK: Mean Relative Error=%.2E < %.2E", errorRelativeMean, maxEpsilon);
+	    else
+	      ::Error(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),"Test FAILED: Mean Relative Error=%.2E > %.2E",errorAbsMean, maxEpsilon);
+   } else if (varNameId < 5) {
+	    if ( errorRelativeMean < maxEpsilon)
+	      ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),      "Test OK: Mean Absolute Error/400.0=%.2E < %.2E", errorRelativeMean, maxEpsilon);
+	    else
+	      ::Error(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),"Test FAILED: Mean Absolute Error/400.0=%.2E > %.2E",errorRelativeMean, maxEpsilon);
+   }  else {
+	    if ( errorAbsMean < maxEpsilon)
+	      ::Info(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),      "Test OK: Mean Absolute Error=%.2E < %.2E", errorAbsMean, maxEpsilon);
+	    else
+	      ::Error(TString::Format("AliTPCSpaceCharge3DDriftLineTest::%-30.30s (%d) %-20.20s",unitTestName[unitTestId],correctionType,varName[varNameId]).Data(),"Test FAILED: Mean Absolute Error=%.2E > %.2E",errorAbsMean, maxEpsilon);
+   }  	   
   }
 
 }
