@@ -27,15 +27,21 @@
 #pragma link C++ class AliExternalInfo+;
 #pragma link C++ class AliTreeTrending+;
 #pragma link C++ class AliNDFormulaBrowser+;
+
 #pragma link C++ class AliDrawStyle+;
-#pragma link C++ function <Int_t> AliDrawStyle::GetNamedTypeAt(const char *, Bool_t &, Int_t , const char *, Int_t, const char , const char *);
-#pragma link C++ function <Float_t> AliDrawStyle::GetNamedTypeAt(const char *, Bool_t &, Int_t , const char *, Int_t, const char , const char *);
-#pragma link C++ function <Int_t> AliDrawStyle::PrepareValue(const char*, TString, TString, TString, TString, TString, Bool_t &, Int_t, Int_t);
-#pragma link C++ function <Float_t> AliDrawStyle::PrepareValue(const char*, TString, TString, TString, TString, TString, Bool_t &, Int_t, Int_t);
+#pragma link C++ function AliDrawStyle::GetNamedTypeAt<Int_t>;
+#pragma link C++ function AliDrawStyle::GetNamedTypeAt<Float_t>;
+//#pragma link C++ function <Int_t> AliDrawStyle::PrepareValue(const char*, TString, TString, TString, TString, TString, Bool_t &, Int_t, Int_t);
+//#pragma link C++ function <Float_t> AliDrawStyle::PrepareValue(const char*, TString, TString, TString, TString, TString, Bool_t &, Int_t, Int_t);
 #pragma link C++ function AliDrawStyle::ObjectApplyStyle(const char*, TGraph *, Int_t, Int_t);
 #pragma link C++ function AliDrawStyle::ObjectApplyStyle(const char*, TH1 *, Int_t, Int_t);
 #pragma link C++ function AliDrawStyle::ObjectApplyStyle(const char*, TF1 *, Int_t, Int_t);
+
 #pragma link C++ class AliPainter+;
+//#pragma link C++ function <TH1D> AliPainter::SetProjections(THn *, TString);
+//#pragma link C++ function <TH2D> AliPainter::SetProjections(THn *, TString);
+//#pragma link C++ function <TH3D> AliPainter::SetProjections(THn *, TString);
+
 #pragma link C++ class AliElasticSearchRoot++;
 
 #pragma link C++ namespace AliFFTsmoother+;
