@@ -38,6 +38,13 @@
 #pragma link C++ function AliDrawStyle::ObjectApplyStyle(const char*, TF1 *, Int_t, Int_t);
 
 #pragma link C++ class AliPainter+;
+//#pragma link C++ function AliPainter::SetFitter(TH1D *&, Int_t);
+//#pragma link C++ function AliPainter::SetFitter(TH2D *&, Int_t);
+//#pragma link C++ function AliPainter::SetFitter(TH3D *&, Int_t);
+//#pragma link C++ function AliPainter::SetDrawingOptions(TH1D *&, Int_t);
+//#pragma link C++ function AliPainter::SetDrawingOptions(TH2D *&, Int_t);
+//#pragma link C++ function AliPainter::SetDrawingOptions(TH3D *&, Int_t);
+
 #pragma link C++ class AliElasticSearchRoot++;
 
 #pragma link C++ namespace AliFFTsmoother+;

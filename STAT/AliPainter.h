@@ -60,7 +60,7 @@ class AliPainter : public TObject {
     static void SaveToKeepArray(TObject *obj, TObjArray *&keepArray, Int_t verbose=0);
     static void SaveToKeepArray(TObjArray *objArr, TObjArray *&keepArray, Int_t verbose=0);
     static TObjArray *SetRanges(THn *, Int_t verbose=0);
-   static TObject *SetProjections(THn *inHis, Int_t verbose=0);
+    static TObject *SetProjections(THn *inHis, Int_t verbose=0);
     template <typename T>
       static void SetFitter(T *&inHis, Int_t verbose=0);
     template <typename T>
