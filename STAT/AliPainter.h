@@ -42,8 +42,10 @@ class AliPainter : public TObject {
     static TPad *DivideTPad(const char *division, const char *classID="", const char *style="", TPad *pad=nullptr, Int_t verbose=0);
     static void SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
     static TPad *SetPadMargin(TPad *cPad, const char *position, const char *wMargin, const char *units, Double_t mValue, Int_t iCol, Int_t nCols);
-    static void DrawHistogram(const char *expression, THn *hisN, TPad *pad=nullptr, TObjArray *metaData=nullptr, TObjArray *keepArray=nullptr, Int_t verbose=0);
-    static void DrawHistogram(const char *expression, const TObjArray *histogramArray, TPad *pad=nullptr, TObjArray *metaData=nullptr, TObjArray *keepArray=nullptr, Int_t verbose=0);
+    static void DrawHistogram(const char *expression, THn *hisN, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
+    static TObjArray *PrepareHistogram(const char *expression, THn *hisN, TObjArray *&keepArray, TObjArray *metaData=nullptr, Int_t verbose=0);
+    static void DrawHistogram(const char *expression, const TObjArray *histogramArray, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
+    static TPad *GetNextPad(TPad *cPad, TPad *tempPad=nullptr, Int_t verbose=0);
 
     //static Double_t GetLimitValue(TString expression, TPad *cPad);
     //static void ApplyLimitValue();
@@ -57,8 +59,7 @@ class AliPainter : public TObject {
     static void ParseRanges(const TString ranges, Int_t verbose=0);
     static void SaveToKeepArray(TObject *obj, TObjArray *&keepArray, Int_t verbose=0);
     static void SaveToKeepArray(TObjArray *objArr, TObjArray *&keepArray, Int_t verbose=0);
-    template <typename T>
-      static TObjArray *SetRanges(T *inHis, Int_t verbose=0);
+    static TObjArray *SetRanges(THn *, Int_t verbose=0);
    static TObject *SetProjections(THn *inHis, Int_t verbose=0);
     template <typename T>
       static void SetFitter(T *&inHis, Int_t verbose=0);

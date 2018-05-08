@@ -294,31 +294,31 @@ void AliPainterTest_DivideTPad() {
 }
 
 void AliPainterTest_DrawHistogram() {
-//  auto *finput = TFile::Open("$AliRoot_SRC/STAT/test/AliPainterTest.root");
-//  auto *tree = (TTree *) finput->Get("hisPtAll");
-//  auto *hisArray = new TObjArray();
-//  auto *keys = finput->GetListOfKeys();
-//  for (Int_t iKey = 0; iKey < keys->GetEntries(); iKey++) {
-//    auto *o = finput->Get(
-//            TString::Format("%s;%d", keys->At(iKey)->GetName(), ((TKey *) keys->At(iKey))->GetCycle()).Data());
-//    hisArray->AddLast(o);
-//  }
-//  auto *canvasQA = new TCanvas("canvasQA", "canvasQA", 1200, 800);
-//  AliPainter::DivideTPad("<horizontal>[1b,1t,1,1]", "Canvas41", "", canvasQA);
-//  canvasQA->cd(1);
-//  AliPainter::DrawHistogram((char *) "hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-//  AliPainter::DrawHistogram((char *) "hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray);
-//  AliPainter::DrawHistogram((char *) "hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray);
-//  AliPainter::DrawHistogram((char *) "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E)",
-//                            hisArray);
-//  canvasQA->Print("canvasQADrawHistogramTest.xml");
-//
-//  auto nDiff = gSystem->GetFromPipe("diff canvasQADrawHistogramTest.xml $AliRoot_SRC/STAT/test/canvasQADrawHistogramTestFixed.xml  | wc -l").Atoi();
-//  if (nDiff - 6 <= 0) {
-//    ::Info("AliPainterTest",
-//           "AliPainterTest::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- IsOK");
-//  } else {
-//    ::Error("AliPainterTest",
-//            "AliPainterTest::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- FAILED");
-//  }
+  TFile::SetCacheFileDir(".");
+  TFile *finput = TFile::Open("http://aliqatrkeos.web.cern.ch/aliqatrkeos/performance/AliPainterTest.root","CACHEREAD");
+  TTree *tree = (TTree *) finput->Get("hisPtAll");
+  TObjArray *hisArray = new TObjArray();
+  TList *keys = finput->GetListOfKeys();
+  for (Int_t iKey = 0; iKey<keys->GetEntries();iKey++) {
+    TObject *o = finput->Get(TString::Format("%s;%d", keys->At(iKey)->GetName(), ((TKey *) keys->At(iKey))->GetCycle()).Data());
+    hisArray->AddLast(o);
+  }
+  TCanvas *canvasQA = new TCanvas("canvasQA", "canvasQA", 1200, 800);
+  AliPainter::DivideTPad("<horizontal>[1b,1t,1,1]", "Canvas41", "", canvasQA);
+  canvasQA->cd(1);
+  AliPainter::DrawHistogram((char *) "hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray,0,0,0,4);
+  AliPainter::DrawHistogram((char *) "hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray,0,0,0,4);
+  AliPainter::DrawHistogram((char *) "hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray,0,0,0,4);
+  AliPainter::DrawHistogram((char *) "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E)",
+                            hisArray,0,0,0,4);
+  canvasQA->Print("canvasQADrawHistogramTest.xml");
+
+  auto nDiff = gSystem->GetFromPipe("diff canvasQADrawHistogramTest.xml $AliRoot_SRC/STAT/test/canvasQADrawHistogramTestFixed.xml  | wc -l").Atoi();
+  if (nDiff - 6 <= 0) {
+    ::Info("AliPainterTest",
+           "AliPainterTest::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- IsOK");
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainterTest::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- FAILED");
+  }
 }
