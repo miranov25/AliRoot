@@ -22,28 +22,29 @@ root.exe -b -q  $AliRoot_SRC/STAT/test/AliPainterTest.C+ | tee AliPainterTest.lo
 #include "TFile.h"
 #include "TTree.h"
 #include <cstring>
+#include "TH1.h"
 
 void AliPainterTest_ParseRanges();
 void AliPainterTest_ParseString();
 void AliPainterTest_ParseOptionString();
 void AliPainterTest_ParsePandasString();
-
+void AliPainterTest_GetNextPad();
 void AliPainterTest_DivideTPad();
 //void AliPainterTest_SetMultiGraphTimeAxisTest();
 void AliPainterTest_DrawHistogram();
-//void AliPainterTest_GetLimitValueTest();
-//void AliPainterTest_ApplyLimitValueTest();
+void AliPainterTest_SetLimits();
+
 
 void AliPainterTest() {
   AliPainterTest_ParseRanges();
   AliPainterTest_ParseString();
   AliPainterTest_ParseOptionString();
   AliPainterTest_ParsePandasString();
+  AliPainterTest_GetNextPad();
   AliPainterTest_DivideTPad();
 //  AliPainterTest_SetMultiGraphTimeAxisTest();
   AliPainterTest_DrawHistogram();
-//  AliPainterTest_GetLimitValueTest();
-//  AliPainterTest_ApplyLimitValueTest();
+  AliPainterTest_SetLimits();
 }
 
 void AliPainterTest_ParseOptionString() {
@@ -316,9 +317,88 @@ void AliPainterTest_DrawHistogram() {
   auto nDiff = gSystem->GetFromPipe("diff canvasQADrawHistogramTest.xml $AliRoot_SRC/STAT/test/canvasQADrawHistogramTestFixed.xml  | wc -l").Atoi();
   if (nDiff - 6 <= 0) {
     ::Info("AliPainterTest",
-           "AliPainterTest::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- IsOK");
+           "AliPainter::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- IsOK");
   } else {
     ::Error("AliPainterTest",
-            "AliPainterTest::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- FAILED");
+            "AliPainter::DrawHistogram(\"hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)\",hisArray)- FAILED");
   }
+}
+
+void AliPainterTest_GetNextPad() {
+  TCanvas *canvasQA1 = new TCanvas("canvasQA1", "canvasQA1", 1200, 800);
+  canvasQA1->Divide(4,1);
+  TPad *pad1 = (TPad *) canvasQA1->cd(1);
+  TPad *tPad = AliPainter::GetNextPad(pad1);
+  if (std::strncmp(tPad->GetName(), "canvasQA1_2",11) == 0) {
+    ::Info("AliPainterTest",
+           "AliPainter::GetNextPad(\"%s\",nullptr,4)- IsOK", pad1->GetName());
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainter::GetNextPad(\"%s\",nullptr,4)- FAILED", pad1->GetName());
+  }
+  tPad = AliPainter::GetNextPad(tPad);
+  if (std::strncmp(tPad->GetName(), "canvasQA1_3",11) == 0) {
+    ::Info("AliPainterTest",
+           "AliPainter::GetNextPad(\"%s\",nullptr,4)- IsOK", tPad->GetName());
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainter::GetNextPad(\"%s\",nullptr,4)- FAILED", tPad->GetName());
+  }
+  tPad = AliPainter::GetNextPad(tPad);
+  if (std::strncmp(tPad->GetName(), "canvasQA1_4",11) == 0) {
+    ::Info("AliPainterTest",
+           "AliPainter::GetNextPad(\"%s\",nullptr,4)- IsOK", tPad->GetName());
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainter::GetNextPad(\"%s\",nullptr,4)- FAILED", tPad->GetName());
+  }
+
+  TPad *pad3 = (TPad *) canvasQA1->cd(2);
+  pad3->Divide(2,1);
+  tPad = (TPad *) pad3->cd(1);
+  tPad = AliPainter::GetNextPad(tPad);
+  if (std::strncmp(tPad->GetName(), "canvasQA1_2_2",11) == 0) {
+    ::Info("AliPainterTest",
+           "AliPainter::GetNextPad(\"%s\",nullptr,4)- IsOK", tPad->GetName());
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainter::GetNextPad(\"%s\",nullptr,4)- FAILED", tPad->GetName());
+  }
+  tPad = AliPainter::GetNextPad(tPad);
+  if (std::strncmp(tPad->GetName(), "canvasQA1_3",11) == 0) {
+    ::Info("AliPainterTest",
+           "AliPainter::GetNextPad(\"%s\",nullptr,4)- IsOK", tPad->GetName());
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainter::GetNextPad(\"%s\",nullptr,4)- FAILED", tPad->GetName());
+  }
+}
+
+void AliPainterTest_SetLimits() {
+  TFile::SetCacheFileDir(".");
+  TFile *finput = TFile::Open("http://aliqatrkeos.web.cern.ch/aliqatrkeos/performance/AliPainterTest.root","CACHEREAD");
+  TTree *tree = (TTree *) finput->Get("hisPtAll");
+  TObjArray *hisArray = new TObjArray();
+  TList *keys = finput->GetListOfKeys();
+  for (Int_t iKey = 0; iKey<keys->GetEntries();iKey++) {
+    TObject *o = finput->Get(TString::Format("%s;%d", keys->At(iKey)->GetName(), ((TKey *) keys->At(iKey))->GetCycle()).Data());
+    hisArray->AddLast(o);
+  }
+  THn *hisN = (THn *) hisArray->FindObject("hisK0DMassQPtTgl");
+  TObjArray *keep = NULL;
+  TObjArray *hisArr = AliPainter::PrepareHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E,ylim=[mean,max])", hisN, keep, NULL,4);
+  Long64_t comSize = 0;
+  Double_t *combineArray = AliPainter::GetDataArray(hisArr,comSize);
+  Double_t mean = TMath::Mean(comSize, combineArray);
+  Double_t max = TMath::MaxElement(comSize, combineArray);
+  AliPainter::SetLimits(hisArr, 4);
+
+  if ((Int_t) mean == 2028 && (Int_t) max == 10730) {
+    ::Info("AliPainterTest",
+           "AliPainter::SetLimits()- IsOK");
+  } else {
+    ::Error("AliPainterTest",
+            "AliPainter::SetLimits()- FAILED");
+  }
+
 }

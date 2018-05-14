@@ -42,8 +42,9 @@ class AliPainter : public TObject {
     static TPad *DivideTPad(const char *division, const char *classID="", const char *style="", TPad *pad=nullptr, Int_t verbose=0);
     static void SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
     static TPad *SetPadMargin(TPad *cPad, const char *position, const char *wMargin, const char *units, Double_t mValue, Int_t iCol, Int_t nCols);
-    static void DrawHistogram(const char *expression, THn *hisN, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
     static TObjArray *PrepareHistogram(const char *expression, THn *hisN, TObjArray *&keepArray, TObjArray *metaData=nullptr, Int_t verbose=0);
+    //TODO: hisN should be first argument (in future could be include in THnBase)
+    static void DrawHistogram(const char *expression, THn *hisN, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
     static void DrawHistogram(const char *expression, const TObjArray *histogramArray, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
     static TPad *GetNextPad(TPad *cPad, TPad *tempPad=nullptr, Int_t verbose=0);
 
@@ -52,7 +53,6 @@ class AliPainter : public TObject {
     typedef std::map<Int_t, std::vector<TString> > axisRangesMap;
     static std::map<TString, TString> drawValues;
     static std::map<TString, TString> fitValues;
-    static std::map<TString, Double_t> statValues;
     static std::map<TString, TString> genValues;
     static std::vector<TString> rangesVec;
     static void FillAll(const char *expression, Int_t verbose=0);
@@ -61,6 +61,9 @@ class AliPainter : public TObject {
     static void SaveToKeepArray(TObjArray *objArr, TObjArray *&keepArray, Int_t verbose=0);
     static TObjArray *SetRanges(THn *, Int_t verbose=0);
     static TObject *SetProjections(THn *inHis, Int_t verbose=0);
+    static Double_t *GetDataArray(TObjArray *hisArr, Long64_t &commonSize, Int_t verbose=0);
+    static void SetLimits(TObjArray *&hisArr, Int_t verbose=0);
+    static Double_t GetStatVal(Double_t *valuesArray, Long64_t commonSize, const TString statUnit, Int_t verbose=0);
     template <typename T>
       static void SetFitter(T *&inHis, Int_t verbose=0);
     template <typename T>
