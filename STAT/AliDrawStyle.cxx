@@ -13,6 +13,57 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
+///   ### AliDrawStyle - Class to access drawing styles
+///   Our goal is provide to users comfortable interface for changing style of drawing.
+///   We think that best tools for such tasks it's CSS. So it's attempt to create analog of CSS for aliroot.
+///   All you need to know about CSS for usage AiDrawStyle is:
+///     1. First of all you should to create and fill file with ".css" extension with description of your own styles according to your objects declaration.
+///        (See example)[https://github.com/alisw/AliRoot/blob/master/STAT/test/alirootTestStyle.css]
+///     2. The syntax of CSS is
+///         \image html CSSsyntax.png
+///         * selector - define the element (class in root), class (user predefined class (like tag)) via name of object.
+///           E.g. TH1 *his = TH1("his1.class(Error)"). "Error" is a class.
+///           And object is name of root object. E.g. his->GetName(). ("his1" in example above).
+///         * declaration consist from  properties and values. We try to use the same properties like in CSS where possible
+///           in opposite case we use properties from root. E.g. {height: 1200;} for canvases use real css property or
+///           {marker-style: 20,21,24,27;} is example of using of property from root;
+///   One more important thing - we provide to users opportunity to specify local property
+///   in the name of objects, such property has more priority than property from file.
+///   E.g. You can define name of object like
+///     \code
+///         hisArray[i] = new TH1F(TString::Format("his%d.class(Raw).style(marker-color:%d;)", i, i*2 + 3).Data(),
+///                           TString::Format("his%d.class(Raw)", i).Data(), 100, -5, 5);
+///      \endcode
+///    How it made in MakeTestPlot() from $AliRoot_SRC/STAT/test/AliDrawStyleTest.C+.
+///
+///   The sequance of work with AliDrawStyle:
+///     1. Define the style (create file with description of style);
+///     2. Register this style;
+///     3. Apply it;
+///
+///   Method of applying the style - AliDrawStyle::ApplyCssStyle() has three input parameters:
+///     1. Name of style (it has a type - const char *, so for using TString use .Data());
+///     2. TPad object in order to apply your style recursively according with you style;
+///     3. Verbosity mode (4 is for detailed output);
+///
+///   Also we support units and color formats. So, you can use rgb or hex notation for colors in your .css file and pixels or percents for sizes.
+///   (See examples)[https://github.com/alisw/AliRoot/blob/master/STAT/test/alirootTestStyle.css]
+///  * Usage (work in progress)
+///    * performance reports -  with styles as a parameter
+///    * QA reports
+///    * AliTreePlayer, and TStatToolkit
+/// \author [Marian Ivanov](marian.ivanov@cern.ch), [Boris Rumyantsev](boris.rumyantsev@cern.ch)
+///
+///  ## Example usage
+/*!
+\code
+ .L $AliRoot_SRC/STAT/test/AliDrawStyleTest.C+
+ TCanvas *canv = MakeTestPlot(3);
+ AliDrawStyle::RegisterCssStyle("test1",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/test1.css",0));
+ AliDrawStyle::ApplyCssStyle(canv, "test1");
+\endcode
+*/
+
 #include "AliDrawStyle.h"
 #include "TStyle.h"
 #include "TError.h"
@@ -144,7 +195,6 @@ Float_t AliDrawStyle::GetFloatAt(const char * format, Int_t index, const char * 
   return -1;
 }
 
-
 // GetMarkerStyle associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
@@ -188,6 +238,7 @@ Int_t AliDrawStyle::GetMarkerColor(const char *style, Int_t index){
   }
   return  AliDrawStyle::fMarkerColors[style][index];
 }
+
 /// GetMarkerSize associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
@@ -198,6 +249,7 @@ Float_t AliDrawStyle::GetMarkerSize(const char *style, Int_t index){
   }
   return  AliDrawStyle::fMarkerSize[style][index];
 }
+
 /// GetFillColor associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
@@ -208,6 +260,7 @@ Int_t AliDrawStyle::GetFillColor(const char *style, Int_t index){
   }
   return  AliDrawStyle::fFillColors[style][index];
 }
+
 /// GetLineWidth associated to the style.
 /// \param  style - name of style used
 /// \param index  - marker index
@@ -244,9 +297,6 @@ void AliDrawStyle::PrintStyles(Option_t *option, TPRegexp& regExp){
 ///
 /// \param styleName
 void AliDrawStyle::ApplyStyle(const char* styleName){
-  //
-  // Apply registered style
-  //
   TStyle * style= fStyleAlice[styleName];
   if (style==NULL){
     ::Error("AliDrawStyle::ApplyStyle","Invalid style %s",styleName);
@@ -260,10 +310,8 @@ void AliDrawStyle::ApplyStyle(const char* styleName){
 void  AliDrawStyle::AddLatexSymbol(const char * symbolName, const char * symbolTitle){
   fLatexAlice[symbolName]=symbolTitle;
 }
+
 void  AliDrawStyle::RegisterDefaultLatexSymbols(){
-  //
-  // Set default AliRoot/Latex/root shortcuts
-  //
   fLatexAlice["qpt"]="#it{q}/#it{p}_{T} (GeV/#it{c})^{-1}";
   fLatexAlice["qpt0"]="#it{q}/#it{p}_{T}";
   fLatexAlice["pt"]="#it{p}_{T}  (GeV/#it{c}) ";
@@ -276,10 +324,8 @@ void  AliDrawStyle::RegisterDefaultLatexSymbols(){
 }
 
 void   AliDrawStyle::RegisterDefaultStyle(){
-  //
   fStyleAlice["figTemplate"]=RegisterDefaultStyleFigTemplate(kFALSE);
   fStyleAlice["figTemplateGrey"]=RegisterDefaultStyleFigTemplate(kFALSE);
-  //
   TStyle *style=RegisterDefaultStyleFigTemplate(kFALSE);
   style->SetName("figTemplate2");
   style->SetTitleXSize(TMath::Power(2,0.5)*style->GetTitleXSize());
@@ -288,7 +334,6 @@ void   AliDrawStyle::RegisterDefaultStyle(){
   style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Y"),"Y");
   style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Z"),"Z");
   fStyleAlice["figTemplate2"]=style;
-  //
   style=RegisterDefaultStyleFigTemplate(kFALSE);
   style->SetName("figTemplate3");
   style->SetTitleXSize(TMath::Power(3,0.5)*style->GetTitleXSize());
@@ -299,14 +344,14 @@ void   AliDrawStyle::RegisterDefaultStyle(){
   fStyleAlice["figTemplate3"]=style;
 }
 
+///
+/// Style source:
+/// https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
 void  AliDrawStyle::RegisterDefaultMarkers(){
-  //
-  // Style source:
-  // https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7, kBlack, kRed+1 }; // for systematic bands
   const Int_t colors[]     = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2,kGray+1,  kRed-10 };
   const Int_t markers[]    = {kFullCircle, kFullSquare,kOpenCircle,kOpenSquare,kOpenDiamond,kOpenCross,kFullCross,kFullDiamond,kFullStar,kOpenStar};
-  //
+
   (fMarkerStyles["figTemplate"])=std::vector<int>(10);
   (fMarkerColors["figTemplate"])=std::vector<int>(10);
   (fMarkerSize["figTemplate"])=std::vector<float>(10);
@@ -357,7 +402,7 @@ void  AliDrawStyle::RegisterDefaultMarkers(){
     (fMarkerSize["figTemplateTRD"])[i]=markerTRDSize[i];
     (fFillColors["figTemplateTRD"])[i]=fillColors[i];
     (fLineWidth["figTemplateTRD"])[i]=0.5;
-    //
+
     (fMarkerStyles["figTemplateTRDPair"])[i]=markersTRD[i];
     (fMarkerColors["figTemplateTRDPair"])[i]=TColor::GetColorDark(colorsTRD[i/2]);
     (fMarkerSize["figTemplateTRDPair"])[i]=markerTRDSize[i];
@@ -367,10 +412,12 @@ void  AliDrawStyle::RegisterDefaultMarkers(){
 
 }
 
+///
+/// Style source:
+//  https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
+/// \param grayPalette
+/// \return
 TStyle*  RegisterDefaultStyleFigTemplate(Bool_t grayPalette) {
-  // Style source:
-  // https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
-  //
   TStyle * figStyle = new TStyle;
   figStyle->Reset("Plain");
   figStyle->SetOptTitle(0);
@@ -431,13 +478,15 @@ TString  AliDrawStyle::ParseDeclaration(const char *inputDec, const char *proper
   return dVal(1,valLength);
 }
 
-/// \brief Method returns type of input number
+///  Method returns input number with predefined type
 /// \tparam T - type of return value could be any number format from c++
 /// \param inputStr - input string could be declaration from css or only string with values
-/// \param index - the number of returning value, by default - 0
-/// \param sep - separator from input string. by default - ";"
-/// \param ignoreBrackets - separators inside this brackets will be ignore. by default "()"
+/// \param status - it's a flag which allows to understand should we use the returned value or not
+/// \param index - the number of returning value, by default - 0, in case if index more than number of values, last value will be return
+/// \param propertyName - name of property, using for sizes
 /// \param verbose
+/// \param sep - separator from input string. by default - ","
+/// \param ignoreBrackets - separators inside of this brackets will be ignore. by default "()"
 /// \return - number of type T or -1 if something went wrong
 /*!
  ####  Example use:
@@ -466,6 +515,7 @@ TString  AliDrawStyle::ParseDeclaration(const char *inputDec, const char *proper
     (int) 14
  \endcode
  */
+ //TODO: remove template because https://github.com/alisw/AliRoot/pull/657#discussion_r185746846
 template <typename T>
 T AliDrawStyle::GetNamedTypeAt(const char *inputStr, Bool_t &status, int index, const char *propertyName, Int_t verbose, const char sep, const char *ignoreBrackets) {
   TString inputTStr;
@@ -757,10 +807,7 @@ T AliDrawStyle::PrepareValue(const char* styleName, TString propertyName, TStrin
 /// Read CSS html like files  (*see also AliRoot modification in CSS)
 /// TODO:
 /// * proper exception  handling (Boris)
-///   * code should not fail
-///   * return 0 pointer if inconsistent content
 ///   * Use ::Error verbosity according debug level
-/// * include CSS files  (should be included as )
 /// \param inputName     - input file to read
 /// \param verbose       - specify verbose level for ::error and ::info (Int_t should be interpreted as an bit-mask)
 /// \return              - TObjArray  with the pairs TNamed of the CSS <Selector, declaration> or  TObjArray (recursive structure like includes)
@@ -818,7 +865,7 @@ void AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputName, 
     delete pCssOut;
   }
 }
-
+//TODO: combine ElementSearch, ClassSearch, ObjectSearch into one function
 /// \brief Checks element id in selector
 /// \param selector - input string with selectors
 /// \param elementID
@@ -1654,66 +1701,66 @@ void AliDrawStyle::TCanvasApplyCssStyle(const char *styleName, TCanvas *cCanvas,
 /*!
   ####  Example usage see in the beginnings of this file:
 */
-  void AliDrawStyle::ApplyCssStyle(TPad *pad, const char *styleName, Int_t verbose) {
-    if (pad == nullptr) {
-      ::Error("AliDrawStyle::ApplyCssStyle", "Pad doesn't exist");
-      return;
-    }
-
-    TObject *cObj = nullptr;
-    TList *oList = nullptr;
-    TString elementID = "";
-    TString objectID = "";
-    TString classID = "";
-    TString localStyle = "";
-    TPRegexp numPat0("[[].*[]]");
-    TPRegexp numPat1("[0-9]+");
-    TString padNumStr;
-
-    oList = pad->GetListOfPrimitives();
-    GetIds(pad, elementID, classID, objectID, localStyle, verbose);
-
-    if (elementID == "TCanvas") {
-      AliDrawStyle::TCanvasApplyCssStyle(styleName, (TCanvas *) pad, verbose);
-      pad->Modified();
-      for (Int_t c = 0; c < oList->GetEntries() && oList->At(c)->InheritsFrom("TPad"); c++) {
-        AliDrawStyle::ApplyCssStyle((TPad *) oList->At(c), styleName, verbose);
-      }
-    }
-
-    //fixme: for pads we can use indexes only from name
-    if (elementID == "TPad") {
-      padNumStr = TString(TString(pad->GetName())(numPat0))(numPat1);
-      if (padNumStr != TString(""))
-        AliDrawStyle::SetPadNumber(padNumStr.Atoi());
-        AliDrawStyle::TPadApplyStyle(styleName, pad, verbose);
-        AliDrawStyle::SetPadNumber(AliDrawStyle::GetPadNumber() + 1);
-    }
-    Int_t objNum = -1, hisCnt = 0, funcCnt = 0, graphCnt = 0, legendCnt = 0;
-    for (Int_t k = 0; k < oList->GetEntries(); k++) {
-      cObj = oList->At(k);
-      if (TString(TString(cObj->GetName())(numPat0))(numPat1) != TString(""))
-        objNum = TString(TString(TString(cObj->GetName())(numPat0))(numPat1)).Atoi();
-      if (cObj->InheritsFrom("TH1")) {
-        if (objNum >= 0) hisCnt = objNum;
-        AliDrawStyle::TH1ApplyStyle(styleName, (TH1 *) cObj, hisCnt, verbose);
-        hisCnt++;
-      }
-      if (cObj->InheritsFrom("TGraph")) {
-        if (objNum >= 0) graphCnt = objNum;
-        AliDrawStyle::TGraphApplyStyle(styleName, (TGraph *) cObj, graphCnt, verbose);
-        graphCnt++;
-      }
-      if (cObj->InheritsFrom("TF1")) {
-        if (objNum >= 0) funcCnt = objNum;
-        AliDrawStyle::TF1ApplyStyle(styleName, (TF1 *) cObj, funcCnt, verbose);
-        funcCnt++;
-      }
-      if (cObj->InheritsFrom("TLegend")) {
-        if (objNum >= 0) legendCnt = objNum;
-        AliDrawStyle::TLegendApplyStyle(styleName, (TLegend *) cObj, legendCnt, verbose);
-        legendCnt++;
-      }
-    }
-    pad->Modified();
+void AliDrawStyle::ApplyCssStyle(TPad *pad, const char *styleName, Int_t verbose) {
+  if (pad == nullptr) {
+    ::Error("AliDrawStyle::ApplyCssStyle", "Pad doesn't exist");
+    return;
   }
+
+  TObject *cObj = nullptr;
+  TList *oList = nullptr;
+  TString elementID = "";
+  TString objectID = "";
+  TString classID = "";
+  TString localStyle = "";
+  TPRegexp numPat0("[[].*[]]");
+  TPRegexp numPat1("[0-9]+");
+  TString padNumStr;
+
+  oList = pad->GetListOfPrimitives();
+  GetIds(pad, elementID, classID, objectID, localStyle, verbose);
+
+  if (elementID == "TCanvas") {
+    AliDrawStyle::TCanvasApplyCssStyle(styleName, (TCanvas *) pad, verbose);
+    pad->Modified();
+    for (Int_t c = 0; c < oList->GetEntries() && oList->At(c)->InheritsFrom("TPad"); c++) {
+      AliDrawStyle::ApplyCssStyle((TPad *) oList->At(c), styleName, verbose);
+    }
+  }
+
+//fixme: for pads we can use indexes only from name
+  if (elementID == "TPad") {
+    padNumStr = TString(TString(pad->GetName())(numPat0))(numPat1);
+    if (padNumStr != TString(""))
+      AliDrawStyle::SetPadNumber(padNumStr.Atoi());
+      AliDrawStyle::TPadApplyStyle(styleName, pad, verbose);
+      AliDrawStyle::SetPadNumber(AliDrawStyle::GetPadNumber() + 1);
+  }
+  Int_t objNum = -1, hisCnt = 0, funcCnt = 0, graphCnt = 0, legendCnt = 0;
+  for (Int_t k = 0; k < oList->GetEntries(); k++) {
+    cObj = oList->At(k);
+    if (TString(TString(cObj->GetName())(numPat0))(numPat1) != TString(""))
+      objNum = TString(TString(TString(cObj->GetName())(numPat0))(numPat1)).Atoi();
+    if (cObj->InheritsFrom("TH1")) {
+      if (objNum >= 0) hisCnt = objNum;
+      AliDrawStyle::TH1ApplyStyle(styleName, (TH1 *) cObj, hisCnt, verbose);
+      hisCnt++;
+    }
+    if (cObj->InheritsFrom("TGraph")) {
+      if (objNum >= 0) graphCnt = objNum;
+      AliDrawStyle::TGraphApplyStyle(styleName, (TGraph *) cObj, graphCnt, verbose);
+      graphCnt++;
+    }
+    if (cObj->InheritsFrom("TF1")) {
+      if (objNum >= 0) funcCnt = objNum;
+      AliDrawStyle::TF1ApplyStyle(styleName, (TF1 *) cObj, funcCnt, verbose);
+      funcCnt++;
+    }
+    if (cObj->InheritsFrom("TLegend")) {
+      if (objNum >= 0) legendCnt = objNum;
+      AliDrawStyle::TLegendApplyStyle(styleName, (TLegend *) cObj, legendCnt, verbose);
+      legendCnt++;
+    }
+  }
+  pad->Modified();
+}
