@@ -23,6 +23,7 @@ root.exe -b -q  $AliRoot_SRC/STAT/test/AliPainterTest.C+ | tee AliPainterTest.lo
 #include "TTree.h"
 #include <cstring>
 #include "TH1.h"
+#include "THn.h"
 
 void AliPainterTest_ParseRanges();
 void AliPainterTest_ParseString();
@@ -400,7 +401,7 @@ void AliPainterTest_SetLimits() {
   }
   THn *hisN = (THn *) hisArray->FindObject("hisK0DMassQPtTgl");
   TObjArray *keep = NULL;
-  TObjArray *hisArr = AliPainter::PrepareHistogram(hisN, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E,ylim=[mean,max])", keep);
+  TObjArray *hisArr = AliPainter::PrepareHistogram(hisN, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E,ylim=[<mean>,<max>])", keep);
   Long64_t comSize = 0;
   Double_t *combineArray = AliPainter::GetDataArray(hisArr,comSize);
   Double_t mean = TMath::Mean(comSize, combineArray);

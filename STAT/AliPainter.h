@@ -15,7 +15,7 @@ TObject *o = finput->Get(TString::Format("%s;%d", keys->At(iKey)->GetName(), ((T
 hisArray->AddLast(o);
 }
 
-THn *hisN = hisArray->FindObject("hisK0DMassQPtTgl");
+THnBase *hisN = hisArray->FindObject("hisK0DMassQPtTgl");
 AliPainter::DrawHistogram("hisName()(1)(name=gaus,option=W)(class=Raw,drawOpt=E)", hisN, 0, 0, 0,4)
 
 */
@@ -32,24 +32,21 @@ AliPainter::DrawHistogram("hisName()(1)(name=gaus,option=W)(class=Raw,drawOpt=E)
 #include "TObjArray.h"
 #include "TString.h"
 #include "TPad.h"
-#include "THn.h"
+#include "THnBase.h"
 #include "TMultiGraph.h"
 #include "TFormula.h"
 #include "TObject.h"
+#include "TLegend.h"
 
 class AliPainter : public TObject {
   public:
     static TPad *DivideTPad(TPad *pad, const char *division, const char *classID="", const char *style="", Int_t verbose=0);
     static void SetMultiGraphTimeAxis(TMultiGraph *graph, TString option);
     static TPad *SetPadMargin(TPad *cPad, const char *position, const char *wMargin, const char *units, Double_t mValue, Int_t iCol, Int_t nCols);
-    static TObjArray *PrepareHistogram(THn *hisN, const char *expression, TObjArray *&keepArray, TObjArray *metaData=nullptr, Int_t verbose=0);
-    //TODO: hisN should be first argument (in future could be include in THnBase)
-    static void DrawHistogram(THn *hisN, const char *expression, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
+    static TObjArray *PrepareHistogram(THnBase *hisN, const char *expression, TObjArray *&keepArray, TObjArray *metaData=nullptr, Int_t verbose=0);
+    static void DrawHistogram(THnBase *hisN, const char *expression, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
     static void DrawHistogram(const TObjArray *histogramArray, const char *expression, TPad *pad=nullptr, TObjArray *keepArray=nullptr, TObjArray *metaData=nullptr, Int_t verbose=0);
     static TPad *GetNextPad(TPad *cPad, TPad *tempPad=nullptr, Int_t verbose=0);
-
-    //static Double_t GetLimitValue(TString expression, TPad *cPad);
-    //static void ApplyLimitValue();
     typedef std::map<Int_t, std::vector<TString> > axisRangesMap;
     static std::map<TString, TString> drawValues;
     static std::map<TString, TString> fitValues;
@@ -59,8 +56,9 @@ class AliPainter : public TObject {
     static void ParseRanges(const TString, Int_t=0);
     static void SaveToKeepArray(TObject *, TObjArray *&, Int_t=0);
     static void SaveToKeepArray(TObjArray *, TObjArray *&, Int_t=0);
-    static TObjArray *SetRanges(THn *, Int_t=0);
-    static TObject *SetProjections(THn *, Int_t=0);
+    static TObjArray *SetRanges(THnBase *, Int_t=0);
+    static TObject *SetProjections(THnBase *, Int_t=0);
+    static TLegend BuildLegend(THnBase *, TObjArray *, Int_t=0);
     static Double_t *GetDataArray(TObjArray *, Long64_t &, Int_t=0);
     static void SetLimits(TObjArray *&, Int_t=0);
     static Double_t GetStatVal(Double_t *, Long64_t, const TString, Int_t=0);

@@ -22,6 +22,7 @@
 #include "TMultiGraph.h"
 #include "TGraph.h"
 #include "TError.h"
+#include "THnBase.h"
 #include "THn.h"
 #include "TH1.h"
 #include "TH2.h"
@@ -371,7 +372,7 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
 ///                             - if float   user range  - TAxis::SetRangeUser(min,max)
 ///                             - if Expression is empty - do not specify anything
 ///                           - projectionString: (i0,i1) @done
-///                             - new projection created THn his = hisInput->Projection(i0,i1....)
+///                             - new projection created THnBase his = hisInput->Projection(i0,i1....)
 ///                             - at minimum one dimension should be specified, maximum 3D
 ///                           - fitting string: (fitterName,fitOption,range,initialParam)
 ///                             - fitterName - whatever fitter registered in the list of fitters
@@ -465,14 +466,14 @@ void AliPainter::DrawHistogram(const TObjArray *histogramArray, const char *expr
     TString hisName = exprsn(0, exprsn.Index("(", 0));
     if (hisName != TString()) {
       THn *hisN = (THn *) histogramArray->FindObject(hisName.Data());
-      AliPainter::DrawHistogram(hisN, expression, pad, keepArray, metaData, verbose);
+      AliPainter::DrawHistogram((THnBase *)hisN, expression, pad, keepArray, metaData, verbose);
       return;
     } else {
       for (Int_t i = 0; i < histogramArray->GetEntriesFast(); i++) {
-        if (histogramArray->InheritsFrom("THn")) {
-          AliPainter::DrawHistogram((THn *) histogramArray->At(i), expression, pad, keepArray, metaData, verbose);
+        if (histogramArray->InheritsFrom("THnBase")) {
+          AliPainter::DrawHistogram((THnBase *) histogramArray->At(i), expression, pad, keepArray, metaData, verbose);
         } else
-          ::Warning("AliPainter::DrawHistogram", "Object %s is %s, but not THn. We will check next object.", \
+          ::Warning("AliPainter::DrawHistogram", "Object %s is %s, but not THnBase. We will check next object.", \
                      histogramArray->At(i)->GetName(), histogramArray->At(i)->ClassName());
       }
     }
@@ -495,7 +496,7 @@ void AliPainter::DrawHistogram(const TObjArray *histogramArray, const char *expr
 ////TODO: combine objects into arrays and use TMath for calculating of parameters @Boris
 //}
 
-TObjArray *AliPainter::PrepareHistogram(THn *hisN, const char *expression, TObjArray *&keepArray, TObjArray *metaData,  Int_t verbose) {
+TObjArray *AliPainter::PrepareHistogram(THnBase *hisN, const char *expression, TObjArray *&keepArray, TObjArray *metaData,  Int_t verbose) {
   if (hisN == nullptr) {
     ::Error("AliPainter::DrawHistogram", "Input histogram is null");
     return nullptr;
@@ -506,7 +507,7 @@ TObjArray *AliPainter::PrepareHistogram(THn *hisN, const char *expression, TObjA
   Int_t hisCnt = hisNArr->GetEntriesFast();
   TH1D *tempHis[hisCnt];
   for (Int_t i = 0; i < hisCnt; i++) {
-    tempHis[i] = (TH1D *) AliPainter::SetProjections((THn *) hisNArr->At(i), verbose);
+    tempHis[i] = (TH1D *) AliPainter::SetProjections((THnBase *) hisNArr->At(i), verbose);
     if (tempHis[i] == nullptr) return nullptr;
     AliPainter::SetFitter<TH1D>(tempHis[i], verbose);
     AliPainter::SetDrawingOptions<TH1D>(tempHis[i], verbose);
@@ -517,7 +518,7 @@ TObjArray *AliPainter::PrepareHistogram(THn *hisN, const char *expression, TObjA
   return finHisArr;
 }
 //TODO: extend to TH2D, TH3D @Boris
-void AliPainter::DrawHistogram(THn *hisN, const char *expression, TPad *pad, TObjArray *metaData, TObjArray *keepArray, Int_t verbose) {
+void AliPainter::DrawHistogram(THnBase *hisN, const char *expression, TPad *pad, TObjArray *metaData, TObjArray *keepArray, Int_t verbose) {
   if (hisN == nullptr) {
     ::Error("AliPainter::DrawHistogram", "Input histogram is null");
     return;
@@ -738,7 +739,7 @@ void AliPainter::ParseRanges(const TString ranges, Int_t verbose) {
   AliPainter::rangesVec = res;
 }
 
-TObject *AliPainter::SetProjections(THn *inHisN, Int_t verbose) {
+TObject *AliPainter::SetProjections(THnBase *inHisN, Int_t verbose) {
 
     std::vector<TString> proj = AliPainter::ParseOptionString(AliPainter::genValues["projections"].Data());
     TObject *res;
@@ -837,7 +838,7 @@ template <typename T>
 }
 //TODO: change global maps to local
 
-TObjArray *AliPainter::SetRanges(THn *hisN, Int_t verbose) {
+TObjArray *AliPainter::SetRanges(THnBase *hisN, Int_t verbose) {
   std::vector<TString> rangeVec;
   TObjArray *finalHisNArr = new TObjArray;
 
