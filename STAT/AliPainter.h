@@ -58,7 +58,7 @@ class AliPainter : public TObject {
     static void SaveToKeepArray(TObjArray *, TObjArray *&, Int_t=0);
     static TObjArray *SetRanges(THnBase *, Int_t=0);
     static TObject *SetProjections(THnBase *, Int_t=0);
-    static TLegend BuildLegend(THnBase *, TObjArray *, Int_t=0);
+//    static TLegend BuildLegend(THnBase *, TObjArray *, Int_t=0);
     static Double_t *GetDataArray(TObjArray *, Long64_t &, Int_t=0);
     static void SetLimits(TObjArray *&, Int_t=0);
     static Double_t GetStatVal(Double_t *, Long64_t, const TString, Int_t=0);
