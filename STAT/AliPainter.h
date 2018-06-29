@@ -14,9 +14,11 @@ for (Int_t iKey = 0; iKey<keys->GetEntries();iKey++) {
 TObject *o = finput->Get(TString::Format("%s;%d", keys->At(iKey)->GetName(), ((TKey *) keys->At(iKey))->GetCycle()).Data());
 hisArray->AddLast(o);
 }
-
+TCanvas *canvasQA1 = new TCanvas("canvasQA", "canvasQA", 1200, 800);
+AliPainter::DivideTPad(canvasQA1, "<horizontal>[1]", "Canvas1");
+canvasQA1->cd(1);
 THnBase *hisN = hisArray->FindObject("hisK0DMassQPtTgl");
-AliPainter::DrawHistogram("hisName()(1)(name=gaus,option=W)(class=Raw,drawOpt=E)", hisN)
+AliPainter::DrawHistogram(hisN, "hisName()(1)(name=gaus,option=W)(class=Raw,drawOpt=E)")
 
 */
 /// \ingroup STAT

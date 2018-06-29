@@ -12,49 +12,6 @@
  * about the suitability of this software for any purpose. It is          *
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
-
-///   ### AliDrawStyle - Class to access drawing styles
-///   Our goal is provide to users comfortable interface for changing style of drawing.
-///   We think that best tools for such tasks it's CSS. So it's attempt to create analog of CSS for aliroot.
-///   All you need to know about CSS for usage AiDrawStyle is:
-///     1. First of all you should to create and fill file with ".css" extension with description of your own styles according to your objects declaration.
-///        (See example)[https://github.com/alisw/AliRoot/blob/master/STAT/test/alirootTestStyle.css]
-///     2. The syntax of CSS is
-///         \image html CSSsyntax.png
-///         * selector - define the element (class in root), class (user predefined class (like tag)) via name of object.
-///           E.g. TH1 *his = TH1("his1.class(Error)"). "Error" is a class.
-///           And object is name of root object. E.g. his->GetName(). ("his1" in example above).
-///         * declaration consist from  properties and values. We try to use the same properties like in CSS where possible
-///           in opposite case we use properties from root. E.g. {height: 1200;} for canvases use real css property or
-///           {marker-style: 20,21,24,27;} is example of using of property from root;
-///   One more important thing - we provide to users opportunity to specify local property
-///   in the name of objects, such property has more priority than property from file.
-///   E.g. You can define name of object like
-///     \code
-///         hisArray[i] = new TH1F(TString::Format("his%d.class(Raw).style(marker-color:%d;)", i, i*2 + 3).Data(),
-///                           TString::Format("his%d.class(Raw)", i).Data(), 100, -5, 5);
-///      \endcode
-///    How it made in MakeTestPlot() from $AliRoot_SRC/STAT/test/AliDrawStyleTest.C+.
-///
-///   The sequance of work with AliDrawStyle:
-///     1. Define the style (create file with description of style);
-///     2. Register this style;
-///     3. Apply it;
-///
-///   Method of applying the style - AliDrawStyle::ApplyCssStyle() has three input parameters:
-///     1. Name of style (it has a type - const char *, so for using TString use .Data());
-///     2. TPad object in order to apply your style recursively according with you style;
-///     3. Verbosity mode (4 is for detailed output);
-///
-///   Also we support units and color formats. So, you can use rgb or hex notation for colors in your .css file and pixels or percents for sizes.
-///   (See examples)[https://github.com/alisw/AliRoot/blob/master/STAT/test/alirootTestStyle.css]
-///  * Usage (work in progress)
-///    * performance reports -  with styles as a parameter
-///    * QA reports
-///    * AliTreePlayer, and TStatToolkit
-/// \author [Marian Ivanov](marian.ivanov@cern.ch), [Boris Rumyantsev](boris.rumyantsev@cern.ch)
-///
-///  ## Example usage
 /*!
 \code
  .L $AliRoot_SRC/STAT/test/AliDrawStyleTest.C+
@@ -489,26 +446,26 @@ TString  AliDrawStyle::ParseDeclaration(const char *inputDec, const char *proper
  \code
  1.
   Bool_t status;
-  AliDrawStyle::GetNamedTypeAt<int>("11,13,14", status)
-  (int) 11
+  AliDrawStyle::GetNamedTypeAt("11,13,14", status)
+  (Float_t)1.10000000000000000e+01
  2.
   Bool_t status;
-  AliDrawStyle::GetNamedTypeAt<int>("11,13,14", status, 1)
-  (int) 12
+  AliDrawStyle::GetNamedTypeAt("11,13,14", status, 1)
+  (Float_t)1.30000000000000000e+01
  3.
   Bool_t status;
-  AliDrawStyle::GetNamedTypeAt<int>("rgb(12,12,12),#dfdfdf,14", status)
-  (int) 1179
+  AliDrawStyle::GetNamedTypeAt("rgb(12,12,12),#dfdfdf,14", status)
+  (Float_t)9.24000000000000000e+02
  4.
   Bool_t status;
-  AliDrawStyle::GetNamedTypeAt<int>("rgb(12,12,12),#dfdfdf,14", status, 1)
-  (int) 1180
+  AliDrawStyle::GetNamedTypeAt("rgb(12,12,12),#dfdfdf,14", status, 1)
+  (Float_t)9.25000000000000000e+02
  5. Bool_t status;
-    AliDrawStyle::GetNamedTypeAt<int>("marker-color:rgb(12,12,12),#dfdfdf,14;marker-size:1,2,3,4;", status,2,"marker-size")
-    (int) 3
+    AliDrawStyle::GetNamedTypeAt("marker-color:rgb(12,12,12),#dfdfdf,14;marker-size:1,2,3,4;", status,2,"marker-size")
+    (Float_t)3.00000000000000000e+00
  6. Bool_t status;
-    AliDrawStyle::GetNamedTypeAt<int>("marker-color:rgb[12,12,12],#dfdfdf,14;marker-size:1,2,3,4;", status,2,"marker-color", 0, ',',"[]")
-    (int) 14
+    AliDrawStyle::GetNamedTypeAt("marker-color:rgb[12,12,12],#dfdfdf,14;marker-size:1,2,3,4;", status,2,"marker-color", 0, ',',"[]")
+    (Float_t)1.40000000000000000e+01
  \endcode
  */
  //TODO: remove template because https://github.com/alisw/AliRoot/pull/657#discussion_r185746846
@@ -1457,20 +1414,6 @@ void AliDrawStyle::TLegendApplyStyle(const char *styleName, TLegend *cLegend, In
 
   valueF = AliDrawStyle::PrepareValue(styleName, TString("text-size"), elementID, classID, objectID, localStyle, status, objNum, verbose);
   if (status) cLegend->SetTextSize(valueF);
-
-
-/*
-SetEntryLabel
-SetEntryOption
-SetEntrySeparation
-SetHeader
-SetToolTipText
-SetDrawOption
-SetDtorOnly
-SetObjectStat
-
-*SetTextSizePixels
- */
 }
 
 /// \brief Common part of TGraphApplyStyle(), TH1ApplyStyle(), TF1ApplyStyle()
@@ -1655,8 +1598,8 @@ void AliDrawStyle::TCanvasApplyCssStyle(const char *styleName, TCanvas *cCanvas,
 ///                                    TString::Format("his[%d].class(Raw,Error)",i).Data(), 100, -2, 2);
 ///           }
 ///        \endcode
-///         Schema of parsing:
-///
+///         Scheme of parsing:
+/// TODO: add scheme @Boris
 /// \param cObject    - input TObject
 /// \param elementID  - cObject->GetName()           (in example - TH1)
 /// \param classID    - values from .class(*)        (in example - Raw,Error)
@@ -1697,7 +1640,7 @@ void AliDrawStyle::TCanvasApplyCssStyle(const char *styleName, TCanvas *cCanvas,
 /// \param pad       - Input TPad object. You can specify TCanvas in this case style will be apply recursively to all objects (TH1, TF1, TGraph) on pad.
 /// \param styleName - Name of style specify in AliDrawStyle::RegisterCssStyle()
 /*!
-  ####  Example usage see in the beginnings of this file:
+  ####  Example usage see in the beginnings of header file:
 */
 void AliDrawStyle::ApplyCssStyle(TPad *pad, const char *styleName, Int_t verbose) {
   if (pad == nullptr) {

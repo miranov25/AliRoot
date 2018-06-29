@@ -74,12 +74,12 @@ std::vector<TString> AliPainter::rangesVec;
 *  2. Then create the canvas and divide it:
 *       \code
 *         TCanvas *canvasQA = new TCanvas("canvasQA", "canvasQA", 1200, 800);
-*         AliPainter::DivideTPad("<horizontal>[1,1,1,1]", "Canvas41", "", canvasQA);
+*         AliPainter::DivideTPad(canvasQA, "<horizontal>[1,1,1,1]", "Canvas41");
 *         canvasQA->cd(1);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E)", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1,drawOpt=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtITS(0,10)(0)()(div=1,drawOpt=E,class=PtIts)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(1,1)(2)()(div=1,drawOpt=E,class=Tgl)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E)");
 *       \endcode
 *         In this simple case we have four vertical pads:
 *         ![<horizontal>\[1b,1t,1,1\]](AliPainter_cxx_example1.png)
@@ -87,50 +87,50 @@ std::vector<TString> AliPainter::rangesVec;
 *  3. You can sharing chosen axis (see meanings of flags in description.):
 *       \code
 *         TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
-*         AliPainter::DivideTPad("<vertical>[1r,1l,1r,1l]", "Raw,Error", "", canvasQA);
+*         AliPainter::DivideTPad(canvasQA, "<vertical>[1r,1l,1r,1l]", "Raw,Error", "");
 *         canvasQA->cd(1);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E)", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E)");
 *        \endcode
 *        ![<vertical>\[1r,1l,1r,1l\]](AliPainter_cxx_example2.png)
  * 4. You can specify more than one pads in one raw:
 *       \code
 *         TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
-*         AliPainter::DivideTPad("<horizontal>[1,3,2,1]", "Raw,Error","",canvasQA);
+*         AliPainter::DivideTPad(canvasQA, "<horizontal>[1,3,2,1]", "Raw,Error");
 *         canvasQA->cd(1);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(div=1,class=Mass,dOption=E)", hisArray);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1, drawOpt=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtITS(0,10)(0)()(div=1, drawOpt=E,class=PtIts)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(1,1)(2)()(div=1, drawOpt=E,class=Tgl)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1, drawOpt=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(div=1,class=Mass,dOption=E)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1, drawOpt=E,class=PtAll)");
 *       \endcode
 *       ![<horizontal>\[1,3,2,1\]](AliPainter_cxx_example3.png)
 *  5. You can specify special flag "m" if you want to join middle pads in column:
 *       \code
 *         TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
-*         AliPainter::DivideTPad("<vertical>[1,3m,2m,1]", "Raw,Error", "", canvasQA);
+*         AliPainter::DivideTPad(canvasQA, "<vertical>[1,3m,2m,1]", "Raw,Error");
 *         canvasQA->cd(1);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(div=1,class=Mass,dOption=E)", hisArray);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1,drawOpt=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtITS(0,10)(0)()(div=1,drawOpt=E,class=PtIts)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(1,1)(2)()(div=1,drawOpt=E,class=Tgl)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1,drawOpt=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(div=1,class=Mass,dOption=E)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1,drawOpt=E,class=PtAll)");
 *       \endcode
 *       ![<vertical>\[1,3m,2m,1\]](AliPainter_cxx_example4.png)
 *  6. All previous case set chosen margin equal 0, but you can set your own value in absolute units,
 *     now we support pixel("px" flag) and standard("st" flag) root values (percent from canvas size):
 *       \code
 *         TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
-*         AliPainter::DivideTPad("<horizontal>[1rpx200,1,1,1]", "Raw,Error", "", canvasQA);
+*         AliPainter::DivideTPad(canvasQA, "<horizontal>[1rpx200,1,1,1]", "Raw,Error");
 *         canvasQA->cd(1);
-*         AliPainter::DrawHistogram("hisPtAll(0,10)(0)()(div=1,dOption=E,class=PtAll)", hisArray);
-*         AliPainter::DrawHistogram("hisPtITS(0,10)(0)()(div=1,dOption=E,class=PtIts)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(1,1)(2)()(div=1,dOption=E,class=Tgl)", hisArray);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E)", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisPtAll(0,10)(0)()(div=1,drawOpt=E,class=PtAll)");
+*         AliPainter::DrawHistogram(hisArray, "hisPtITS(0,10)(0)()(div=1,drawOpt=E,class=PtIts)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(1,1)(2)()(div=1,drawOpt=E,class=Tgl)");
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E)");
 *       \endcode
 *       ![<horizontal>\[1rpx200,1,1,1\]](AliPainter_cxx_example5.png)
 */
@@ -309,12 +309,6 @@ void AliPainter::RegisterDefaultOptions() {
   AliPainter::drawValues[TString("class")] = TString("");
   AliPainter::drawValues[TString("style")] = TString("");
   AliPainter::drawValues[TString("drawOpt")] = TString("");
-  // stat options
-//  AliPainter::optionValues[TString("max")]           = TString("");
-//  AliPainter::optionValues[TString("min")]           = TString("");
-//  AliPainter::optionValues[TString("mean")]          = TString("");
-//  AliPainter::optionValues[TString("rms")]           = TString("");
-//  AliPainter::optionValues[TString("median")]        = TString("");
 }
 
 /// /brief Subsidiary method for RangesParser
@@ -382,14 +376,15 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
 ///                                            we should put there checks of correctness of fit
 ///                                            options
 ///                             - range - {x0min,x0max,x1min,xm1max,...} in case not specified - range is not set
-///                           - intitialParam - {p0,p1;p2,...;ep0,ep1,...;minp0,minp1,...; maxp0,maxp1 ...} errors, min and max are optionals
+///                           - intitialParam{not yet} - {p0,p1;p2,...;ep0,ep1,...;minp0,minp1,...; maxp0,maxp1 ...} errors, min and max are optionals
 /// TODO: may be we should also use TVectorD or TMatrix instead enumeration? @Boris
 ///                           - drawing string: (padDiv, lims, className, dOption)
 ///                             - padDiv - allows to choose wich pad use for drawing:
 ///                               - divFlag = 0 - use the same pad for drawing; (default value)
 ///                               - divFlag = 1 - use differents pads for drawing;
-///                             - lims - allows to set limits for specified axis: (not specified by default)
+///                             - lims - allows to set limits and expressions for specified axis: (not specified by default)
 ///                               - xlim = [xmin, xmax] - set the minima and maxima for x-axes;
+///                               - xlim = [<xmin>+0.5*<mean>, <xmax>-0.5*<mean>] - set the minima and maxima for x-axes;
 ///                               - ylim = [ymin, ymax] - set the minima and maxima for y-axes;
 ///                               - zlim = [zmin, zmax] - set the minima and maxima for z-axes;
 ///                             - className - adds name of class to each object of drawing. It need for applying css style - [AliDrawStyle:ApplyCssStyle();](link to docs):
@@ -425,7 +420,7 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
 *   Behaviour by default:
 *    \code
 *      TCanvas *canvasQA = new TCanvas("canvasQA", "canvasQA", 1200, 800);
-*      AliPainter::DrawHistogram("hisK0DMassQPtTgl()(0)()()", hisArray);
+*      AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl()(0)()()");
 *    \endcode
 *    Using of ranges option:
 *    1. Simple values specified
@@ -438,9 +433,9 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
 *       By default draw use the same pad, but you can change it specify draw option.
 *       \code
 *         TCanvas *canvasQA1 = new TCanvas("canvasQA", "canvasQA", 1200, 800);
-*         AliPainter::DivideTPad("<horizontal>[1]", "Canvas1", "",  canvasQA1);
+*         AliPainter::DivideTPad(canvasQA1, "<horizontal>[1]", "Canvas1");
 *         canvasQA1->cd(1);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E,ylim=[0,])", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E,ylim=[0,])");
 *       \endcode
 *     2.2 Using AliPainter::DivideTPad();
 *       In case if you don't want to use the same pad you should specify it.
@@ -448,12 +443,16 @@ void AliPainter::RangesToMap(TString range, Int_t axisNum, axisRangesMap &result
 *       here we add className(Raw) and you can see how it looks like via canvasQA->ls(). You can use this class name for applying your own styles in css file.
 *       \code
 *         TCanvas *canvasQA1 = new TCanvas("canvasQA", "canvasQA", 1200, 800);
-*         AliPainter::DivideTPad("<horizontal>[1,1]", "Canvas1", "",  canvasQA1);
+*         AliPainter::DivideTPad(canvasQA1, "<horizontal>[1,1]", "Canvas1");
 *         canvasQA1->cd(1);
-*         AliPainter::DrawHistogram("hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(gaus,W)(class=Mass,dOption=E,ylim=[0,], div=1)", hisArray);
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E,ylim=[0,], div=1)");
 *       \endcode
 *     2.3 Limitations to y-axis
 *         You can set the ranges to yaxis with using second parameter of drawOption.
+*         TCanvas *canvasQA1 = new TCanvas("canvasQA", "canvasQA", 1200, 800);
+*         AliPainter::DivideTPad(canvasQA1, "<horizontal>[1,1]", "Canvas1");
+*         canvasQA1->cd(1);
+*         AliPainter::DrawHistogram(hisArray, "hisK0DMassQPtTgl(20,80,40:80:20:20,0,10)(0)(name=gaus,option=W)(class=Mass,drawOpt=E,ylim=[<min>+0.5*<mean>,<max>-0.5*<mean>], div=1)");
 *     2.4 Using of standard root draw options
 *    3 Fitting
 *     3.1 Using of standard root fiting methods.
@@ -484,18 +483,14 @@ void AliPainter::DrawHistogram(const TObjArray *histogramArray, const char *expr
     std::cerr << "Exception catched : " << e.what() << std::endl;
   }
 }
-//Double_t AliPainter::GetLimitValue(TString expression, TPad *cPad) {
-//  std::map<TString, TString> numNam;
-//  //TODO: use regexp @Boris
-//  numNam[TString("max")]    = TString("[0]");
-//  numNam[TString("min")]    = TString("[1]");
-//  numNam[TString("mean")]   = TString("[2]");
-//  numNam[TString("rms")]    = TString("[3]");
-//  numNam[TString("median")] = TString("[4]");
-//
-////TODO: combine objects into arrays and use TMath for calculating of parameters @Boris
-//}
 
+///
+/// \param hisN
+/// \param expression
+/// \param keepArray
+/// \param metaData
+/// \param verbose
+/// \return
 TObjArray *AliPainter::PrepareHistogram(THnBase *hisN, const char *expression, TObjArray *&keepArray, TObjArray *metaData,  Int_t verbose) {
   if (hisN == nullptr) {
     ::Error("AliPainter::DrawHistogram", "Input histogram is null");
@@ -553,7 +548,7 @@ void AliPainter::DrawHistogram(THnBase *hisN, const char *expression, TPad *pad,
     else {
       if (verbose == 4)
         ::Info("AliPainter::DrawHistogram", "Histogram %s will be draw on the same pad",hisArray[i]->GetName());
-      hisArray[i]->Draw(TString::Format("%s SAME", AliPainter::drawValues["drawOpt"].Data()));
+      hisArray[i]->Draw(TString::Format("%sSAME", AliPainter::drawValues["drawOpt"].Data()));
     }
   }
 }
@@ -830,11 +825,13 @@ template <typename T>
     inHis->SetName(TString::Format("%s.style(%s)", inHis->GetName(), AliPainter::drawValues[TString("style")].Data()));
   }
 
-  if (verbose == 4)
-    ::Info("AliPainter::SetDrawingOptions", "For histogram %s drawing options %s was added", inHis->GetName(), AliPainter::drawValues[TString("drawOpt")].Data());
-  inHis->SetOption(AliPainter::drawValues[TString("drawOpt")].Data());
+  if (TString("drawOpt") != TString()) {
+    if (verbose == 4)
+      ::Info("AliPainter::SetDrawingOptions", "For histogram %s drawing options %s was added", inHis->GetName(),
+             AliPainter::drawValues[TString("drawOpt")].Data());
+    inHis->SetOption(AliPainter::drawValues[TString("drawOpt")].Data());
+  }
   inHis->SetStats(kFALSE);
-
 }
 //TODO: change global maps to local
 

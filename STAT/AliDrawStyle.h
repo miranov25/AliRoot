@@ -26,7 +26,6 @@
 ///
 ///   Also we support units and color formats. So, you can use rgb or hex notation for colors in your .css file and pixels or percents for sizes.
 /// \author [Marian Ivanov](marian.ivanov@cern.ch), [Boris Rumyantsev](boris.rumyantsev@cern.ch)
-///
 ///  ## Example usage:
 ///     First of all you should create and fill the file with extension -".css" with description
 ///     of your own styles according to your objects declaration. The general syntax of CSS you can see
@@ -271,13 +270,13 @@ protected:
   static std::map <TString, TString> fLatexAlice;              ///< map of predefined latex symbols - formatted according ALICE rules
   static std::map<TString, TStyle *> fStyleAlice;             ///< map of Alice predefined styles (+user defined)
   static std::map<TString, TObjArray *> fCssStyleAlice;       ///< map of Alice predefined styles corresponding to css notation
-  static std::map <TString, std::vector<int>> fMarkerStyles;  ///< map of predefined marker styles arrays
-  static std::map <TString, std::vector<int>> fMarkerColors;  ///< map of predefined colors  arrays
-  static std::map <TString, std::vector<float>> fMarkerSize;  ///< map of predefined marker sizes ()
-  static std::map <TString, std::vector<int>> fFillColors;    ///< map of predefined fill colors arrays
-  static std::map <TString, std::vector<float>> fLineWidth;   ///< map of predefined line width
-  static std::map <TString, std::vector<float>> fLineStyle;   ///< map of predefined line style
-  static std::map <TString, std::vector<float>> fLineColor;   ///< map of predefined line color
+  static std::map <TString, std::vector<int> > fMarkerStyles;  ///< map of predefined marker styles arrays
+  static std::map <TString, std::vector<int> > fMarkerColors;  ///< map of predefined colors  arrays
+  static std::map <TString, std::vector<float> > fMarkerSize;  ///< map of predefined marker sizes ()
+  static std::map <TString, std::vector<int> > fFillColors;    ///< map of predefined fill colors arrays
+  static std::map <TString, std::vector<float> > fLineWidth;   ///< map of predefined line width
+  static std::map <TString, std::vector<float> > fLineStyle;   ///< map of predefined line style
+  static std::map <TString, std::vector<float> > fLineColor;   ///< map of predefined line color
   static void RegisterDefaultLatexSymbols();                 ///< initialize default LatexSymbols
   static void RegisterDefaultStyle();                        ///< initialize default TStyles
   static void RegisterDefaultMarkers();                      ///< initialize default Markers/Colors
