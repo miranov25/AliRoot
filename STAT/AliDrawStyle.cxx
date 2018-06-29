@@ -87,14 +87,370 @@
 #include "TGraph.h"
 #include "TMultiGraph.h"
 #include "TAxis.h"
-#include "TList.h"
-
 #include <iostream>
 #include <fstream>
 #include <ios>
 
 Int_t AliDrawStyle::padNumber = 0;
+TString AliDrawStyle::fDefaultTStyleID;                            ///< ID of the default TStyle
+TString AliDrawStyle::fDefaultArrayStyleID;                        ///< ID of the default array styles
+std::map<TString, TString>  AliDrawStyle::fLatexAlice;
+std::map<TString, TStyle*>  AliDrawStyle::fStyleAlice;
+std::map<TString, TObjArray*>  AliDrawStyle::fCssStyleAlice;       //
+std::map<TString, std::vector<int> > AliDrawStyle::fMarkerStyles;  // PLEASE LEAVE THE UNAESTHETIC SPACE
+std::map<TString, std::vector<int> > AliDrawStyle::fMarkerColors;  // IN ORDER TO MAKE IT WORK WITH THE
+std::map<TString, std::vector<float> > AliDrawStyle::fMarkerSize;  // NATIVE SLC6 COMPILER!!!
+std::map<TString, std::vector<int> > AliDrawStyle::fFillColors;
+std::map<TString, std::vector<float> > AliDrawStyle::fLineWidth;
+std::map<TString, std::vector<float> > AliDrawStyle::fLineStyle;
+std::map<TString, std::vector<float> > AliDrawStyle::fLineColor;
 
+/// SetDefault call RegisterDefaultLatexSymbols(), RegisterDefaultStyle(), RegisterDefaultMarkers();
+void AliDrawStyle::SetDefaults(){
+  AliDrawStyle::RegisterDefaultLatexSymbols();
+  AliDrawStyle::RegisterDefaultStyle();
+  AliDrawStyle::RegisterDefaultMarkers();
+}
+
+/// set AliDrawStyle::SetDefaultStyles
+/// \param styleName  - default style to be used class function in case of empty style selection
+/// \param arrayName   - default style to be used class function in case of empty array style selection
+void AliDrawStyle::SetDefaultStyles(const char * styleName, const char* arrayName){
+  fDefaultTStyleID=styleName;
+  fDefaultArrayStyleID=arrayName;
+}
+
+TStyle* RegisterDefaultStyleFigTemplate(Bool_t grayScale);
+
+/// Latex symbol section
+/// \param symbol  -id name of latex symbol
+/// \return latex symbol to be used in ROOT latex
+TString AliDrawStyle::GetLatexAlice(const char * symbol){
+  return  fLatexAlice[symbol];
+}
+
+/// Get integer from string at index
+/// \param format    -  array string
+/// \param index     -  element index
+/// \param separator -  array separator
+/// TODO: using TString - to be replaced by faster variant with rough pointers (make it faster as possible)
+/// Example usage:
+/*!
+\code
+   AliDrawStyle::GetIntegerAt("1:4:8",1,":"); // return 4
+   AliDrawStyle::GetIntegerAt("1;4;8",2,";"); // return  8
+\endcode
+ */
+Int_t AliDrawStyle::GetIntegerAt(const char * format, Int_t index, const char * separator ) {
+  if (format==NULL) return -1;
+  if (index<0) return -1;
+  index++;
+  TString sFormat(format);
+  TString token(format);
+  Int_t position=0;
+  Int_t counter=0;
+  while (counter<index) {
+    if (sFormat.Tokenize(token,position,separator)) {
+      counter++;
+    }else{
+      break;
+    }
+  }
+  if (counter==index) return token.Atoi();
+  return -1;
+}
+
+/// Get integer from string
+/// \param format    -  array string
+/// \param index     -  element index
+/// \param separator -  array separator
+/// TODO: using TString - to be replaced by faster variant with rough pointers (Boris check)
+/// Example usage:
+/*!
+\code
+   AliDrawStyle::GetFloatAt("1.1:4.1:8.1",1,":"); // return 4.1
+   AliDrawStyle::GetFloatAt("1.1;4.1;8.1",2,";"); // return  8.1
+\endcode
+*/
+Float_t AliDrawStyle::GetFloatAt(const char * format, Int_t index, const char * separator ) {
+  if (format==NULL) return -1;
+  if (index<0) return -1;
+  index++;
+  TString sFormat(format);
+  TString token(format);
+  Int_t position=0;
+  Int_t counter=0;
+  while (counter<index) {
+    if (sFormat.Tokenize(token,position,separator)) {
+      counter++;
+    }else{
+      break;
+    }
+  }
+  if (counter==index) return token.Atof();
+  return -1;
+}
+
+// GetMarkerStyle associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return marker style for given styleName, index
+Int_t AliDrawStyle::GetMarkerStyle(const char *style, Int_t index){
+  if (AliDrawStyle::fMarkerStyles[style].size() <= index) {
+    return GetIntegerAt(style,index);
+  }
+  return  AliDrawStyle::fMarkerStyles[style][index];
+}
+
+// GetLineStyle associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return marker style for given styleName, index
+Int_t AliDrawStyle::GetLineStyle(const char *style, Int_t index){
+  if (AliDrawStyle::fLineStyle[style].size() <= index) {
+    return GetIntegerAt(style,index);
+  }
+  return  AliDrawStyle::fLineStyle[style][index];
+}
+
+// GetLineColor associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return marker style for given styleName, index
+Int_t AliDrawStyle::GetLineColor(const char *style, Int_t index){
+  if (AliDrawStyle::fLineColor[style].size() <= index) {
+    return GetIntegerAt(style,index);
+  }
+  return  AliDrawStyle::fLineColor[style][index];
+}
+
+/// GetMarkerColor associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return marker color for given styleName, index
+Int_t AliDrawStyle::GetMarkerColor(const char *style, Int_t index){
+  if (AliDrawStyle::fMarkerColors[style].size() <= index) {
+    return GetIntegerAt(style,index);
+  }
+  return  AliDrawStyle::fMarkerColors[style][index];
+}
+
+/// GetMarkerSize associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return marker color for given styleName, index
+Float_t AliDrawStyle::GetMarkerSize(const char *style, Int_t index){
+  if (AliDrawStyle::fMarkerSize[style].size() <= index) {
+    return GetIntegerAt(style,index);
+  }
+  return  AliDrawStyle::fMarkerSize[style][index];
+}
+
+/// GetFillColor associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return fill color for given styleName, index
+Int_t AliDrawStyle::GetFillColor(const char *style, Int_t index){
+  if (AliDrawStyle::fFillColors[style].size() <= index) {
+    return GetIntegerAt(style,index);
+  }
+  return  AliDrawStyle::fFillColors[style][index];
+}
+
+/// GetLineWidth associated to the style.
+/// \param  style - name of style used
+/// \param index  - marker index
+/// \return fill color for given styleName, index
+Float_t AliDrawStyle::GetLineWidth(const char *style, Int_t index){
+  if (AliDrawStyle::fLineWidth[style].size() <= index) {
+    return GetFloatAt(style,index);
+  }
+  return  AliDrawStyle::fLineWidth[style][index];
+}
+
+void AliDrawStyle::PrintLatexSymbols(Option_t */*option*/, TPRegexp& regExp){
+  //print latex symbols
+  typedef std::map<TString,TString>::const_iterator it_type;
+  for(it_type iterator = fLatexAlice.begin(); iterator != fLatexAlice.end(); ++iterator) {
+    if (regExp.Match(iterator->first.Data())==0) continue;
+    std::cout<<iterator->first << " " << iterator->second << "\n";
+  }
+}
+
+void AliDrawStyle::PrintStyles(Option_t *option, TPRegexp& regExp){
+  //print latex symbols
+  typedef std::map<TString,TStyle*>::const_iterator it_type;
+  for(it_type iterator = fStyleAlice.begin(); iterator != fStyleAlice.end(); ++iterator) {
+    if (regExp.Match(iterator->first.Data())==0) continue;
+    if (option==NULL) std::cout << iterator->first << " " << iterator->second << "\n";
+    if (option!=NULL) {
+      iterator->second->Print(option);
+      if (TString(option).Contains("dump")) iterator->second->Dump();
+    }
+  }
+}
+
+///
+/// \param styleName
+void AliDrawStyle::ApplyStyle(const char* styleName){
+  TStyle * style= fStyleAlice[styleName];
+  if (style==NULL){
+    ::Error("AliDrawStyle::ApplyStyle","Invalid style %s",styleName);
+  }else{
+    ::Info("AliDrawStyle::ApplyStyle","%s",styleName);
+  }
+  if (style) style->cd();
+}
+
+
+void  AliDrawStyle::AddLatexSymbol(const char * symbolName, const char * symbolTitle){
+  fLatexAlice[symbolName]=symbolTitle;
+}
+
+void  AliDrawStyle::RegisterDefaultLatexSymbols(){
+  fLatexAlice["qpt"]="#it{q}/#it{p}_{T} (GeV/#it{c})^{-1}";
+  fLatexAlice["qpt0"]="#it{q}/#it{p}_{T}";
+  fLatexAlice["pt"]="#it{p}_{T}  (GeV/#it{c}) ";
+  fLatexAlice["pt0"]="#it{p}_{T} ";
+  fLatexAlice["sqptmev"]="#sigma_{#it{q}/#it{p}_{T}} (MeV/#it{c})^{-1}";
+  fLatexAlice["pbpb502"]="Pb#font[122]{-}Pb #sqrt{#it{s}_{NN}} =5.02 TeV";
+  fLatexAlice["pp13"]="pp #sqrt{#it{s}} = 13 TeV ";
+  fLatexAlice["drphi"]="#Delta_{#it{r#phi}} (cm)";
+  fLatexAlice["srphi"]="#sigma_{#it{r#phi}} (cm)";
+}
+
+void   AliDrawStyle::RegisterDefaultStyle(){
+  fStyleAlice["figTemplate"]=RegisterDefaultStyleFigTemplate(kFALSE);
+  fStyleAlice["figTemplateGrey"]=RegisterDefaultStyleFigTemplate(kFALSE);
+  TStyle *style=RegisterDefaultStyleFigTemplate(kFALSE);
+  style->SetName("figTemplate2");
+  style->SetTitleXSize(TMath::Power(2,0.5)*style->GetTitleXSize());
+  style->SetTitleYSize(TMath::Power(2,0.5)*style->GetTitleYSize());
+  style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("X"),"X");
+  style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Y"),"Y");
+  style->SetLabelSize(TMath::Power(2,0.5)*style->GetLabelSize("Z"),"Z");
+  fStyleAlice["figTemplate2"]=style;
+  style=RegisterDefaultStyleFigTemplate(kFALSE);
+  style->SetName("figTemplate3");
+  style->SetTitleXSize(TMath::Power(3,0.5)*style->GetTitleXSize());
+  style->SetTitleYSize(TMath::Power(3,0.5)*style->GetTitleYSize());
+  style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("X"),"X");
+  style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("Y"),"Y");
+  style->SetLabelSize(TMath::Power(3,0.5)*style->GetLabelSize("Z"),"Z");
+  fStyleAlice["figTemplate3"]=style;
+}
+
+///
+/// Style source:
+/// https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
+void  AliDrawStyle::RegisterDefaultMarkers(){
+  const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7, kBlack, kRed+1 }; // for systematic bands
+  const Int_t colors[]     = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2,kGray+1,  kRed-10 };
+  const Int_t markers[]    = {kFullCircle, kFullSquare,kOpenCircle,kOpenSquare,kOpenDiamond,kOpenCross,kFullCross,kFullDiamond,kFullStar,kOpenStar};
+
+  (fMarkerStyles["figTemplate"])=std::vector<int>(10);
+  (fMarkerColors["figTemplate"])=std::vector<int>(10);
+  (fMarkerSize["figTemplate"])=std::vector<float>(10);
+  (fFillColors["figTemplate"])=std::vector<int>(10);
+  (fLineWidth["figTemplate"])=std::vector<float>(10);
+  (fLineColor["figTemplate"])=std::vector<float>(10);
+  (fLineStyle["figTemplate"])=std::vector<float>(10);
+  for (Int_t i=0;i<10; i++){
+    (fMarkerStyles["figTemplate"])[i]=markers[i];
+    (fMarkerColors["figTemplate"])[i]=colors[i];
+    (fMarkerSize["figTemplate"])[i]=1;
+    (fFillColors["figTemplate"])[i]=fillColors[i];
+    (fLineWidth["figTemplate"])[i]=0.5;
+    (fLineStyle["figTemplate"])[i]=i+1;
+    (fLineColor["figTemplate"])[i]=colors[i];
+  }
+  // style inspired by TRD performance paper
+  Int_t colorsTRD[12]={0};
+  const Int_t markersTRD[]    = {kOpenSquare,kFullSquare, kOpenStar,kFullStar, kOpenCircle,kFullCircle, kOpenDiamond,kFullDiamond, kOpenCross,kFullCross };
+  const Float_t markerTRDSize[]    = {1,1, 0.9,0.9, 1.4,1.4, 1.1,1.1, 1.2,1.2 };
+  colorsTRD[0]=TColor::GetColor("#0000DD");
+  colorsTRD[1]=TColor::GetColor("#00EE00");
+  colorsTRD[2]=TColor::GetColor("#FF0000");
+  colorsTRD[3]=TColor::GetColor("#00EEDD");
+  colorsTRD[4]=TColor::GetColor("#FFEE00");
+  colorsTRD[5]=TColor::GetColor("#FF00DD");
+  colorsTRD[6]=TColor::GetColor("#9999DD");
+  colorsTRD[7]=TColor::GetColor("#99EE99");
+  colorsTRD[8]=TColor::GetColor("#FF9999");
+  colorsTRD[9]=TColor::GetColor("#66AADD");
+  colorsTRD[10]=TColor::GetColor("#AAEE66");
+  colorsTRD[11]=TColor::GetColor("#FF66AA");
+  (fMarkerStyles["figTemplateTRD"])=std::vector<int>(10);
+  (fMarkerColors["figTemplateTRD"])=std::vector<int>(10);
+  (fMarkerSize["figTemplateTRD"])=std::vector<float>(10);
+  (fFillColors["figTemplateTRD"])=std::vector<int>(10);
+  (fLineWidth["figTemplateTRD"])=std::vector<float>(10);
+  (fLineStyle["figTemplateTRD"])=std::vector<float>(10);
+  (fMarkerStyles["figTemplateTRDPair"])=std::vector<int>(10);
+  (fMarkerColors["figTemplateTRDPair"])=std::vector<int>(10);
+  (fMarkerSize["figTemplateTRDPair"])=std::vector<float>(10);
+  (fFillColors["figTemplateTRDPair"])=std::vector<int>(10);
+  (fLineWidth["figTemplateTRDPair"])=std::vector<float>(10);
+  (fLineStyle["figTemplateTRDPair"])=std::vector<float>(10);
+  for (Int_t i=0; i<10; i++){
+    (fMarkerStyles["figTemplateTRD"])[i]=markersTRD[i];
+    (fMarkerColors["figTemplateTRD"])[i]=TColor::GetColorDark(colorsTRD[i]);
+    (fMarkerSize["figTemplateTRD"])[i]=markerTRDSize[i];
+    (fFillColors["figTemplateTRD"])[i]=fillColors[i];
+    (fLineWidth["figTemplateTRD"])[i]=0.5;
+
+    (fMarkerStyles["figTemplateTRDPair"])[i]=markersTRD[i];
+    (fMarkerColors["figTemplateTRDPair"])[i]=TColor::GetColorDark(colorsTRD[i/2]);
+    (fMarkerSize["figTemplateTRDPair"])[i]=markerTRDSize[i];
+    (fFillColors["figTemplateTRDPair"])[i]=fillColors[i/2];
+    (fLineWidth["figTemplateTRDPair"])[i]=0.5;
+  }
+
+}
+
+///
+/// Style source:
+//  https://twiki.cern.ch/twiki/pub/ALICE/ALICERecommendationsResultPresentationText/figTemplate.C
+/// \param grayPalette
+/// \return
+TStyle*  RegisterDefaultStyleFigTemplate(Bool_t grayPalette) {
+  TStyle * figStyle = new TStyle;
+  figStyle->Reset("Plain");
+  figStyle->SetOptTitle(0);
+  figStyle->SetOptStat(0);
+
+  if(grayPalette) figStyle->SetPalette(8,0);
+  else figStyle->SetPalette(1);
+
+  figStyle->SetCanvasColor(10);
+  figStyle->SetCanvasBorderMode(0);
+  figStyle->SetFrameLineWidth(1);
+  figStyle->SetFrameFillColor(kWhite);
+  figStyle->SetPadColor(10);
+  figStyle->SetPadTickX(1);
+  figStyle->SetPadTickY(1);
+  figStyle->SetPadBottomMargin(0.15);
+  figStyle->SetPadLeftMargin(0.15);
+  figStyle->SetHistLineWidth(1);
+  figStyle->SetHistLineColor(kRed);
+  figStyle->SetFuncWidth(2);
+  figStyle->SetFuncColor(kGreen);
+  figStyle->SetLineWidth(2);
+  figStyle->SetLabelSize(0.045,"xyz");
+  figStyle->SetLabelOffset(0.01,"y");
+  figStyle->SetLabelOffset(0.01,"x");
+  figStyle->SetLabelColor(kBlack,"xyz");
+  figStyle->SetTitleSize(0.05,"xyz");
+  figStyle->SetTitleOffset(1.25,"y");
+  figStyle->SetTitleOffset(1.2,"x");
+  figStyle->SetTitleFillColor(kWhite);
+  figStyle->SetTextSizePixels(26);
+  figStyle->SetTextFont(42);
+  figStyle->SetLegendBorderSize(0);
+  figStyle->SetLegendFillColor(kWhite);
+  figStyle->SetLegendFont(42);
+  return figStyle;
+}
 
 /// AliDrawStyle::ParseDeclaration parse input declaration and return values
 /// \param input        - input string

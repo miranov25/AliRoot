@@ -43,7 +43,6 @@ set(SRCS
     AliTreeTrending.cxx
     AliNDFormulaBrowser.cxx
     AliDrawStyle.cxx
-    AliDrawStyleOld.cxx
     AliPainter.cxx
     AliElasticSearchRoot.cxx)
 

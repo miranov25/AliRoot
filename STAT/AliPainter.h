@@ -16,7 +16,7 @@ hisArray->AddLast(o);
 }
 
 THnBase *hisN = hisArray->FindObject("hisK0DMassQPtTgl");
-AliPainter::DrawHistogram("hisName()(1)(name=gaus,option=W)(class=Raw,drawOpt=E)", hisN, 0, 0, 0,4)
+AliPainter::DrawHistogram("hisName()(1)(name=gaus,option=W)(class=Raw,drawOpt=E)", hisN)
 
 */
 /// \ingroup STAT
