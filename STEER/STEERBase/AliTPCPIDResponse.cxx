@@ -84,9 +84,9 @@ AliTPCPIDResponse::AliTPCPIDResponse():
   fhEtaSigmaPar1(0x0),
   fSigmaPar0(0.0),
   fCurrentEventMultiplicity(0),
+  fIsNewPbPbParam(kFALSE),
   fCorrFuncSlope(0x0),
   fCorrFuncCurv(0x0),
-  fIsNewPbPbParam(kFALSE),
   fCorrFuncMultiplicity(0x0),
   fCorrFuncMultiplicityTanTheta(0x0),
   fCorrFuncSigmaMultiplicity(0x0),
@@ -166,6 +166,12 @@ AliTPCPIDResponse::~AliTPCPIDResponse()
   delete fhEtaSigmaPar1;
   fhEtaSigmaPar1 = 0x0;
   
+  delete fCorrFuncSlope;
+  fCorrFuncSlope = 0x0;
+  
+  delete fCorrFuncCurv;
+  fCorrFuncCurv = 0x0;
+  
   delete fCorrFuncMultiplicity;
   fCorrFuncMultiplicity = 0x0;
   
@@ -204,10 +210,10 @@ AliTPCPIDResponse::AliTPCPIDResponse(const AliTPCPIDResponse& that):
   fhEtaCorr(0x0),
   fhEtaSigmaPar1(0x0),
   fSigmaPar0(that.fSigmaPar0),
+  fCurrentEventMultiplicity(that.fCurrentEventMultiplicity),
+  fIsNewPbPbParam(that.fIsNewPbPbParam),
   fCorrFuncSlope(0x0),
   fCorrFuncCurv(0x0),
-  fIsNewPbPbParam(that.fIsNewPbPbParam),
-  fCurrentEventMultiplicity(that.fCurrentEventMultiplicity),
   fCorrFuncMultiplicity(0x0),
   fCorrFuncMultiplicityTanTheta(0x0),
   fCorrFuncSigmaMultiplicity(0x0),
@@ -221,8 +227,11 @@ AliTPCPIDResponse::AliTPCPIDResponse(const AliTPCPIDResponse& that):
   fSplineArray()
 {
   //copy ctor
-  for (Int_t i=0; i<fgkNumberOfGainScenarios; i++) {fRes0[i]=that.fRes0[i];fResN2[i]=that.fResN2[i];}
- 
+  for (Int_t i=0; i<fgkNumberOfGainScenarios; i++) {
+    fRes0[i] = that.fRes0[i];
+    fResN2[i] = that.fResN2[i];
+  }
+
   // Copy eta maps
   if (that.fhEtaCorr) {
     fhEtaCorr = new TH2D(*(that.fhEtaCorr));
