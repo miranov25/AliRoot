@@ -25,10 +25,12 @@
 
 #include "TArrayI.h"
 #include "TArrayF.h"
+#include "TVectorF.h"
 
 #include "AliLog.h"
 #include "AliPID.h"
 #include "AliTOFHeader.h"
+#include "AliESDUtils.h"
 #include "AliESDpid.h"
 #include "AliESDEvent.h"
 #include "AliESDtrack.h"
@@ -41,6 +43,7 @@ ClassImp(AliESDpid)
 
 Bool_t AliESDpid::fgUseElectronExclusionBands = kFALSE;
 Int_t  AliESDpid::fgNSpeciesForTracking = AliPID::kSPECIESC;
+Int_t  AliESDpid::fgOnly3HeOrPi = 0;
 
 Int_t AliESDpid::MakePID(AliESDEvent *event, Bool_t TPConly, Float_t /*timeZeroTOF*/) const {
   //
@@ -426,6 +429,11 @@ void AliESDpid::SetPIDForTracking(AliESDtrack *esdtr) const
     return;
   }
 
+  if (fgOnly3HeOrPi != 0) {
+    esdtr->SetPIDForTracking( esdtr->GetTPCsignal() < fgOnly3HeOrPi ? AliPID::kPion : AliPID::kHe3 );
+    return;
+  } 
+
   // or with AliPIDCombined
   // pidProb.ComputeProbabilities(esdtr, this, p);
 
@@ -483,4 +491,46 @@ void AliESDpid::SetNSpeciesForTracking(Int_t n)
   // set max number of species to consider for tracking
   fgNSpeciesForTracking = n>0 ? n : AliPID::kSPECIESC;
   AliInfoClassF("First %d species will be considered for tracking PID",fgNSpeciesForTracking);
+}
+
+//_________________________________________________________________________
+void AliESDpid::SetOnly3HeOrPi(Int_t val)
+{
+  // set the threshold discriminating between 3He and pions (0 to switch off)
+  fgOnly3HeOrPi = val;
+  AliInfoClassF("Set the dE/dx threshold discriminating between 3He and pions to %i (0 to switch off)",fgOnly3HeOrPi);
+}
+
+//_________________________________________________________________________
+void AliESDpid::SetEventPileupProperties(const AliVEvent* vevent)
+{
+  const AliESDEvent* event = (AliESDEvent*)vevent;
+
+  // ===| Extract event information |===========================================
+  //
+  // ---| Primary multiplicity |------------------------------------------------
+  const AliESDVertex *vertex = event->GetPrimaryVertexTracks();
+  const Int_t primMult = vertex->GetNContributors();
+
+  // ---| ITS cluster occupancy |-----------------------------------------------
+  const AliMultiplicity *multObj = event->GetMultiplicity();
+  TVectorF itsClustersPerLayer(6);
+  for (Int_t i=0;i<6;i++)  {
+    itsClustersPerLayer[i] = multObj->GetNumberOfITSClusters(i);
+  }
+
+  // ---| TPC pileup vertex info |----------------------------------------------
+  TVectorF tpcVertexInfo(10);
+  AliESDUtils::GetTPCPileupVertexInfo(event, tpcVertexInfo);
+
+  // ===| calculate derived variables |=========================================
+  const Double_t shiftM = 0.5 * (tpcVertexInfo[1] + tpcVertexInfo[0]) - 25.;
+  const Double_t multSSD = itsClustersPerLayer[4] + itsClustersPerLayer[5];
+  const Double_t multSDD = itsClustersPerLayer[2] + itsClustersPerLayer[3];
+  const Double_t pileUp1DITS = (multSSD + multSDD) / 2.38;
+  const Double_t nPileUpSumCorr = (tpcVertexInfo[3] + tpcVertexInfo[4]) - 0.05 * pileUp1DITS;
+  const Double_t nPileUpPrim = nPileUpSumCorr / (1 - TMath::Abs(shiftM / 210.));
+
+  // ===| set pileup event properties |=========================================
+  fTPCResponse.SetEventPileupProperties(shiftM,nPileUpPrim,primMult);
 }

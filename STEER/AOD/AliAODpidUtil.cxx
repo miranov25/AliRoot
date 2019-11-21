@@ -99,3 +99,54 @@ Float_t AliAODpidUtil::GetNumberOfSigmasTOFold(const AliVParticle *vtrack, AliPI
   if (sigTOF>0) return (tofTime - expTime)/sigTOF;
   else return -997.;
 }
+
+//_________________________________________________________________________
+void AliAODpidUtil::SetEventPileupProperties(const AliVEvent* vevent)
+{
+  static Bool_t warned = kFALSE;
+  static TVectorF dummyVertexInfo(10); // to be used with old AODs w/o vertex info
+  if (!warned) {
+    // make sure that provided event is AOD
+    if (!vevent->InheritsFrom(AliAODEvent::Class())) {
+      AliFatal("Provided AliVEvent must be AliAODEvent");
+    }
+
+    if (!((AliAODHeader*)vevent->GetHeader())->GetTPCPileUpInfo()) {
+      AliError("========================================================");
+      AliError(">>>>              TPC PID in trouble                <<<<");
+      AliError(">>>>  pile-up correction requested, but 1st         <<<<");
+      AliError(">>>>  provided event has no pile-up info stored.    <<<<");
+      AliError(">>>>  All events will be treated as pile-up free    <<<<");
+      AliError("========================================================");
+    }
+    warned = kTRUE;
+  }
+
+  // ===| Extract event information |===========================================
+  //
+  // ---| Primary multiplicity |------------------------------------------------
+  const AliVVertex *vertex = vevent->GetPrimaryVertexTracks();
+  const Int_t primMult = vertex->GetNContributors();
+
+  // ---| ITS cluster occupancy |-----------------------------------------------
+  const AliVMultiplicity *multObj = vevent->GetMultiplicity();
+  TVectorF itsClustersPerLayer(6);
+  for (Int_t i=0;i<6;i++)  {
+    itsClustersPerLayer[i] = multObj->GetNumberOfITSClusters(i);
+  }
+
+  // ---| TPC pileup vertex info |----------------------------------------------
+  AliAODHeader* header = (AliAODHeader*)vevent->GetHeader();
+  const TVectorF &tpcVertexInfo = header->GetTPCPileUpInfo() ? *header->GetTPCPileUpInfo() : dummyVertexInfo;
+  
+  // ===| calculate derived variables |=========================================
+  const Double_t shiftM = 0.5 * (tpcVertexInfo[1] + tpcVertexInfo[0]) - 25.;
+  const Double_t multSSD = itsClustersPerLayer[4] + itsClustersPerLayer[5];
+  const Double_t multSDD = itsClustersPerLayer[2] + itsClustersPerLayer[3];
+  const Double_t pileUp1DITS = (multSSD + multSDD) / 2.38;
+  const Double_t nPileUpSumCorr = (tpcVertexInfo[3] + tpcVertexInfo[4]) - 0.05 * pileUp1DITS;
+  const Double_t nPileUpPrim = nPileUpSumCorr / (1 - TMath::Abs(shiftM / 210.));
+
+  // ===| set pileup event properties |=========================================
+  fTPCResponse.SetEventPileupProperties(shiftM,nPileUpPrim,primMult);
+}

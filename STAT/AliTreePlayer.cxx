@@ -835,11 +835,13 @@ Int_t  AliTreePlayer::selectWhatWhereOrderBy(TTree * tree, TString what, TString
       fprintf(default_fp,"</tr>\n");
     }
     //
-    if (isCSV){
+    if (isCSV){   ///dummy
       for (Int_t icol=0; icol<nCols; icol++){  // formula loop
         Int_t nData=rFormulaList[icol]->GetNdata();
         if (nData<=1){
-          fprintf(default_fp,"%s\t",rFormulaList[icol]->PrintValue(0,0,printFormatList[icol]->GetName()));
+          TString qValue=rFormulaList[icol]->PrintValue(0,0,printFormatList[icol]->GetName());
+          qValue.ReplaceAll("\t","");
+          fprintf(default_fp,"%s\t",qValue.Data());
         }else{
           for (Int_t iData=0; iData<nData;iData++){  // array loo
             fprintf(default_fp,"%f",rFormulaList[icol]->EvalInstance(iData));
@@ -853,6 +855,29 @@ Int_t  AliTreePlayer::selectWhatWhereOrderBy(TTree * tree, TString what, TString
       }
       fprintf(default_fp,"\n");
     }
+    if (isCSV){   ///dummy
+      Int_t nDataMax=1;
+      for (Int_t icol=0; icol<nCols; icol++) {       // formula loop
+        Int_t nData = rFormulaList[icol]->GetNdata();
+        nDataMax=TMath::Max(nDataMax,nData);
+      }
+      for (Int_t iData=0; iData<nDataMax;iData++){  // array loop
+        for (Int_t icol=0; icol<nCols; icol++){  // formula loop
+          Int_t nData=rFormulaList[icol]->GetNdata();
+          if (nData<=1){
+            fprintf(default_fp,"%s\t",rFormulaList[icol]->PrintValue(0,0,printFormatList[icol]->GetName()));
+          }else{
+              fprintf(default_fp,"%f",rFormulaList[icol]->EvalInstance(iData));
+              fprintf(default_fp,"\t");
+
+          }
+        }
+        fprintf(default_fp,"\n");
+      }
+    }
+
+
+
   }
   if (isJSON) fprintf(default_fp,"}\t]\n}\n");
   if (isHTML){
@@ -1123,7 +1148,7 @@ TObjArray  * AliTreePlayer::MakeHistograms(TTree * tree, TString hisString, TStr
   //
 
   const Int_t kMaxDim=10;
-  if (tree=NULL){
+  if (tree== nullptr){
     ::Error("AliTreePlayer::MakeHistograms","Tree=0");
     return 0;
   }
@@ -1593,7 +1618,7 @@ void AliTreePlayer::MakeCacheTree(TTree * tree, TString varList, TString outFile
 /// \param axisAlias              - axis names
 /// \param axisTitle              - axis titles
 /// \return                       - resulting tree
-TTree* AliTreePlayer::LoadTrees(const char *inputDataList, const char *chRegExp, const char *chNotReg, TString inputFileSelection, TString axisAlias, TString axisTitle) {
+TTree* AliTreePlayer::LoadTrees(const char *inputDataList, const char *chRegExp, const char *chNotReg, TString inputFileSelection, TString axisAlias, TString axisTitle, Int_t verbose) {
   //
   TPRegexp regExp(chRegExp);
   TPRegexp notReg(chNotReg);
@@ -1634,7 +1659,9 @@ TTree* AliTreePlayer::LoadTrees(const char *inputDataList, const char *chRegExp,
     if (!isSelected) continue;
     ::Info("LoadTrees","Load file\t%s", fileName.Data());
     TString description = "";
-    TFile *finput = TFile::Open(fileName.Data());
+    TString option="";
+    if (fileName.Contains("http")) option="cacheread";
+    TFile *finput = TFile::Open(fileName.Data(),option.Data());
     if (finput == NULL) {
       ::Error("MakeResidualDistortionReport", "Invalid file name %s", fileName.Data());
       continue;
@@ -1647,7 +1674,7 @@ TTree* AliTreePlayer::LoadTrees(const char *inputDataList, const char *chRegExp,
       if (notReg.Match(keys->At(iKey)->GetName()) != 0) continue;     // is rejected
       TTree *tree = (TTree *) finput->Get(keys->At(iKey)->GetName()); // better to use dynamic cast
       if (treeBase == NULL) {
-        TFile *finput2 = TFile::Open(fileName.Data());
+        TFile *finput2 = TFile::Open(fileName.Data(),option.Data());
         treeBase = (TTree *) finput2->Get(keys->At(iKey)->GetName());
       }
       TString fileTitle=tagValue["Title"];
@@ -1659,7 +1686,7 @@ TTree* AliTreePlayer::LoadTrees(const char *inputDataList, const char *chRegExp,
       Int_t entriesF = tree->GetEntries();
       Int_t entriesB = treeBase->GetEntries();
       if (entriesB == entriesF) {
-        ::Info("InitMapTree", "%s\t%s.%s:\t%d\t%d", treeBase->GetName(), fileName.Data(), keys->At(iKey)->GetName(), entriesB, entriesF);
+        if (verbose>0) ::Info("InitMapTree", "%s\t%s.%s:\t%d\t%d", treeBase->GetName(), fileName.Data(), keys->At(iKey)->GetName(), entriesB, entriesF);
       } else {
         ::Error("InitMapTree", "%s\t%s.%s:\t%d\t%d", treeBase->GetName(), fileName.Data(), keys->At(iKey)->GetName(), entriesB, entriesF);
       }
@@ -1675,3 +1702,93 @@ TTree* AliTreePlayer::LoadTrees(const char *inputDataList, const char *chRegExp,
   return treeBase;
 }
 
+
+
+/// AddMetadata to the input tree - see https://alice.its.cern.ch/jira/browse/ATO-290
+/// \param tree         - input tree
+/// \param varTagName   - tag to register
+/// \param varTagValue  - value
+/// \return             - return has list
+/// Currently supported metadata
+///* Drawing  :
+///  * <varName>.AxisTitle
+///  *<varName>.Legend
+///  * <varname>.Color
+///  * <varname>.MarkerStyle
+///* This metadata than can be used by the TStatToolkit
+///  * TStatToolkit::MakeGraphSparse
+///  * TStatToolkit::MakeGraphErrors
+///
+THashList*  AliTreePlayer::AddMetadata(TTree* tree, const char *varTagName,const char *varTagValue){
+  if (!tree) return NULL;
+  THashList * metaData = (THashList*) tree->GetUserInfo()->FindObject("metaTable");
+  if (metaData == NULL){
+    metaData=new THashList;
+    metaData->SetName("metaTable");
+    tree->GetUserInfo()->AddLast(metaData);
+  }
+  if (varTagName!=NULL && varTagValue!=NULL){
+    TNamed * named = TStatToolkit::GetMetadata(tree, varTagName,NULL,kTRUE);
+    if (named==NULL){
+      metaData->AddLast(new TNamed(varTagName,varTagValue));
+    }else{
+      named->SetTitle(varTagValue);
+    }
+  }
+  return metaData;
+}
+
+/// Get metadata description
+/// In case metadata contains friend part - friend path os returned as prefix
+/// Metadata are supposed to be added into tree using TStatToolkit::AddMetadata() function
+/// \param tree          - input tree
+/// \param varTagName    - tag name
+/// \param prefix        - friend prefix in case metadata are in friend tree
+/// \param fullMatch     - request full match in varTagName (to enable different metadata for tree and friend tree)
+/// \return              - metadata description
+/// TODO: too many string operations - to be speed up using char array arithmetic
+TNamed* AliTreePlayer::GetMetadata(TTree* tree, const char *varTagName, TString * prefix,Bool_t fullMatch){
+  //
+
+  if (!tree) return 0;
+  TTree * treeMeta=tree;
+
+  THashList * metaData = (THashList*) treeMeta->GetUserInfo()->FindObject("metaTable");
+  if (metaData == NULL){
+    metaData=new THashList;
+    metaData->SetName("metaTable");
+    tree->GetUserInfo()->AddLast(metaData);
+    return 0;
+  }
+  TNamed * named = (TNamed*)metaData->FindObject(varTagName);
+  if (named || fullMatch) return named;
+
+  TString metaName(varTagName);
+  Int_t nDots= metaName.CountChar('.');
+  if (prefix!=NULL) *prefix="";
+  if (nDots>1){ //check if friend name expansion needed
+    while (nDots>1){
+      TList *fList= treeMeta->GetListOfFriends();
+      if (fList!=NULL){
+        Int_t nFriends= fList->GetEntries();
+        for (Int_t kf=0; kf<nFriends; kf++){
+          TPRegexp regFriend(TString::Format("^%s.",fList->At(kf)->GetName()).Data());
+          if (metaName.Contains(regFriend)){
+            treeMeta=treeMeta->GetFriend(fList->At(kf)->GetName());
+            regFriend.Substitute(metaName,"");
+            if (prefix!=NULL){
+              (*prefix)+=fList->At(kf)->GetName();
+              // (*prefix)+=""; /// FIX use prefix as it is
+            }
+          }
+        }
+      }
+      if (nDots == metaName.CountChar('.')) break;
+      nDots=metaName.CountChar('.');
+    }
+  }
+
+  named = (TNamed*)metaData->FindObject(metaName.Data());
+  return named;
+
+}

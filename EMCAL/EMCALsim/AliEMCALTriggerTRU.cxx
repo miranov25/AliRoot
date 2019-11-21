@@ -511,6 +511,10 @@ void AliEMCALTriggerTRU::GetL0Region(const int time, Int_t arr[][4])
 //________________
 void AliEMCALTriggerTRU::GetL0Region(const int time, Int_t ** arr)
 {
+  if(!fActive) {
+    AliDebug(999, "Not filling L0 Region for inactive TRU");
+    return;
+  }
   Int_t r0 = time - fDCSConfig->GetRLBKSTU();
 
   if (r0 < 0) 
@@ -568,5 +572,7 @@ void AliEMCALTriggerTRU::Reset()
   ZeroRegion();
   
   for (Int_t i=0;i<96;i++) for (Int_t j=0;j<256;j++) fADC[i][j] = 0;
+
+  fL0Time = 0;
 }
 

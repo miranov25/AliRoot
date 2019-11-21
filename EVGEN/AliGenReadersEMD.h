@@ -3,10 +3,12 @@
 /* Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
  * See cxx source for full Copyright notice                               */
 
-// Class to read events from external (TNtupla) file
+// Class to read events from external (TNtuple) file
 // Events -> single EM dissociation of Pb nuclei
-// Data from RELDIS code (by I. Pshenichov)
-//
+// Data from RELDIS code (by I. Pshenichnov)
+// I. A. Pshenichnov, J. P. Bondorf, I. N. Mishustin, A. Ventura, and S. Masetti
+// Phys. Rev. C 64, 024903 – Published 13 July 2001
+
 #include "AliGenReader.h"
 
 
@@ -33,13 +35,16 @@ class AliGenReadersEMD : public AliGenReader
     void TrackAll() {fPcToTrack = kAll;}
     void SetStartEvent(Int_t nev) {fStartEvent = nev;}
     void SetNtupleName(TString s) {fNtupleName=s;}
+    void SetInvertPz(Bool_t invert = kTRUE) {fInvertPz=invert;}
+    Bool_t GetInvertPz() const { return fInvertPz; }
 
  protected:
     Int_t           fStartEvent;      	// points to the first event to read
     Int_t           fNcurrent;      	// points to the current event to read
     Int_t           fNparticle;     	// number of particles
     TTree          *fTreeNtuple;   	// pointer to the TTree
-    TString         fNtupleName; //name of the ntuple to be read
+    TString         fNtupleName;        // name of the ntuple to be read
+    Bool_t          fInvertPz;          // invert the particle momentum z component 
     //
     Int_t 	    fPcToTrack;		// flag for particles to be tracked
     Int_t           fOffset;		// Needed to correctly read next particle

@@ -83,6 +83,8 @@ AliAODHeader::AliAODHeader() :
   fTPConlyRefMult(-1), 
   fCentralityP(0),
   fEventplaneP(0),
+  fTPCPileUpInfo(0),
+  fITSPileUpInfo(0),
   fIRInt2InteractionsMap(0),
   fIRInt1InteractionsMap(0)
 {
@@ -98,6 +100,7 @@ AliAODHeader::AliAODHeader() :
   for (Int_t i = 0; i < 6; i++)  fITSClusters[i] = 0;
   for (Int_t j=0; j<64; ++j) fVZEROEqFactors[j]=-1;
   for (Int_t i=0; i<kT0SpreadSize;i++) fT0spread[i]=0;
+
 }
 
 //______________________________________________________________________________
@@ -158,6 +161,8 @@ AliAODHeader::AliAODHeader(Int_t nRun,
   fTPConlyRefMult(-1), 
   fCentralityP(0),
   fEventplaneP(0),
+  fTPCPileUpInfo(0),
+  fITSPileUpInfo(0),
   fIRInt2InteractionsMap(0),
   fIRInt1InteractionsMap(0)
 {
@@ -258,6 +263,8 @@ AliAODHeader::AliAODHeader(Int_t nRun,
   fTPConlyRefMult(-1), 
   fCentralityP(0),
   fEventplaneP(0),
+  fTPCPileUpInfo(0),
+  fITSPileUpInfo(0),
   fIRInt2InteractionsMap(0),
   fIRInt1InteractionsMap(0)
 {
@@ -284,6 +291,8 @@ AliAODHeader::~AliAODHeader()
   delete fCentralityP;
   delete fEventplaneP;
   RemoveQTheta();
+  delete fTPCPileUpInfo;
+  delete fITSPileUpInfo;
 }
 
 //______________________________________________________________________________
@@ -339,6 +348,8 @@ AliAODHeader::AliAODHeader(const AliAODHeader& hdr) :
   fTPConlyRefMult(hdr.fTPConlyRefMult), 
   fCentralityP(new AliCentrality(*hdr.fCentralityP)),
   fEventplaneP(new AliEventplane(*hdr.fEventplaneP)),
+  fTPCPileUpInfo(new TVectorF(*hdr.fTPCPileUpInfo)),
+  fITSPileUpInfo(new TVectorF(*hdr.fITSPileUpInfo)),
   fIRInt2InteractionsMap(hdr.fIRInt2InteractionsMap),
   fIRInt1InteractionsMap(hdr.fIRInt1InteractionsMap)
 {
@@ -368,7 +379,7 @@ AliAODHeader::AliAODHeader(const AliAODHeader& hdr) :
   for (Int_t i = 0; i < 6; i++)  fITSClusters[i] = hdr.fITSClusters[i];
   for (Int_t j=0; j<64; ++j) fVZEROEqFactors[j]=hdr.fVZEROEqFactors[j];
   for (Int_t i=0; i<kT0SpreadSize;i++) fT0spread[i]=hdr.fT0spread[i];
-
+  
 }
 
 //______________________________________________________________________________
@@ -473,6 +484,11 @@ AliAODHeader& AliAODHeader::operator=(const AliAODHeader& hdr)
   for (Int_t j=0; j<64; ++j) fVZEROEqFactors[j] = hdr.fVZEROEqFactors[j];
   for (Int_t i=0; i<kT0SpreadSize;i++) fT0spread[i]=hdr.fT0spread[i];
 
+  delete fTPCPileUpInfo;
+  fTPCPileUpInfo = hdr.fTPCPileUpInfo ? new TVectorF(*hdr.fTPCPileUpInfo) : 0;
+  delete fITSPileUpInfo;
+  fITSPileUpInfo = hdr.fITSPileUpInfo ? new TVectorF(*hdr.fITSPileUpInfo) : 0;
+  
   return *this;
 }
 
@@ -534,6 +550,10 @@ void AliAODHeader::Clear(Option_t* /*opt*/)
     fEventplaneQx = -999.;
     fEventplaneQy = -999.;
   }
+  delete fTPCPileUpInfo;
+  fTPCPileUpInfo = nullptr;
+  delete fITSPileUpInfo;
+  fITSPileUpInfo = nullptr;
   return;
 }
 
@@ -727,4 +747,34 @@ Bool_t AliAODHeader::InitMagneticField() const
     return kFALSE;
   }
   //
+}
+
+void AliAODHeader::SetTPCPileUpInfo(const TVectorF* src)
+{
+  if (src) {
+    if (!fTPCPileUpInfo || !AreCompatible(*fTPCPileUpInfo, *src)) {
+      delete fTPCPileUpInfo;
+      fTPCPileUpInfo = new TVectorF(*src);
+    }
+    else *fTPCPileUpInfo = *src;
+  }
+  else {
+    delete fTPCPileUpInfo;
+    fTPCPileUpInfo = 0;
+  }
+}
+
+void AliAODHeader::SetITSPileUpInfo(const TVectorF* src)
+{
+  if (src) {
+    if (!fITSPileUpInfo || !AreCompatible(*fITSPileUpInfo, *src)) {
+      delete fITSPileUpInfo;
+      fITSPileUpInfo = new TVectorF(*src);
+    }
+    else *fITSPileUpInfo = *src;
+  }
+  else {
+    delete fITSPileUpInfo;
+    fITSPileUpInfo = 0;
+  }
 }
