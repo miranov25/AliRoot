@@ -2757,7 +2757,7 @@ void AliTPCtracker::GetTailValue(Float_t ampfactor,Double_t &ionTailMax, Double_
   // Parameters:
   // cl0 -  cluster to be modified
   // cl1 -  source cluster ion tail of this cluster will be added to the cl0 (accroding time and pad response function)
-  // 
+  Float_t timeScale= AliTPCReconstructor::GetRecoParam()->GetIonTailCorrectionTimeScale(); // time scale is used for fine tuning if ion drift velcoty - should be in range ~0.5-1.5
   const float kMinPRF       = 0.5f;                          // minimal PRF width
   ionTailTotal              = 0.;                            // correction value to be added to Qtot of cl0
   ionTailMax                = 0.;                            // correction value to be added to Qmax of cl0
@@ -2768,7 +2768,7 @@ void AliTPCtracker::GetTailValue(Float_t ampfactor,Double_t &ionTailMax, Double_
   Int_t padcl0              =  TMath::Nint(cl0->GetPad());   // pad0
   Int_t padcl1              =  TMath::Nint(cl1->GetPad());   // pad1
   Float_t padWidth          = (sectorPad < 36)?0.4:0.6;      // pad width in cm
-  const Int_t deltaTimebin  =  TMath::Nint(TMath::Abs(cl1->GetTimeBin()-cl0->GetTimeBin()))+12;  //distance between pads of cl1 and cl0 increased by 12 bins
+  const Int_t deltaTimebin  =  (TMath::Nint(TMath::Abs(cl1->GetTimeBin()-cl0->GetTimeBin()))+12)*timeScale;  //distance between pads of cl1 and cl0 increased by 12 bins + adding time Scale
   float rmsPad1I            = (cl1->GetSigmaY2()==0)?0.5f/kMinPRF:(0.5f*padWidth/sqrtf(cl1->GetSigmaY2()));
   float rmsPad0I            = (cl0->GetSigmaY2()==0)?0.5f/kMinPRF:(0.5f*padWidth/sqrtf(cl0->GetSigmaY2()));
   
@@ -2827,7 +2827,7 @@ void AliTPCtracker::GetTailValue(Float_t ampfactor,Double_t &ionTailMax, Double_
         if (itb>=graphRes[ampIndex]->GetN()) continue;
        
         // calculate contribution to qTot
-        Float_t tailCorr =  ((qTotPad1*ampfactor)*(graphRes[ampIndex])->GetY()[itb]);
+        Float_t tailCorr =  ((qTotPad1*ampfactor)*(graphRes[ampIndex])->GetY()[itb])*timeScale;
         if (ipad1!=padcl0) { 
           ionTailTotal += TMath::Min(qMaxPad0,tailCorr);   // for side pad
         } else {             

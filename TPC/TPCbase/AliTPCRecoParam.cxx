@@ -103,6 +103,7 @@ AliTPCRecoParam::AliTPCRecoParam():
   fUseAlignmentTime(kTRUE),              // use time dependent alignment correction
   fUseIonTailCorrection(0),   // no ion tail correction for now
   fIonTailCorrection(1),      ///< ion tail tail correction factor - NEW SINCE 2018- additonal scaling correcting for imperfect knowledge of the integral of ion tail - shoudl be ~ 1
+  fIonTailCorrectionTimeScale(1.0),      ///< ion tail tail correction factor time stretching - new Since 2019 - default value=1
   fCrosstalkCorrection(0),   // crosstalk correction factor (from each signal substracted by (mean signal in wite patch)xfCrosstalkCorrection) - Effect important only after removing oc capacitors in 2012
   fCrosstalkCorrectionMissingCharge(1),   // crosstalk correction factor - missing charge (from each signal substracted by (mean signal in wite patch)xfCrosstalkCorrection) - Effect important only after removing oc capacitors in 2012
   fCrosstalkIonTail(kFALSE),            /// < flag calculate crosstalk for ion tail
