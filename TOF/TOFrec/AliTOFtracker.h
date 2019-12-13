@@ -99,6 +99,7 @@ class AliTOFtracker : public AliTracker {
  virtual void GetPidSettings(AliESDpid *esdPID);
  virtual Int_t Clusters2Tracks(AliESDEvent* /*event*/) {return -1;};
  virtual Int_t PropagateBack(AliESDEvent * const event);
+ virtual void  MakeGammaSeed();
  virtual Int_t RefitInward(AliESDEvent* /*event*/) {return -1;};
  virtual Int_t LoadClusters(TTree * cTree); // Load Clusters
  virtual void  UnloadClusters();// UnLoad Clusters

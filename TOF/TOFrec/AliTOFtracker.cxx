@@ -391,7 +391,7 @@ Int_t AliTOFtracker::PropagateBack(AliESDEvent * const event) {
   //Make TOF PID
   // Now done in AliESDpid
   // fPid->MakePID(event,timeZero);
-
+  MakeGammaSeed();
   fSeeds->Clear();
   //fTracks->Delete();
   fTracks->Clear();
@@ -1470,4 +1470,44 @@ AliESDTOFCluster* AliTOFtracker::GetESDTOFCluster(int clID)
   //
   return clESD;
   //
+}
+
+
+void AliTOFtracker::MakeGammaSeed() {
+    // find the gamma candidate clusters
+    Bool_t timeWalkCorr    = fkRecoParam->GetTimeWalkCorr();
+    const Float_t kTimeOffset = 0.; // time offset for tracking algorithm [ps]
+    const AliESDVertex * vertex = fESDEv->GetPrimaryVertex();
+    Double_t xyzVertex[3];
+    vertex->GetXYZ(xyzVertex);
+    Int_t nc=0;
+    const Float_t dPhi = 0.34;
+    const Float_t dZ   = 5.;
+    Float_t xyz0[3], xyz1[3];
+    for (Int_t i0=0; i0<fN; i0++) {
+      AliTOFcluster *c0 = fClusters[i0];
+      if (!c0->GetStatus()) {
+        //  AliDebug(1, "Cluster in channel declared bad!");
+        continue; // skip bad channels as declared in OCDB
+      }
+      c0->GetGlobalXYZ(xyz0);
+      Float_t length0=(xyz0[0]-xyzVertex[0])*(xyz0[0]-xyzVertex[0])+(xyz0[1]-xyzVertex[1])*(xyz0[1]-xyzVertex[1])+(xyz0[2]-xyzVertex[2])*(xyz0[2]-xyzVertex[2]);
+      Double_t tof0=AliTOFGeometry::TdcBinWidth()*c0->GetTDC()+kTimeOffset; // in ps
+      AliDebug(3,Form(" tof time of the matched track: %f = ",tof0));
+      Double_t tofcorr0=tof0;
+      //if(timeWalkCorr)tofcorr0=CorrectTimeWalk(0,tof0); /// TODO - check meaning
+      Float_t phi0=c0->GetPhi();
+      Float_t z0  =c0->GetZ();
+
+      //Double_t dph = TMath::Abs(c->GetPhi() - phi);
+      //if (dph > TMath::Pi()) dph -= 2. * TMath::Pi();
+      //if (TMath::Abs(dph) > dphi) continue;
+      if (fDebugStreamer && (AliTOFReconstructor::StreamLevel() & AliTOFReconstructor::kStreamSingle)>0){
+        (*fDebugStreamer)<<"hit0"<<
+        "c0.="<<c0<<
+        "lentgh0="<<length0<<
+        "tof0="<<tof0<<
+        "\n";
+      }
+    }
 }
