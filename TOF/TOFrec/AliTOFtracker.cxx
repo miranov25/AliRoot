@@ -52,6 +52,7 @@
 #include "AliTOFGeometry.h"
 #include "AliTOFtracker.h"
 #include "AliTOFtrack.h"
+#include "TTreeStream.h"
 
 extern TGeoManager *gGeoManager;
 //extern TROOT *gROOT;
@@ -61,6 +62,7 @@ ClassImp(AliTOFtracker)
 
 //_____________________________________________________________________________
 AliTOFtracker::AliTOFtracker():
+  fDebugStreamer(0x0),
   fkRecoParam(0x0),
   fGeom(0x0),
   fN(0),
@@ -106,6 +108,10 @@ AliTOFtracker::AliTOFtracker():
   }
   */
   InitCheckHists();
+  if (AliTOFReconstructor::StreamLevel()>0) {
+    fDebugStreamer = new TTreeSRedirector("TOFdebug.root","recreate");
+    AliTOFReconstructor::SetDebugStreamer(fDebugStreamer);
+  }
 
 }
 //_____________________________________________________________________________
@@ -162,6 +168,7 @@ AliTOFtracker::~AliTOFtracker() {
      }
      }
   */
+  if (fDebugStreamer) delete fDebugStreamer;
 
 }
 //_____________________________________________________________________________

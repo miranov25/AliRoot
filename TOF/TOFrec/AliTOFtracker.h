@@ -36,6 +36,8 @@ class AliESDpid;
 class AliTOFcluster;
 class AliTOFRecoParam;
 class AliTOFGeometry;
+class TTreeSRedirector;
+
 
 class AliTOFtrackPoint : public TObject {
 
@@ -108,7 +110,8 @@ class AliTOFtracker : public AliTracker {
  void InitCheckHists();
  void SaveCheckHists();
  void FillClusterArray(TObjArray* arr) const;
- 
+  TTreeSRedirector *fDebugStreamer;     //!debug streamer
+
  protected:
  AliESDTOFCluster* GetESDTOFCluster(int clID);
 
