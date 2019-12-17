@@ -608,7 +608,7 @@ void AliTOFtracker::MatchTracks( Int_t mLastStep){
 
       AliTOFcluster *c=fClusters[k];
       if (c->GetZ() > z+dz) break;
-      // if (c->IsUsed() && mLastStep < 2) continue;    ///TODO - return back this
+      if (c->IsUsed() && mLastStep < 2) continue;
       if (!c->GetStatus()) {
 	AliDebug(1,"Cluster in channel declared bad!");
 	continue; // skip bad channels as declared in OCDB
@@ -679,7 +679,7 @@ void AliTOFtracker::MatchTracks( Int_t mLastStep){
 
 
 #if 0
- ,    /*****************/
+    /*****************/
     /**** OLD CODE ***/
     /*****************/
 
