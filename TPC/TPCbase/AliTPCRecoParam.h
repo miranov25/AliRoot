@@ -219,6 +219,10 @@ class AliTPCRecoParam : public AliDetectorRecoParam
   void   SettUseClusterErrordEdxCorrection(Bool_t useClusterErrordEdxCorrection){ fUseClusterErrordEdxCorrection=useClusterErrordEdxCorrection;}
   Bool_t GetUseClusterErrordEdxMultCorrection() const {return fUseClusterErrordEdxMultCorrection;}
   void   SettUseClusterErrordEdxMultCorrection(Bool_t useClusterErrordEdxMultCorrection){ fUseClusterErrordEdxMultCorrection=useClusterErrordEdxMultCorrection;}
+  const TMatrixF& GetClusterErrorMatrix() const {return fClusterErrorMatrix;}
+  void  SetClusterErrorMatrix(TMatrixF* matrix) {fClusterErrorMatrix=*matrix;}
+  void  SetClusterErrorMatrixElement(Int_t row, Int_t column, Float_t value) {fClusterErrorMatrix(row,column)=value;}
+  void  SetClusterErrorParam();      // set default cluster error Param
   const TMatrixF& GetClusterNSigma2Cut() const {return fClusterNSigma2Cut;}
   void SetClusterNSigma2Cut(TMatrixF cuts){fClusterNSigma2Cut=cuts;}
   void SetClusterNSigma2Cut(Int_t row, Int_t column,Float_t cut){fClusterNSigma2Cut(row,column)=cut;}
@@ -341,6 +345,7 @@ class AliTPCRecoParam : public AliDetectorRecoParam
   //
   Bool_t fUseClusterErrordEdxCorrection;     ///< switch to use the dEdx correction
   Bool_t fUseClusterErrordEdxMultCorrection;     ///< switch to use the dEdx, multiplicity  correction
+  TMatrixF fClusterErrorMatrix;                  ///< cluster error matrix
   TMatrixF fClusterNSigma2Cut;                    /// < n sigma cluster/trac cut
   static TVectorD* fgSystErrClustCustom;  //< custom systematic errors for the TPC clusters overriding persistent data member
   static TVectorD* fgPrimaryDCACut;       //< only primaries passing DCAYZ cut are reconstructed
@@ -351,7 +356,7 @@ public:
                                       // Use static function, other option will be to use
                                       // additional specific storage ?
   /// \cond CLASSIMP
-  ClassDef(AliTPCRecoParam, 37)
+  ClassDef(AliTPCRecoParam, 38)
   /// \endcond
 };
 
