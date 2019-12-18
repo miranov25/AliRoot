@@ -331,8 +331,8 @@ void AliTPCRecoParam::SetClusterErrorParam(){
   errParam(7,i) = (errz2OccudEdx+errz2Ratio)*(p0+p1*tgl2); //errz2HM
 */
   TMatrixF &e=fClusterErrorMatrix;
-  e(0,0)=0.5; e(0,1)=1; e(0,2)=0.3; e(0,3)=0.25; e(0,4)=1;    /// (p0+p1*mdEdx+p2*mQ)*p3*(sy2+p4*tanPhi2)      // erry2LM
-  e(1,0)=0.5; e(1,1)=1; e(1,2)=0.3; e(1,3)=0.5;  e(1,4)=0;    /// (p0+p1*mdEdx+p2*mQ)*p3*(sy2+p4*tgl2)         // errz2LM
+  e(0,0)=0.5; e(0,1)=1; e(0,2)=0.15; e(0,3)=0.25; e(0,4)=0.04;    /// (p0+p1*mdEdx+p2*mQ)*p3*(sy2+p4*tanPhi2)      // erry2LM
+  e(1,0)=0.5; e(1,1)=1; e(1,2)=0.15; e(1,3)=0.5;  e(1,4)=0;    /// (p0+p1*mdEdx+p2*mQ)*p3*(sy2+p4*tgl2)         // errz2LM
   //
   e(2,0)=0; e(2,1)=1; e(2,2)=0.3; e(2,3)=0.12*0.12;          /// occu6N*(p0+p1*mdEdx+p2*mQ)*p3   // erry2OccudEdx 0.12*0.12*occu6N*(mdEdx+0.3*mQ);
   e(3,0)=0; e(3,1)=1; e(3,2)=0.3; e(3,3)=0.09*0.09;          /// occu6N*(p0+p1*mdEdx+p2*mQ)*p3   // errz2OccudEdx = 0.09*0.09*occu6N*(mdEdx+0.3*mQ);
@@ -341,7 +341,7 @@ void AliTPCRecoParam::SetClusterErrorParam(){
   e(5,0)= 0.01; e(5,1)=0.05;                                /// p0*negRatio+p1*posRatio         // 0.01*negRatio+0.05*posRatio;
   //
   e(6,0)= 0.3; e(6,1)=1; e(6,2)=1;                         /// errParam(6,i) = (erry2OccudEdx+erry2Ratio)*(p0+p1*tanPhi2); //erry2HM      = (erry2OccudEdx+erry2Ratio)*(0.3+tanPhi2);
-  e(7,0)= 1;   e(7,1)=1; e(7,2)=1;                         ///errParam(7,i) = (errz2OccudEdx+errz2Ratio)*(p0+p1*tgl2); //errz2HM (errz2OccudEdx+errz2Ratio)*(1+tgl2)*0.5;
+  e(7,0)= 1;   e(7,1)=1; e(7,2)=0.5;                         ///errParam(7,i) = (errz2OccudEdx+errz2Ratio)*(p0+p1*tgl2); //errz2HM (errz2OccudEdx+errz2Ratio)*(1+tgl2)*0.5;
 
 }
 

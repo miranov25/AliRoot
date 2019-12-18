@@ -144,6 +144,7 @@
 #include "AliMCEvent.h"
 #include "AliRun.h"
 #include "AliMC.h"
+#include "TMatrixF.h"
 
 
 using std::cout;
@@ -325,12 +326,15 @@ Int_t AliTPCtracker::AcceptCluster(AliTPCseed * seed, AliTPCclusterMI * cluster)
     if (seed->GetESD()) if (seed->GetESD()->GetTPCsignal()>0)  mdEdx=TMath::Min(kdEdxMIP / seed->GetESD()->GetTPCsignal(), 1.);
     if (cluster->GetMax()<=1 ) cluster->SetMax(2); // it can happend that common mode shift cluster bellow 0 -rocover such cluster
     if (AliTPCReconstructor::GetRecoParam()->GetUseClusterErrordEdxMultCorrection()) {
+      const TMatrixF& e = AliTPCReconstructor::GetRecoParam()->GetClusterErrorMatrix();
       // error tuning in https://gitlab.cern.ch/alice-tpc-offline/alice-tpc-notes/blob/0e00a7739d6c3cf89438f48c107b7e530a780e80/JIRA/PWGPP-570/clusterPerfromanceDF.C
       //      tree->SetAlias("erry2LM", "(erry2+(0.2**2)*TanPhi2)*(0.5+mdEdx+0.3*mQ)*0.25");
       //      tree->SetAlias("errz2LM", "(errz2+(0.0**2)*Theta**2)*(0.5+mdEdx+0.3*mQ)*0.5");
       Float_t mQ = kClusterMIP / cluster->GetMax();
-      erry2LM=(sy2+0.04*tanPhi2)*(0.5+mdEdx+0.3*mQ)*0.25;
-      errz2LM=(sz2)*(0.5+mdEdx+0.3*mQ)*0.5;
+      // erry2LM=(sy2+0.04*tanPhi2)*(0.5+mdEdx+0.3*mQ)*0.25;
+      erry2LM=(e(0,0)+e(0,1)*mdEdx+e(0,2)*mQ)*e(0,3)*(sy2+e(0,4)*tanPhi2);
+      // errz2LM=(sz2)*(0.5+mdEdx+0.3*mQ)*0.5;
+      errz2LM=(e(1,0)+e(1,1)*mdEdx+e(1,2)*mQ)*e(1,3)*(sz2+e(1,4)*tgl2);
       //      tree->SetAlias("Occu6N", "Occu6*(1.+83/Cl.fX)*0.5");
       //      tree->SetAlias("posRatio", "(Cl.fBaselineTailPos/Cl.fMax)");
       //      tree->SetAlias("negRatio", "(Cl.fBaselineTail/Cl.fMax)");
@@ -344,12 +348,20 @@ Int_t AliTPCtracker::AcceptCluster(AliTPCseed * seed, AliTPCclusterMI * cluster)
       //      tree->SetAlias("errz2Ratio", "0.01*negRatio+0.05*posRatio");
       //      tree->SetAlias("errz2HM", "(errz2OccudEdx+errz2Ratio)*(1+Theta**2)*0.5");
 
-      erry2OccudEdx = 0.12*0.12*occu6N*(mdEdx+0.3*mQ);
-      erry2Ratio   = 0.07*negRatio+0.15*posRatio;
-      erry2HM      = (erry2OccudEdx+erry2Ratio)*(0.3+tanPhi2);
-      errz2OccudEdx = 0.09*0.09*occu6N*(mdEdx+0.3*mQ);
-      errz2Ratio   = 0.01*negRatio+0.05*posRatio;
-      errz2HM      = (errz2OccudEdx+errz2Ratio)*(1+tgl2)*0.5;
+//      erry2OccudEdx = 0.12*0.12*occu6N*(mdEdx+0.3*mQ);
+//      erry2Ratio   = 0.07*negRatio+0.15*posRatio;
+//      erry2HM      = (erry2OccudEdx+erry2Ratio)*(0.3+tanPhi2);
+//      errz2OccudEdx = 0.09*0.09*occu6N*(mdEdx+0.3*mQ);
+//      errz2Ratio   = 0.01*negRatio+0.05*posRatio;
+//      errz2HM      = (errz2OccudEdx+errz2Ratio)*(1+tgl2)*0.5;
+        erry2OccudEdx=(e(2,0)+e(2,1)*mdEdx+e(2,2)*mQ)*e(2,3)*occu6N;
+        errz2OccudEdx=(e(3,0)+e(3,1)*mdEdx+e(3,2)*mQ)*e(3,3)*occu6N;
+        //
+        erry2Ratio=e(4,0)*posRatio+e(4,1)*negRatio;
+        errz2Ratio=e(5,0)*posRatio+e(5,1)*negRatio;
+        //
+        erry2HM      = (erry2OccudEdx+erry2Ratio)*(e(6,0)+e(6,1)*tanPhi2);
+        errz2HM      = (errz2OccudEdx+errz2Ratio)*(e(7,0)+e(7,1)*tgl2)*e(7,2);
       //
       if (erry2HM>kMaxSigma2) erry2HM=kMaxSigma2;
       if (errz2HM>kMaxSigma2) errz2HM=kMaxSigma2;
