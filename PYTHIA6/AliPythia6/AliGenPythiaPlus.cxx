@@ -451,6 +451,16 @@ void AliGenPythiaPlus::Init()
 	fParentSelect[6]= 5332;
 	fFlavorSelect   = 5;	
 	break;
+    case kPyHeavyFlavppMNRwmi:
+	fParentSelect[0]=  511;  //settings to selct decay products
+	fParentSelect[1]=  521;
+	fParentSelect[2]=  531;
+	fParentSelect[3]= 5122;
+	fParentSelect[4]= 5132;
+	fParentSelect[5]= 5232;
+	fParentSelect[6]= 5332;
+	fFlavorSelect    =  5;
+	break;
     case kPyBeautyUnforced:
 	fParentSelect[0] =  511;
 	fParentSelect[1] =  521;
@@ -627,9 +637,44 @@ void AliGenPythiaPlus::Generate()
 	Int_t* pSelected = new Int_t[np];
 	Int_t* trackIt   = new Int_t[np];
 	for (i = 0; i < np; i++) {
-	    pParent[i]   = -1;
-	    pSelected[i] =  0;
-	    trackIt[i]   =  0;
+	  pParent[i]   = -1;
+	  pSelected[i] =  0;
+	  trackIt[i]   =  0;
+
+	  if(fPythia->Version() == 8){
+	    // order parent quarks by flavour
+	    TParticle* iparticle = (TParticle *) fParticles.At(i);
+	    Int_t pdgPart = TMath::Abs(iparticle->GetPdgCode());
+	    if(pdgPart>=100){ // hadrons
+	      Int_t kfl=pdgPart;
+	      if (kfl > 100000) kfl %= 100000; // resonance
+	      if (kfl > 10000)  kfl %= 10000;  // resonance
+	      if (kfl > 10) kfl/=100; // meson
+	      if (kfl > 10) kfl/=10; // baryon
+	      Int_t iMo1 = iparticle->GetFirstMother();
+	      Int_t iMo2 = iparticle->GetSecondMother();
+	      if(iMo1 >=0 && iMo2 >=0){ // particle with two mothers
+		TParticle* mother1 = (TParticle *) fParticles.At(iMo1);
+		TParticle* mother2 = (TParticle *) fParticles.At(iMo2);
+		Int_t absPdgMo1 = TMath::Abs(mother1->GetPdgCode());
+		Int_t absPdgMo2 = TMath::Abs(mother2->GetPdgCode());
+		if( (absPdgMo1<=6 || absPdgMo1==21) && (absPdgMo2<=6 || absPdgMo2==21) ){
+		  // parton parents
+		  if(absPdgMo1!=kfl && absPdgMo2==kfl){
+		    // assign as first mother the quark with same flavour as the hadron
+		    iparticle->SetFirstMother(iMo2);
+		    iparticle->SetLastMother(iMo1);
+		  }
+		  if(absPdgMo1!=kfl && absPdgMo2!=kfl && absPdgMo1<absPdgMo2){
+		    // in case no quark has the flavour of the hadron
+		    // assign as first mother the one with higher pdg code
+		    iparticle->SetFirstMother(iMo2);
+		    iparticle->SetLastMother(iMo1);
+		  }
+		}
+	      }
+	    }
+	  }
 	}
 
 	Int_t nc = 0;        // Total n. of selected particles
@@ -647,6 +692,7 @@ void AliGenPythiaPlus::Generate()
       fProcess != kPyZgamma &&
 	    fProcess != kPyCharmppMNRwmi && 
 	    fProcess != kPyBeautyppMNRwmi &&
+	    fProcess != kPyHeavyFlavppMNRwmi &&
       fProcess != kPyWPWHG &&
 	    fProcess != kPyJetsPWHG &&
             fProcess != kPyCharmPWHG &&
@@ -958,7 +1004,7 @@ Int_t  AliGenPythiaPlus::GenerateMB()
 
     // Check if there is a ccbar or bbbar pair with at least one of the two
     // in fYMin < y < fYMax
-    if (fProcess == kPyCharmppMNRwmi || fProcess == kPyBeautyppMNRwmi) {
+    if (fProcess == kPyCharmppMNRwmi || fProcess == kPyBeautyppMNRwmi || fProcess == kPyHeavyFlavppMNRwmi ) {
       TParticle *partCheck;
       TParticle *mother;
       Bool_t  theQ=kFALSE,theQbar=kFALSE,inYcut=kFALSE;
@@ -968,7 +1014,10 @@ Int_t  AliGenPythiaPlus::GenerateMB()
       for(i=0; i<np; i++) {
 	partCheck = (TParticle*)fParticles.At(i);
 	pdg = partCheck->GetPdgCode();  
-	if(TMath::Abs(pdg) == fFlavorSelect) { // quark  
+	Bool_t flavSel=kFALSE;
+	if(TMath::Abs(pdg) == fFlavorSelect) flavSel=kTRUE;
+	if(fProcess == kPyHeavyFlavppMNRwmi && (TMath::Abs(pdg) == 4 || TMath::Abs(pdg) == 5)) flavSel=kTRUE;
+	if(flavSel) { // quark  
 	  if(pdg>0) { theQ=kTRUE; } else { theQbar=kTRUE; }
 
       	if(partCheck->Energy()-TMath::Abs(partCheck->Pz()) > FLT_EPSILON) y = 0.5*TMath::Log((partCheck->Energy()+partCheck->Pz()+1.e-13)/
