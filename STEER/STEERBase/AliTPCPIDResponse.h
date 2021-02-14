@@ -173,19 +173,19 @@ public:
                               ETPCdEdxSource dedxSource = kdEdxDefault,
                               Bool_t correctEta = kFALSE,
                               Bool_t correctMultiplicity = kFALSE,
-                              Bool_t usePileupCorrection = kFALSE) const;
+                              Bool_t usePileupCorrection = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
   Double_t GetExpectedSigma( const AliVTrack* track, 
                              AliPID::EParticleType species,
                              ETPCdEdxSource dedxSource = kdEdxDefault,
                              Bool_t correctEta = kFALSE,
                              Bool_t correctMultiplicity = kFALSE,
-                             Bool_t usePileupCorrection = kFALSE) const;
+                             Bool_t usePileupCorrection = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
   Float_t GetNumberOfSigmas( const AliVTrack* track,
                              AliPID::EParticleType species,
                              ETPCdEdxSource dedxSource = kdEdxDefault,
                              Bool_t correctEta = kFALSE,
                              Bool_t correctMultiplicity = kFALSE,
-                             Bool_t usePileupCorrection = kFALSE) const;
+                             Bool_t usePileupCorrection = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
   
   Float_t GetSignalDelta( const AliVTrack* track,
                           AliPID::EParticleType species,
@@ -193,7 +193,7 @@ public:
                           Bool_t correctEta = kFALSE,
                           Bool_t correctMultiplicity = kFALSE,
                           Bool_t usePileupCorrection = kFALSE,
-                          Bool_t ratio = kFALSE) const;
+                          Bool_t ratio = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
   
   void SetResponseFunction(TObject* o,
                            AliPID::EParticleType type,
@@ -258,12 +258,17 @@ public:
 
   void SetPileupCorrectionObject(AliNDLocalRegression* correction) { fPileupCorrection = correction; }
   const AliNDLocalRegression* GetPileupCorrectionObject() const { return fPileupCorrection; }
-
   Bool_t IsPileupCorrectionRequested() const { return fPileupCorrectionRequested; }
-
   Double_t GetPileupCorrectionValue(const AliVTrack* track) const;
-
   static AliNDLocalRegression* GetPileupCorrectionFromFile(const TString fileName);
+  //
+  void SetQPtTglCorrectionObject(AliNDLocalRegression* correction) { fQPtTglCorrection = correction; }
+  const AliNDLocalRegression* GetQPtTglCorrectionObject() const { return fQPtTglCorrection; }
+  Bool_t IsQPtTglCorrectionRequested() const { return fQPtTglCorrectionRequested; }
+  Double_t GetQPtTglCorrectionValue(const AliVTrack* track) const;
+  static AliNDLocalRegression* GetQPtTglCorrectionFromFile(const TString fileName);
+
+  //
   //===| dEdx type functions |==================================================
   void SetdEdxType(ETPCdEdxType dEdxType, Int_t dEdxChargeType=0, Int_t dEdxWeightType=0, Double_t dEdxIROCweight=1., Double_t dEdxOROCmedWeight=1., Double_t dEdxOROClongWeight=1.) {
     fdEdxType=dEdxType; fdEdxChargeType=dEdxChargeType; fdEdxWeightType=dEdxWeightType; fIROCweight=dEdxIROCweight; fOROCmedWeight=dEdxOROCmedWeight; fOROClongWeight=dEdxOROClongWeight; }
@@ -318,7 +323,7 @@ protected:
                              const TSpline3* responseFunction,
                              Bool_t correctEta,
                              Bool_t correctMultiplicity,
-                             Bool_t usePileupCorrection) const;
+                             Bool_t usePileupCorrection, Bool_t useQPtTglCorrection = kFALSE) const;
   
   Double_t GetExpectedSigma(const AliVTrack* track, 
                             AliPID::EParticleType species,
@@ -328,7 +333,7 @@ protected:
                             const TSpline3* responseFunction,
                             Bool_t correctEta,
                             Bool_t correctMultiplicity,
-                            Bool_t usePileupCorrection) const;
+                            Bool_t usePileupCorrection,  Bool_t useQPtTglCorrection = kFALSE) const;
   //
   // function for numberical debugging 0 registed splines can be used in the TFormula and tree visualizations
   //
@@ -348,6 +353,7 @@ private:
   TObjArray fResponseFunctions; //! ObjArray of response functions individually for each particle
   AliOADBContainer* fOADBContainer; //! OADB container with response functions
   AliNDLocalRegression* fPileupCorrection; // pileup correction object
+  AliNDLocalRegression* fQPtTglCorrection; // pileup correction object
   TVectorF fVoltageMap; //!stores a map of voltages wrt nominal for all chambers
   Float_t fLowGainIROCthreshold;  //voltage threshold below which the IROC is considered low gain
   Float_t fBadIROCthreshhold;     //voltage threshold for bad IROCS
@@ -387,6 +393,7 @@ private:
 
   ETPCPileupCorrectionStrategy fPileupCorrectionStrategy; // Pileup correction strategy
   Bool_t fPileupCorrectionRequested; // If pileup correction was configured in the OADB object
+  Bool_t fQPtTglCorrectionRequested; // If pileup correction was configured in the OADB object
 
   //===| New resolution parametrization |=======================================
   TF1*     fSigmaParametrization;      // Resolution parametrization
