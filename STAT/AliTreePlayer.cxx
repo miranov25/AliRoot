@@ -1647,6 +1647,7 @@ void AliTreePlayer::MakeCacheTreeChunk(TTree * tree, TString varList, TString ou
   for (Int_t iEntry=firstEntry; iEntry<nEntries; iEntry+=chunkSize) {
     ::Info("Processing chunk","%d",iEntry);
     if (estimate < chunkSize) tree->SetEstimate(chunkSize);
+    if (chunkSize+iEntry>entriesAll) chunkSize=entriesAll-iEntry;   // ROOT6 does not handle properly query above limt
     Int_t entries = tree->Draw(varList.Data(), selection, "goffpara", chunkSize, iEntry);
     if (entries<=0) break;
     if (entries > estimate) {
