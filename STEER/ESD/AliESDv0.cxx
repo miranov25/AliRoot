@@ -994,8 +994,8 @@ Double_t AliESDv0::GetKFInfoScale(UInt_t p1, UInt_t p2, Int_t type, Double_t d1p
   Double_t mass2=AliPID::ParticleMass(p2);
   Double_t E1 = paramP.P()*paramP.P()+mass1*mass1+eLoss*dE1;
   Double_t E2 = paramN.P()*paramN.P()+mass2*mass2+eLoss*dE2;
-  Double_t dP1=TMath::Sqrt(E1*E1-mass1*mass1)-paramP.P();
-  Double_t dP2=TMath::Sqrt(E2*E2-mass2*mass2)-paramN.P();
+  Double_t dP1=TMath::Sqrt(TMath::Max(E1*E1-mass1*mass1,0.0))-paramP.P();
+  Double_t dP2=TMath::Sqrt(TMath::Max(E2*E2-mass2*mass2,0.0))-paramN.P();
 
   Double_t *pparam1 = (Double_t*)paramP.GetParameter();
   Double_t *pparam2 = (Double_t*)paramN.GetParameter();
