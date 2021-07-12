@@ -2447,3 +2447,109 @@ double AliTPCPIDResponse::sigmadEdxPt(double p, double PID, double resol ){
   double deltaRel = TMath::Abs(dEdx2-dEdx)/dEdx;
   return deltaRel;
 }
+
+
+/// return pt after traversing length in TPC volume assummig AliExternalTrackParam::BetheBlochAleph standard parameterization
+/// formula approximation for primary and new to primary tracks
+/// \param ptIn       - input Pt
+/// \param tgl        - pz/pt
+/// \param mass       - particle mass
+/// \param type       - 0-Argon, 1-Neon
+/// \param bz         - magnetic field in kG
+/// \param fraction   - scaling factor for energy loss
+/// \return
+double AliTPCPIDResponse::GetPtOutHelix(Float_t ptIn, Double_t tgl, Float_t mass, Double_t rIn, Double_t rOut,  Int_t type, Float_t bz,Float_t fraction){
+  const Float_t kB2C=-0.299792458e-3;
+  const Float_t kMaxSnp=0.95;
+  Float_t pin=ptIn*TMath::Sqrt(1+tgl*tgl);
+  Float_t qPt=1/ptIn;
+  Float_t bg = pin/mass;
+  Float_t elossNe = 0.001*0.00156;  // page 3 https://www.slac.stanford.edu/pubs/icfa/summer98/paper3/paper3.pdf
+  Float_t elossAr = 0.001*0.00244;  // page 3 https://www.slac.stanford.edu/pubs/icfa/summer98/paper3/paper3.pdf
+  Float_t dEdx= AliExternalTrackParam::BetheBlochAleph(bg)*fraction;
+  Double_t e0=TMath::Sqrt(pin*pin+mass*mass);
+  Float_t eloss=(type==0) ? elossAr:elossNe;
+  Float_t lengthNorm=TMath::Abs(rOut-rIn)*TMath::Sqrt(1+tgl*tgl);
+  Float_t C = kB2C*bz*qPt;
+  if (TMath::Abs(0.5*rIn*C)>1)  rIn=2.*kMaxSnp/C;
+  if (TMath::Abs(0.5*rOut*C)>1)  rOut=2.*kMaxSnp/C;
+  Float_t lIn = 2.*TMath::ASin(0.5*rIn*C)/C;
+  Float_t lOut = 2.*TMath::ASin((0.5*rOut*C))/C;
+  lengthNorm=(TMath::Abs(lOut)-TMath::Abs(lIn))*TMath::Sqrt(1+tgl*tgl);
+   //
+  Double_t e1=e0-dEdx*eloss*lengthNorm;
+  if (e1<mass) return 0;
+  return TMath::Sqrt(e1*e1-mass*mass)/TMath::Sqrt(1+tgl*tgl);
+}
+
+/// calcucate dEdx ratio  in region 0 and region 0
+/// \param ptIn     - pt at the inner wall (rIn0) in (GeV)
+/// \param tgl      - pz/pt
+/// \param mass     - particle mass
+/// \param rIn0     - rIn0  (e.g rIn0 of IROC)
+/// \param rOut0    - rOut0 (e.g rOut of OROC)
+/// \param rIn1     - rIn1  (e.g rIn0 of OROC medium)
+/// \param rOut1    - rIn1  (e.g rOut of OROC medium)
+/// \param type     - 0-Argon, 1-Neon
+/// \param bz       - magnetic field (kGaus)
+/// \param nStep    - number of steps for Euler integration
+/// \return
+double AliTPCPIDResponse::dEdxRationR0R1Helix(Float_t ptIn, Float_t tgl,  Float_t mass, Double_t rIn0,Float_t rOut0, Double_t rIn1,Float_t rOut1,  Int_t type, Float_t bz, Int_t nStep){
+  Float_t pin=ptIn*TMath::Sqrt(1+tgl*tgl);
+  Double_t rMin=TMath::Min(rIn0,rIn1);
+  Double_t rMax=TMath::Max(rOut0,rOut1);
+  Float_t rStep=(rMax-rMin)/nStep;
+  //
+  Float_t ptOut=ptIn;
+  Float_t dEdxSum0=0, dEdxSumN0=0;
+  Float_t dEdxSum1=0, dEdxSumN1=0;
+  for (Int_t iStep=0; iStep<nStep; iStep++) {
+    Float_t radiusM=rMin+rStep*(iStep*0.5);
+    ptOut = AliTPCPIDResponse::GetPtOutHelix(ptOut, tgl, mass, rMin+rStep*iStep, rMin+rStep*(iStep+1), type, bz);
+    if (ptOut <= 0) return 1;
+    Float_t pOut = ptOut * TMath::Sqrt(1 + tgl * tgl);
+    Float_t dEdxOut = AliExternalTrackParam::BetheBlochAleph(pOut / mass);
+    if (radiusM>rIn0 && radiusM<rOut0){
+      dEdxSum0+=dEdxOut;
+      dEdxSumN0++;
+    }
+    if (radiusM>rIn1 && radiusM<rOut1){
+      dEdxSum1+=dEdxOut;
+      dEdxSumN1++;
+    }
+  }
+  return (dEdxSum0/dEdxSumN0)/(dEdxSum1/dEdxSumN1);
+}
+
+
+
+/// return ration of mean  dEdx alogn trajectroy to the dEdx at the beginning of trajectory
+/// \param ptIn         - pt at the input (GeV)
+/// \param tgl          - pz/pt
+/// \param mass         - particle mass
+/// \param rIn          - inner radius
+/// \param rOut         - outer radius
+/// \param type         - 0-Argon, 1-Neon
+/// \param bz           - magnetic field
+/// \param nStep        - Euler integration approximation with n steps
+/// \param useInnerPt   - default kFLASE - used for debugging purposes
+/// \return
+double AliTPCPIDResponse::dEdxMeanToInHelix(Float_t ptIn, Float_t tgl,  Float_t mass, Double_t rIn,Float_t rOut,  Int_t type, Float_t bz, Int_t nStep, Float_t scale, Bool_t useInnerPt){
+  Float_t pin=ptIn*TMath::Sqrt(1+tgl*tgl);
+  Float_t dEdxIn=AliExternalTrackParam::BetheBlochAleph(pin/mass);
+  Float_t rStep=(rOut-rIn)/nStep;
+  Float_t ptOut=ptIn;
+  Float_t dEdxSum=0;
+  Float_t dEdxSumN=0;
+  for (Int_t iStep=0; iStep<nStep; iStep++) {
+    Float_t pt=(useInnerPt) ? ptIn:ptOut;
+    ptOut = AliTPCPIDResponse::GetPtOutHelix(pt, tgl, mass, rIn+rStep*iStep, rIn+rStep*(iStep+1), type, bz,scale);
+    if (ptOut <= 0) continue;
+    Float_t pOut = ptOut * TMath::Sqrt(1 + tgl * tgl);
+    Float_t dEdxOut = AliExternalTrackParam::BetheBlochAleph(pOut / mass);
+    dEdxSum+=dEdxOut;
+    dEdxSumN++;
+  }
+  if (dEdxSumN==0) return 1;
+  return (dEdxSum/dEdxSumN)/dEdxIn;
+}

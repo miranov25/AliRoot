@@ -173,19 +173,22 @@ public:
                               ETPCdEdxSource dedxSource = kdEdxDefault,
                               Bool_t correctEta = kFALSE,
                               Bool_t correctMultiplicity = kFALSE,
-                              Bool_t usePileupCorrection = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
+                              Bool_t usePileupCorrection = kFALSE,
+                              Bool_t useQPtTglCorrection = kFALSE) const;
   Double_t GetExpectedSigma( const AliVTrack* track, 
                              AliPID::EParticleType species,
                              ETPCdEdxSource dedxSource = kdEdxDefault,
                              Bool_t correctEta = kFALSE,
                              Bool_t correctMultiplicity = kFALSE,
-                             Bool_t usePileupCorrection = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
+                             Bool_t usePileupCorrection = kFALSE,
+                             Bool_t useQPtTglCorrection = kFALSE) const;
   Float_t GetNumberOfSigmas( const AliVTrack* track,
                              AliPID::EParticleType species,
                              ETPCdEdxSource dedxSource = kdEdxDefault,
                              Bool_t correctEta = kFALSE,
                              Bool_t correctMultiplicity = kFALSE,
-                             Bool_t usePileupCorrection = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
+                             Bool_t usePileupCorrection = kFALSE,
+                             Bool_t useQPtTglCorrection = kFALSE) const;
   
   Float_t GetSignalDelta( const AliVTrack* track,
                           AliPID::EParticleType species,
@@ -193,7 +196,8 @@ public:
                           Bool_t correctEta = kFALSE,
                           Bool_t correctMultiplicity = kFALSE,
                           Bool_t usePileupCorrection = kFALSE,
-                          Bool_t useQPtTglCorrection = kFALSE, Bool_t ratio = kFALSE) const;
+                          Bool_t useQPtTglCorrection = kFALSE,
+                          Bool_t ratio = kFALSE) const;
   
   void SetResponseFunction(TObject* o,
                            AliPID::EParticleType type,
@@ -316,6 +320,10 @@ public:
   //
   static Double_t BetheBlochAleph(Double_t bg, Double_t kp1, Double_t kp2, Double_t kp3, Double_t kp4, Double_t kp5);
   static double   sigmadEdxPt(double p, double PID, double resol=0.01 );
+  static double GetPtOutHelix(Float_t ptIn, Double_t tgl, Float_t mass, Double_t rIn=84, Double_t rOut=245,  Int_t type=0, Float_t bz=5,Float_t fraction=1);
+  static double dEdxRationR0R1Helix(Float_t ptIn, Float_t tgl,  Float_t mass, Double_t rIn0=93,Float_t rOut0=245, Double_t rIn1=93,Float_t rOut1=245,  Int_t type=0, Float_t bz=5, Int_t nStep=20);
+  static double dEdxMeanToInHelix(Float_t ptIn, Float_t tgl,  Float_t mass, Double_t rIn=93,Float_t rOut=245,  Int_t type=0, Float_t bz=5, Int_t nStep=10, Float_t scale=1, Bool_t useInnerPt=kFALSE);
+
 protected:
   Double_t GetExpectedSignal(const AliVTrack* track,
                              AliPID::EParticleType species,
