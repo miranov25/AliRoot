@@ -193,7 +193,7 @@ public:
                           Bool_t correctEta = kFALSE,
                           Bool_t correctMultiplicity = kFALSE,
                           Bool_t usePileupCorrection = kFALSE,
-                          Bool_t ratio = kFALSE, Bool_t useQPtTglCorrection = kFALSE) const;
+                          Bool_t useQPtTglCorrection = kFALSE, Bool_t ratio = kFALSE) const;
   
   void SetResponseFunction(TObject* o,
                            AliPID::EParticleType type,
