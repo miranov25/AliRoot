@@ -526,6 +526,11 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
   if (usePileupCorrection && fPileupCorrectionStrategy == kPileupCorrectionInExpectedSignal) {
     corrPileup = GetPileupCorrectionValue(track);
   }
+  //qPtTglCorrection
+   Double_t corrqPtTgl = 1.;
+  if (useQPtTglCorrection && fQPtTglCorrectionRequested) {
+    corrqPtTgl = GetQPtTglCorrectionValue(track);
+  }
 
   if (!correctEta && !correctMultiplicity) {
     return dEdxSplines + corrPileup;
@@ -544,7 +549,7 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
     corrFactorMultiplicity = GetMultiplicityCorrectionFast(track, dEdxSplines * corrFactorEta, fCurrentEventMultiplicity);
   }
 
-  return dEdxSplines * corrFactorEta * corrFactorMultiplicity + corrPileup;
+  return dEdxSplines * corrFactorEta * corrFactorMultiplicity * corrqPtTgl + corrPileup;
 }
 
 
@@ -1855,7 +1860,7 @@ Double_t AliTPCPIDResponse::GetQPtTglCorrectionValue(const AliVTrack* track) con
   //const Double_t trackTgl = TMath::Abs(TMath::SinH(track->GetTPCTgl()));
   const Double_t trackTgl = track->GetTgl();
   Double_t corrVals[2] = {track->GetInnerParam()->GetSigned1Pt(), trackTgl};
-  const Double_t corrQPtTgl = (1+fQPtTglCorrection->Eval(corrVals)) * 50;
+  const Double_t corrQPtTgl = (1+fQPtTglCorrection->Eval(corrVals)) ;
 
   return corrQPtTgl;
 }
