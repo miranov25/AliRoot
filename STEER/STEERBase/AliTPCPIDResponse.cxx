@@ -79,6 +79,9 @@ AliTPCPIDResponse::AliTPCPIDResponse():
   fOADBContainer(0x0),
   fPileupCorrection(0x0),
   fQPtTglCorrection(0x0),
+  fEnergyLossCorrectionRequested(kFALSE),     //  flag fEnergyLossCorrectionRequested
+  fGasType(0),                                // type of the gas (0-Argon, 1-Neon)
+  fEnergyLossFactor(1.4),                     // energy loss facto - fit parameters in respect to tabulated value
   fVoltageMap(72),
   fLowGainIROCthreshold(-40),
   fBadIROCthreshhold(-70),
@@ -496,7 +499,9 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
                                               const TSpline3* responseFunction,
                                               Bool_t correctEta,
                                               Bool_t correctMultiplicity,
-                                              Bool_t usePileupCorrection, Bool_t useQPtTglCorrection) const
+                                              Bool_t usePileupCorrection,
+                                              Bool_t useQPtTglCorrection,
+                                              Bool_t useEnergyLossCorrection) const
 {
   // Calculates the expected PID signal as the function of 
   // the information stored in the track and the given parameters,
@@ -531,6 +536,12 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
   if (useQPtTglCorrection && fQPtTglCorrectionRequested) {
     corrqPtTgl = GetQPtTglCorrectionValue(track);
   }
+  // energy loss correction
+  Double_t corrELoss = 1.;
+  if (useEnergyLossCorrection && fEnergyLossCorrectionRequested) {
+    corrELoss = GetEnergyLossCorrectionValue(track,species);
+  }
+
 
   if (!correctEta && !correctMultiplicity) {
     return dEdxSplines + corrPileup;
@@ -549,7 +560,7 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
     corrFactorMultiplicity = GetMultiplicityCorrectionFast(track, dEdxSplines * corrFactorEta, fCurrentEventMultiplicity);
   }
 
-  return dEdxSplines * corrFactorEta * corrFactorMultiplicity * corrqPtTgl + corrPileup;
+  return dEdxSplines * corrFactorEta * corrFactorMultiplicity * corrqPtTgl *corrELoss+ corrPileup;
 }
 
 
@@ -559,7 +570,9 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
                                               ETPCdEdxSource dedxSource,
                                               Bool_t correctEta,
                                               Bool_t correctMultiplicity,
-                                              Bool_t usePileupCorrection, Bool_t useQPtTglCorrection) const
+                                              Bool_t usePileupCorrection,
+                                              Bool_t useQPtTglCorrection,
+                                              Bool_t useEnergyLossCorrection) const
 {
   // Calculates the expected PID signal as the function of 
   // the information stored in the track, for the specified particle type 
@@ -590,7 +603,7 @@ Double_t AliTPCPIDResponse::GetExpectedSignal(const AliVTrack* track,
   }
   
   // Charge factor already taken into account inside the following function call
-  return GetExpectedSignal(track, species, dEdx, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection);
+  return GetExpectedSignal(track, species, dEdx, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection,useEnergyLossCorrection);
 }
   
 //_________________________________________________________________________
@@ -654,7 +667,9 @@ Double_t AliTPCPIDResponse::GetExpectedSigma(const AliVTrack* track,
                                              const TSpline3* responseFunction,
                                              Bool_t correctEta,
                                              Bool_t correctMultiplicity,
-                                             Bool_t usePileupCorrection, Bool_t useQPtTglCorrection) const
+                                             Bool_t usePileupCorrection,
+                                             Bool_t useQPtTglCorrection,
+                                             Bool_t useEnergyLossCorrection) const
 {
   // Calculates the expected sigma of the PID signal as the function of 
   // the information stored in the track and the given parameters,
@@ -679,10 +694,10 @@ Double_t AliTPCPIDResponse::GetExpectedSigma(const AliVTrack* track,
   // If no sigma map is available or if no eta correction is requested (sigma maps only for corrected eta!), use the old parametrisation
   if (!fhEtaSigmaPar1 || !correctEta) {  
     if (nPoints != 0) 
-      return GetExpectedSignal(track, species, dEdx, responseFunction, kFALSE, correctMultiplicity, usePileupCorrection, useQPtTglCorrection) *
+      return GetExpectedSignal(track, species, dEdx, responseFunction, kFALSE, correctMultiplicity, usePileupCorrection, useQPtTglCorrection,useEnergyLossCorrection) *
                fRes0[gainScenario] * sqrt(1. + fResN2[gainScenario]/nPoints);
     else
-      return GetExpectedSignal(track, species, dEdx, responseFunction, kFALSE, correctMultiplicity, usePileupCorrection, useQPtTglCorrection)*fRes0[gainScenario];
+      return GetExpectedSignal(track, species, dEdx, responseFunction, kFALSE, correctMultiplicity, usePileupCorrection, useQPtTglCorrection,useEnergyLossCorrection)*fRes0[gainScenario];
   }
     
   if (nPoints > 0) {
@@ -719,7 +734,9 @@ Double_t AliTPCPIDResponse::GetExpectedSigma(const AliVTrack* track,
                                              ETPCdEdxSource dedxSource,
                                              Bool_t correctEta,
                                              Bool_t correctMultiplicity,
-                                             Bool_t usePileupCorrection, Bool_t useQPtTglCorrection) const
+                                             Bool_t usePileupCorrection,
+                                             Bool_t useQPtTglCorrection,
+                                             Bool_t useEnergyLossCorrection) const
 {
   // Calculates the expected sigma of the PID signal as the function of 
   // the information stored in the track, for the specified particle type 
@@ -744,7 +761,9 @@ Float_t AliTPCPIDResponse::GetNumberOfSigmas(const AliVTrack* track,
                              ETPCdEdxSource dedxSource,
                              Bool_t correctEta,
                              Bool_t correctMultiplicity,
-                             Bool_t usePileupCorrection, Bool_t useQPtTglCorrection) const
+                             Bool_t usePileupCorrection,
+                             Bool_t useQPtTglCorrection,
+                             Bool_t useEnergyLossCorrection) const
 {
   //Calculates the number of sigmas of the PID signal from the expected value
   //for a given particle species in the presence of multiple gain scenarios
@@ -758,8 +777,8 @@ Float_t AliTPCPIDResponse::GetNumberOfSigmas(const AliVTrack* track,
   if (!ResponseFunctiondEdxN(track, species, dedxSource, dEdx, nPoints, gainScenario, &responseFunction))
     return -999; //TODO: Better handling!
     
-  Double_t bethe = GetExpectedSignal(track, species, dEdx, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection);
-  Double_t sigma = GetExpectedSigma(track, species, gainScenario, dEdx, nPoints, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection);
+  Double_t bethe = GetExpectedSignal(track, species, dEdx, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection,useEnergyLossCorrection);
+  Double_t sigma = GetExpectedSigma(track, species, gainScenario, dEdx, nPoints, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection,useEnergyLossCorrection);
   // 999 will be returned by GetExpectedSigma e.g. in case of 0 dEdx clusters
   if (sigma >= 998) 
     return -999;
@@ -773,7 +792,9 @@ Float_t AliTPCPIDResponse::GetSignalDelta(const AliVTrack* track,
                                           ETPCdEdxSource dedxSource,
                                           Bool_t correctEta,
                                           Bool_t correctMultiplicity,
-                                          Bool_t usePileupCorrection /*= kFALSE*/, Bool_t useQPtTglCorrection,
+                                          Bool_t usePileupCorrection /*= kFALSE*/,
+                                          Bool_t useQPtTglCorrection,
+                                          Bool_t useEnergyLossCorrection,
                                           Bool_t ratio/*=kFALSE*/)const
 {
   //Calculates the number of sigmas of the PID signal from the expected value
@@ -788,7 +809,7 @@ Float_t AliTPCPIDResponse::GetSignalDelta(const AliVTrack* track,
   if (!ResponseFunctiondEdxN(track, species, dedxSource, dEdx, nPoints, gainScenario, &responseFunction))
     return -9999.; //TODO: Better handling!
 
-  const Double_t bethe = GetExpectedSignal(track, species, dEdx, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection);
+  const Double_t bethe = GetExpectedSignal(track, species, dEdx, responseFunction, correctEta, correctMultiplicity, usePileupCorrection, useQPtTglCorrection,useEnergyLossCorrection);
 
   Double_t delta=-9999.;
   if (!ratio) delta=dEdx-bethe;
@@ -2404,6 +2425,22 @@ void AliTPCPIDResponse::GetTF1ParametrizationValues(Double_t values[7], const Al
   values[5] = TMath::Sqrt(maxCl[dEdxType]  / ncl);
   values[6] = fCurrentEventMultiplicity / fMultiplicityNormalization;
 }
+
+
+  // energy loss correction - expected mean energy loss divide energy loss at the TPC inner wall
+  /// calculate relative energy loss correction in the TPC - in helix approximation for primary tracks
+  /// \param track
+  /// \return
+  Double_t AliTPCPIDResponse::GetEnergyLossCorrectionValue(const AliVTrack* track, Int_t pidCode) const{
+    Double_t elossCorr=1;
+    const Float_t rMin=83;
+    Float_t mass = AliPID::ParticleMass(pidCode);
+    //  makeFitBGRegion(doCheck, "ldEdxRawDist",period,
+    //  "dEdxMeanToInHelix(1/ldEdxRawDist.qPtMean,ldEdxRawDist.tglMean,AliPID::ParticleMass(pidCenter),83,83+tpcNcr3Dist.binMedian,0,5,10,1.4)","dEdxMeanToInHelix(1/qPtMean,tglMean,AliPID::ParticleMass(pidCenter),83,83+tpcNcr3Dist.binMedian,0,5,10,1.4)<1.1",&info);
+    elossCorr=dEdxMeanToInHelix(track->Pt(),track->GetTPCTgl(),mass,rMin,rMin+track->GetTPCCrossedRows(),fGasType,track->GetBz(),10,fEnergyLossFactor);
+    return elossCorr;
+}
+
 
 
 /// This is the empirical ALEPH parameterization of the Bethe-Bloch formula.
