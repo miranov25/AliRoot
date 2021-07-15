@@ -2415,7 +2415,7 @@ void AliTPCPIDResponse::GetTF1ParametrizationValues(Double_t values[7], const Al
   const Double_t p = track->GetTPCmomentum();
   const Double_t bg = p / AliPID::ParticleMassZ(Int_t(species));
   const Double_t bbAlpeh = AliExternalTrackParam::BetheBlochAleph(bg);
-
+  // bbAleph not well defined below BG 0.01 - putting to the code protection against outliers
   // values[0] = fMIP / bbAlpeh;   // bbAlelp is already normalized to the MIP
   values[0] = (bbAlpeh>0) ? 1. / bbAlpeh:1.;
   values[1] = track->GetTPCTgl();
